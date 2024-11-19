@@ -1,0 +1,54 @@
+# Node.js
+node_modules/
+dist/
+public/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Vue.js build output
+/dist/
+/build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Go
+bin/
+*.exe
+*.test
+*.out
+*.coverage
+*.prof
+*.log
+*.so
+*.a
+*.cgo
+
+# Go vendor folder
+vendor/
+
+# Go module cache
+.golangci.yml
+.golangci-lint-cache/
+
+# PostgreSQL
+*.sql
+*.db
+*.sqlite
+*.dump
+pgdata/
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+.DS_Store
+
+# OS-specific files
+Thumbs.db
+desktop.ini
