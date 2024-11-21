@@ -36,7 +36,6 @@ vendor/
 .golangci-lint-cache/
 
 # PostgreSQL
-*.sql
 *.db
 *.sqlite
 *.dump
