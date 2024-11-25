@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jnie1/MTGViewer-V2/auth"
@@ -41,9 +42,37 @@ func postHandler(c *gin.Context) {
 	})
 }
 
-// func booksHandler(c *gin.Context) {
-// 	c.JSON(http.StatusOK, databaseStuffGoesHere)
-// }
+type author struct {
+	name string
+}
+
+type book struct {
+	name     string
+	authorId int
+}
+
+func booksHandler(c *gin.Context) {
+	id := c.Param("id")
+	bookId, err := strconv.Atoi(id)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	book := book{}
+
+	db := database.Instance()
+	row := db.QueryRow("SELECT name, author_id from books where id = $1", bookId)
+	err = row.Scan(&book.name, &book.authorId)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	c.JSON(http.StatusOK, book)
+}
 
 func main() {
 	// Loading environment variables
@@ -65,7 +94,7 @@ func main() {
 	// Define routes and associate them with handlers
 	r.GET("/greet", greetHandler)
 	r.GET("/user", userHandler)
-	// r.GET("/books", booksHandler)
+	r.GET("/books/:id", booksHandler)
 	r.POST("/post", postHandler)
 
 	authorized := r.Group("", auth.IsAuthorized)
