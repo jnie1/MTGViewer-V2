@@ -1,15 +1,12 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jnie1/MTGViewer-V2/database"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 )
 
 // Handlers
@@ -29,7 +26,7 @@ func userHandler(c *gin.Context) {
 }
 
 func postHandler(c *gin.Context) {
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 
 	// Binding the incoming JSON request body to the map
 	if err := c.ShouldBindJSON(&jsonData); err != nil {
@@ -48,38 +45,20 @@ func booksHandler(c *gin.Context) {
 }
 
 func main() {
-	// Initialize a Gin router
-	r := gin.Default()
-
 	// Loading environment variables
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Retrieving environment variables
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbSSLMode := os.Getenv("DB_SSLMODE")
-
-	// Database connection string
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode)
-
-	// Opening connection to database
-	db, err := sql.Open("postgres", connStr)
+	err = database.Open()
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
-	defer db.Close()
+	defer database.Close()
 
-	// Pinging databse connection
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("Error pinging database: ", err)
-	}
+	// Initialize a Gin router
+	r := gin.Default()
 
 	// Define routes and associate them with handlers
 	r.GET("/greet", greetHandler)
