@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"database/sql"
 	"net/http"
 	"strconv"
 
@@ -9,7 +10,13 @@ import (
 )
 
 func getBooks(c *gin.Context) {
-	books, _ := books.GetBooks()
+	books, err := books.GetBooks()
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
 	c.JSON(http.StatusOK, books)
 }
 
@@ -24,8 +31,13 @@ func getBook(c *gin.Context) {
 
 	book, err := books.GetBook(bookId)
 
-	if err != nil {
+	if err == sql.ErrNoRows {
 		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -35,11 +47,14 @@ func getBook(c *gin.Context) {
 func addBook(c *gin.Context) {
 	var book books.BookData
 
-	if err := c.ShouldBind(&book); err != nil {
+	err := c.ShouldBind(&book)
+
+	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
+		return
 	}
 
-	err := books.AddBook(book)
+	err = books.AddBook(book)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
