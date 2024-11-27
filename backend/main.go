@@ -18,15 +18,6 @@ func greetHandler(c *gin.Context) {
 	})
 }
 
-func userHandler(c *gin.Context) {
-	// Extracting the name parameter from the URL
-	name := c.DefaultQuery("name", "Guest")
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Hello, " + name,
-	})
-}
-
 func main() {
 	// Loading environment variables
 	err := godotenv.Load()
@@ -45,9 +36,9 @@ func main() {
 	r := gin.Default()
 
 	// Define routes and associate them with handlers
-	routes.AddBookRoutes(r)
 	r.GET("/greet", greetHandler)
-	r.GET("/user", userHandler)
+	routes.AddUserRoutes(r)
+	routes.AddBookRoutes(r)
 
 	authorized := r.Group("", auth.IsAuthorized)
 
