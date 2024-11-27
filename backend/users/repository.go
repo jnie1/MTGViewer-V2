@@ -11,7 +11,7 @@ func GetUser(email string) (UserInfo, error) {
 		FROM users
 		WHERE email = $1`, email)
 
-	err := row.Scan(&user.Name, &user.Email, &user.PasswordHash, &user.Role)
+	err := row.Scan(&user.Name, &user.PasswordHash, &user.Role)
 
 	if err != nil {
 		return user, err
