@@ -21,6 +21,13 @@ func IsAuthorized(c *gin.Context) {
 		return
 	}
 
+	err = token.Valid()
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
 	c.Set("role", token.Role)
 	c.Next()
 }
