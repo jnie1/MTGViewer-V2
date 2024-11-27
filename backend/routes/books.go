@@ -65,7 +65,8 @@ func addBook(c *gin.Context) {
 }
 
 func AddBookRoutes(router *gin.Engine) {
-	router.GET("/books/:id", getBook)
-	router.GET("/books", getBooks)
-	router.POST("/books", addBook)
+	group := router.Group("/books")
+	group.GET("/:id", getBook)
+	group.GET("/", getBooks)
+	group.POST("/", addBook)
 }
