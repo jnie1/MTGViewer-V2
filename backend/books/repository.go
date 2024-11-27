@@ -19,6 +19,8 @@ func GetBooks() ([]BookData, error) {
 		return nil, err
 	}
 
+	defer row.Close()
+
 	for row.Next() {
 		book := BookData{}
 
@@ -36,7 +38,6 @@ func GetBook(bookId int) (BookData, error) {
 	book := BookData{}
 
 	db := database.Instance()
-
 	row := db.QueryRow(`
 		SELECT books.name, author.name
 		FROM books
@@ -64,14 +65,13 @@ func getAuthorId(db *sql.DB, authorName string) (int, error) {
 	var authorId int
 
 	row := db.QueryRow("SELECT id FROM author WHERE name = $1", authorName)
-	err := row.Scan(&authorId)
 
-	if err == nil {
+	if err := row.Scan(&authorId); err == nil {
 		return authorId, nil
 	}
 
 	row = db.QueryRow("INSERT INTO author (name) VALUES ($1) RETURNING id", authorName)
-	err = row.Scan(&authorId)
+	err := row.Scan(&authorId)
 
 	return authorId, err
 }

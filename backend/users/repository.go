@@ -11,9 +11,7 @@ func GetUser(email string) (UserInfo, error) {
 		FROM users
 		WHERE email = $1`, email)
 
-	err := row.Scan(&user.Name, &user.PasswordHash, &user.Role)
-
-	if err != nil {
+	if err := row.Scan(&user.Name, &user.PasswordHash, &user.Role); err != nil {
 		return user, err
 	}
 
@@ -23,7 +21,6 @@ func GetUser(email string) (UserInfo, error) {
 
 func CreateUser(user UserInfo) error {
 	db := database.Instance()
-
 	_, err := db.Exec(`
 		INSERT INTO users (name, email, password_hash, role)
 		VALUES ($1, $2, $3, $4)`,

@@ -20,13 +20,11 @@ func greetHandler(c *gin.Context) {
 
 func main() {
 	// Loading environment variables
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	err = database.Open()
-	if err != nil {
+	if err := database.Open(); err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
 
