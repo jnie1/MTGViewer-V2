@@ -54,7 +54,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	user, err := users.GetUser(request.Password)
+	user, err := users.GetUser(request.Email)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
