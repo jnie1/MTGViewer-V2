@@ -47,16 +47,12 @@ func getBook(c *gin.Context) {
 func addBook(c *gin.Context) {
 	var book books.BookData
 
-	err := c.ShouldBind(&book)
-
-	if err != nil {
+	if err := c.ShouldBind(&book); err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	err = books.AddBook(book)
-
-	if err != nil {
+	if err := books.AddBook(book); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
