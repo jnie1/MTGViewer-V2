@@ -37,6 +37,7 @@ func main() {
 	r.GET("/greet", greetHandler)
 	routes.AddUserRoutes(r)
 	routes.AddBookRoutes(r)
+	routes.AddCardRoutes(r)
 
 	authorized := r.Group("", auth.IsAuthorized)
 
