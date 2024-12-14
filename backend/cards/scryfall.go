@@ -7,13 +7,21 @@ import (
 	"net/http"
 )
 
+type ScryfallImages struct {
+	Small  string `json:"small"`
+	Normal string `json:"normal"`
+	Large  string `json:"large"`
+}
+
 type ScryfallCard struct {
-	ScryfallId    string `json:"scryfall_id"`
-	MultiverseIds []int  `json:"multiverse_ids"`
-	ManaCost      string `json:"mana_cost"`
-	Name          string `json:"name"`
-	Power         string `json:"power"`
-	Toughness     string `json:"toughness"`
+	ScryfallId    string         `json:"id"`
+	MultiverseIds []int          `json:"multiverse_ids"`
+	ManaCost      string         `json:"mana_cost"`
+	Name          string         `json:"name"`
+	Power         string         `json:"power"`
+	Toughness     string         `json:"toughness"`
+	Images        ScryfallImages `json:"image_uris"`
+	Type          string         `json:"type_line"`
 }
 
 var scryfallUrl = "https://api.scryfall.com"
