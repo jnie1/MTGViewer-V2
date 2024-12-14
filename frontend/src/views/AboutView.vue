@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import fetchApi from '@/fetch/api';
-import { ref } from 'vue';
+import useFetch from '@/fetch/useFetch';
 
 interface ICard {
   name: string;
 }
 
-const card = ref<ICard>();
-
-fetchApi<ICard>('cards/scryfall').then((c) => (card.value = c));
+const { data: card } = useFetch<ICard>('/cards/scryfall');
 </script>
 
 <template>
