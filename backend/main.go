@@ -32,6 +32,7 @@ func main() {
 
 	// Initialize a Gin router
 	r := gin.Default()
+	r.Use(auth.AddCors)
 
 	// Define routes and associate them with handlers
 	r.GET("/greet", greetHandler)
@@ -47,5 +48,4 @@ func main() {
 
 	// Start the server on port 8080
 	r.Run(":8080")
-
 }

@@ -42,5 +42,12 @@
     "vite-plugin-vue-devtools": "^7.5.4",
     "vitest": "^2.1.4",
     "vue-tsc": "^2.1.10"
+  },
+  "prettier": {
+    "$schema": "https://json.schemastore.org/prettierrc",
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "printWidth": 100
   }
 }
