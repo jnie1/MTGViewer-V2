@@ -10,6 +10,13 @@ import (
 func AddCors(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", os.Getenv("CLIENT_ORIGIN"))
 	c.Header("Access-Control-Allow-Credentials", "true")
+	c.Header("Access-Control-Allow-Headers", "Content-Type,Authorization")
+
+	if c.Request.Method == "OPTIONS" {
+		c.AbortWithStatus(http.StatusNoContent)
+		return
+	}
+
 	c.Next()
 }
 

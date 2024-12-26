@@ -2,9 +2,9 @@ package cards
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 type ScryfallImages struct {
@@ -28,7 +28,10 @@ var scryfallUrl = "https://api.scryfall.com"
 
 func FetchRandomCard() (ScryfallCard, error) {
 	card := ScryfallCard{}
-	randomUrl := fmt.Sprint(scryfallUrl, "/cards/random")
+	randomUrl, err := url.JoinPath(scryfallUrl, "/cards/random")
+	if err != nil {
+		return card, err
+	}
 
 	req, err := http.NewRequest("GET", randomUrl, nil)
 	if err != nil {
