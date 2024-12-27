@@ -19,8 +19,9 @@ const emailRules = [
     if (value) return true;
     return 'Email is required.';
   },
-  (value: string | null) => {
-    if (value && /.+@.+\..+/.test(value)) return true;
+  (value: string) => {
+    const emailPattern = /.+@.+\..+/;
+    if (emailPattern.test(value)) return true;
     return 'Email must be valid.';
   },
 ];
