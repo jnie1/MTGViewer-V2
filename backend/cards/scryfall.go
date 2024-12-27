@@ -1,6 +1,7 @@
 package cards
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -48,12 +49,77 @@ func FetchRandomCard() (ScryfallCard, error) {
 
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return card, err
 	}
 
-	err = json.Unmarshal(body, &card)
+	err = json.Unmarshal(content, &card)
 
 	return card, err
+}
+
+type setCollectorNumber struct {
+	Set             string `json:"set"`
+	CollectorNumber string `json:"collector_number"`
+}
+
+type collectionQuery struct {
+	Identifiers []setCollectorNumber `json:"identifiers"`
+}
+
+type collectionResult struct {
+	Cards []ScryfallCard `json:"data"`
+}
+
+func FetchCollection() ([]ScryfallCard, error) {
+	cards := []ScryfallCard{}
+
+	collectionUrl, err := url.JoinPath(scryfallUrl, "/cards/collection")
+	if err != nil {
+		return cards, err
+	}
+
+	query := collectionQuery{
+		Identifiers: []setCollectorNumber{
+			{Set: "FDN", CollectorNumber: "100"},
+			{Set: "FDN", CollectorNumber: "105"},
+		},
+	}
+
+	payload, err := json.Marshal(query)
+	if err != nil {
+		return cards, err
+	}
+
+	body := bytes.NewBuffer(payload)
+	req, err := http.NewRequest("POST", collectionUrl, body)
+	if err != nil {
+		return cards, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "mtg-viewer-v2")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return cards, err
+	}
+
+	defer resp.Body.Close()
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return cards, err
+	}
+
+	result := collectionResult{}
+	err = json.Unmarshal(content, &result)
+	if err != nil {
+		return cards, err
+	}
+
+	cards = result.Cards
+	return cards, nil
 }

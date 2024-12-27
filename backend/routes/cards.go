@@ -18,7 +18,19 @@ func fetchRandomCard(c *gin.Context) {
 	c.JSON(http.StatusOK, card)
 }
 
+func fetchCollection(c *gin.Context) {
+	cards, err := cards.FetchCollection()
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, cards)
+}
+
 func AddCardRoutes(router *gin.Engine) {
 	group := router.Group("/cards")
 	group.GET("/scryfall", fetchRandomCard)
+	group.GET("/collection", fetchCollection)
 }
