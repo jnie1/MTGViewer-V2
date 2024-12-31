@@ -8,27 +8,11 @@ import (
 	"net/url"
 )
 
-type ScryfallImages struct {
-	Small  string `json:"small"`
-	Normal string `json:"normal"`
-	Large  string `json:"large"`
-}
-
-type ScryfallCard struct {
-	ScryfallId    string         `json:"id"`
-	MultiverseIds []int          `json:"multiverse_ids"`
-	ManaCost      string         `json:"mana_cost"`
-	Name          string         `json:"name"`
-	Power         string         `json:"power"`
-	Toughness     string         `json:"toughness"`
-	Images        ScryfallImages `json:"image_uris"`
-	Type          string         `json:"type_line"`
-}
-
 var scryfallUrl = "https://api.scryfall.com"
 
-func FetchRandomCard() (ScryfallCard, error) {
-	card := ScryfallCard{}
+func FetchRandomCard() (Card, error) {
+	var card Card
+
 	randomUrl, err := url.JoinPath(scryfallUrl, "/cards/random")
 	if err != nil {
 		return card, err
@@ -54,26 +38,17 @@ func FetchRandomCard() (ScryfallCard, error) {
 		return card, err
 	}
 
-	err = json.Unmarshal(content, &card)
+	var result scryfallCard
+	if err := json.Unmarshal(content, &result); err != nil {
+		return card, err
+	}
 
-	return card, err
+	card = toCard(result)
+	return card, nil
 }
 
-type setCollectorNumber struct {
-	Set             string `json:"set"`
-	CollectorNumber string `json:"collector_number"`
-}
-
-type collectionQuery struct {
-	Identifiers []setCollectorNumber `json:"identifiers"`
-}
-
-type collectionResult struct {
-	Cards []ScryfallCard `json:"data"`
-}
-
-func FetchCollection() ([]ScryfallCard, error) {
-	cards := []ScryfallCard{}
+func FetchCollection() ([]Card, error) {
+	var cards []Card
 
 	collectionUrl, err := url.JoinPath(scryfallUrl, "/cards/collection")
 	if err != nil {
@@ -114,12 +89,11 @@ func FetchCollection() ([]ScryfallCard, error) {
 		return cards, err
 	}
 
-	result := collectionResult{}
-	err = json.Unmarshal(content, &result)
-	if err != nil {
+	var result collectionResult
+	if err := json.Unmarshal(content, &result); err != nil {
 		return cards, err
 	}
 
-	cards = result.Cards
+	cards = toCards(result.Cards)
 	return cards, nil
 }
