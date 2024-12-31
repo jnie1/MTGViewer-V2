@@ -9,10 +9,10 @@ type CardImageUrls struct {
 type Card struct {
 	Name      string        `json:"name"`
 	ManaCost  string        `json:"mana_cost"`
-	Type      string        `json:"type_line"`
+	Type      string        `json:"type"`
 	Power     string        `json:"power"`
 	Toughness string        `json:"toughness"`
-	Images    CardImageUrls `json:"images"`
+	Images    CardImageUrls `json:"imageUrls"`
 }
 
 type scryfallImages struct {
