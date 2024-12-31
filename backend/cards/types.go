@@ -8,7 +8,7 @@ type CardImageUrls struct {
 
 type Card struct {
 	Name      string        `json:"name"`
-	ManaCost  string        `json:"mana_cost"`
+	ManaCost  string        `json:"manaCost"`
 	Type      string        `json:"type"`
 	Power     string        `json:"power"`
 	Toughness string        `json:"toughness"`
