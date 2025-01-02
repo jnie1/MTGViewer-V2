@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { defineProps } from 'vue';
 import type { ICard } from '@/cards/ICard';
 
 const { card } = defineProps<{ card?: ICard }>();
@@ -17,6 +16,7 @@ const { card } = defineProps<{ card?: ICard }>();
 <style lang="css" scoped>
 .card-img {
   width: 300px;
+  max-width: 300px;
   border-radius: 16px;
 }
 
@@ -27,7 +27,7 @@ const { card } = defineProps<{ card?: ICard }>();
 
   .card-img:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 20px black;
+    box-shadow: 0 0 24px var(--color-primary);
   }
 }
 </style>
