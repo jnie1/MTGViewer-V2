@@ -69,7 +69,7 @@ const handleSubmit = async () => {
           type="password"
           :rules="passwordRules"
         />
-        <v-btn class="ma-2 mt-0" type="submit">Sign up</v-btn>
+        <v-btn class="ma-2 mt-0" color="primary" type="submit">Sign up</v-btn>
       </v-form>
     </v-sheet>
   </main>

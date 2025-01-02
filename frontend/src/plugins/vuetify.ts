@@ -6,7 +6,11 @@ const customTheme: ThemeDefinition = {
   dark: true,
   colors: {
     background: '#111519',
+    'on-background': '#e0eaea',
+    'on-background-variant': '#f8f8f8',
     surface: '#232e3f',
+    'on-surface': '#e0eaea',
+    'on-surface-variant': '#f8f8f8',
     primary: '#fa4125',
     secondary: '#7aa5f7',
   }
