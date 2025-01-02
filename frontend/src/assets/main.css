@@ -10,7 +10,7 @@
 a,
 .green {
   text-decoration: none;
-  color: var(--color-secondary);
+  color: var(--color-primary);
   transition: 0.4s;
   padding: 3px;
 }
