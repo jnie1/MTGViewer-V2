@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import CardImage from '@/cards/CardImage.vue';
-import type { ICard } from '@/cards/ICard';
+import type { ICard } from '@/cards/types';
 import useFetch from '@/fetch/useFetch';
+
+const capitalize = (str: string | null | undefined) => {
+  if (!str) return '';
+  return str[0].toUpperCase() + str.slice(1);
+};
 
 const { data: card } = useFetch<ICard>('/cards/scryfall');
 </script>
@@ -16,6 +21,7 @@ const { data: card } = useFetch<ICard>('/cards/scryfall');
       </v-card-item>
       <v-card-text>
         <p>{{ card?.type }}</p>
+        <p>{{ capitalize(card?.rarity) }}</p>
         <p v-if="card?.power || card?.toughness">{{ card?.power }} / {{ card?.toughness }}</p>
       </v-card-text>
     </v-card>

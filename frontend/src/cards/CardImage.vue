@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import type { ICard } from '@/cards/ICard';
+import type { ICard } from '@/cards/types';
 
-const { card } = defineProps<{ card?: ICard }>();
+interface ICardImageProps {
+  card?: ICard;
+}
+
+const { card } = defineProps<ICardImageProps>();
 </script>
 
 <template>
   <v-img
     class="card-img"
+    :class="{
+      uncommon: card?.rarity === 'uncommon',
+      rare: card?.rarity === 'rare',
+      mythic: card?.rarity === 'mythic',
+    }"
     :alt="card?.name"
     :src="card?.imageUrls.normal"
     :lazy-src="card?.imageUrls.preview"
@@ -27,6 +36,17 @@ const { card } = defineProps<{ card?: ICard }>();
 
   .card-img:hover {
     transform: scale(1.05);
+  }
+
+  .card-img.uncommon:hover {
+    box-shadow: 0 0 24px var(--color-secondary);
+  }
+
+  .card-img.rare:hover {
+    box-shadow: 0 0 24px var(--color-yellow);
+  }
+
+  .card-img.mythic:hover {
     box-shadow: 0 0 24px var(--color-primary);
   }
 }
