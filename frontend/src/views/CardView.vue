@@ -15,8 +15,8 @@ const { data: card } = useFetch<ICard>('/cards/scryfall');
         <v-card-subtitle v-if="card?.manaCost">{{ card?.manaCost }}</v-card-subtitle>
       </v-card-item>
       <v-card-text>
-        <p>{{ card?.type}}</p>
-        <p v-if="card?.power || card?.toughness">{{ card?.power}} / {{ card?.toughness }}</p>
+        <p>{{ card?.type }}</p>
+        <p v-if="card?.power || card?.toughness">{{ card?.power }} / {{ card?.toughness }}</p>
       </v-card-text>
     </v-card>
   </main>

@@ -13,7 +13,7 @@ const customTheme: ThemeDefinition = {
     'on-surface-variant': '#f8f8f8',
     primary: '#fa4125',
     secondary: '#7aa5f7',
-  }
+  },
 };
 
 const vuetify = createVuetify({
@@ -21,7 +21,7 @@ const vuetify = createVuetify({
   directives,
   theme: {
     defaultTheme: 'customTheme',
-    themes: { customTheme }
+    themes: { customTheme },
   },
 });
 

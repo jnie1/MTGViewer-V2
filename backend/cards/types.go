@@ -1,36 +1,36 @@
 package cards
 
 type CardImageUrls struct {
-	Preview string `json:"preview"`
-	Normal  string `json:"normal"`
-	Full    string `json:"full"`
+	Preview string `json:"preview,omitempty"`
+	Normal  string `json:"normal,omitempty"`
+	Full    string `json:"full,omitempty"`
 }
 
 type Card struct {
 	Name      string        `json:"name"`
-	ManaCost  string        `json:"manaCost"`
+	ManaCost  string        `json:"manaCost,omitempty"`
 	Type      string        `json:"type"`
-    Rarity    string        `json:"rarity"`
-	Power     string        `json:"power"`
-	Toughness string        `json:"toughness"`
+	Rarity    string        `json:"rarity"`
+	Power     string        `json:"power,omitempty"`
+	Toughness string        `json:"toughness,omitempty"`
 	Images    CardImageUrls `json:"imageUrls"`
 }
 
 type scryfallImages struct {
-	Small  string `json:"small"`
-	Normal string `json:"normal"`
-	Large  string `json:"large"`
+	Small  string `json:"small,omitempty"`
+	Normal string `json:"normal,omitempty"`
+	Large  string `json:"large,omitempty"`
 }
 
 type scryfallCard struct {
 	ScryfallId string         `json:"id"`
-	ManaCost   string         `json:"mana_cost"`
+	ManaCost   string         `json:"mana_cost,omitempty"`
 	Name       string         `json:"name"`
-	Power      string         `json:"power"`
-	Toughness  string         `json:"toughness"`
+	Power      string         `json:"power,omitempty"`
+	Toughness  string         `json:"toughness,omitempty"`
 	Images     scryfallImages `json:"image_uris"`
 	Type       string         `json:"type_line"`
-    Rarity     string         `json:"rarity"`
+	Rarity     string         `json:"rarity"`
 }
 
 type setCollectorNumber struct {
@@ -52,6 +52,7 @@ func toCard(card scryfallCard) Card {
 		Name:      card.Name,
 		ManaCost:  card.ManaCost,
 		Type:      card.Type,
+		Rarity:    card.Rarity,
 		Power:     card.Power,
 		Toughness: card.Toughness,
 		Images: CardImageUrls{
