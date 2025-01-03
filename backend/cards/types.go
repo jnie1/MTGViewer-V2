@@ -10,6 +10,7 @@ type Card struct {
 	Name      string        `json:"name"`
 	ManaCost  string        `json:"manaCost"`
 	Type      string        `json:"type"`
+    Rarity    string        `json:"rarity"`
 	Power     string        `json:"power"`
 	Toughness string        `json:"toughness"`
 	Images    CardImageUrls `json:"imageUrls"`
@@ -29,6 +30,7 @@ type scryfallCard struct {
 	Toughness  string         `json:"toughness"`
 	Images     scryfallImages `json:"image_uris"`
 	Type       string         `json:"type_line"`
+    Rarity     string         `json:"rarity"`
 }
 
 type setCollectorNumber struct {
