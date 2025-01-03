@@ -34,6 +34,6 @@ const { data: card } = useFetch<ICard>('/cards/scryfall');
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 48px;
+  gap: 40px;
 }
 </style>

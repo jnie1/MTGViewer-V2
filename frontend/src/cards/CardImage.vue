@@ -35,19 +35,20 @@ const { card } = defineProps<ICardImageProps>();
   }
 
   .card-img:hover {
+    --shadow-length: 0 0 16px;
     transform: scale(1.05);
   }
 
   .card-img.uncommon:hover {
-    box-shadow: 0 0 24px var(--color-secondary);
+    box-shadow: var(--shadow-length) var(--color-secondary);
   }
 
   .card-img.rare:hover {
-    box-shadow: 0 0 24px var(--color-yellow);
+    box-shadow: var(--shadow-length) var(--color-yellow);
   }
 
   .card-img.mythic:hover {
-    box-shadow: 0 0 24px var(--color-primary);
+    box-shadow: var(--shadow-length) var(--color-primary);
   }
 }
 </style>
