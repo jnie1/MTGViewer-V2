@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ICard } from '@/cards/ICard';
+import type { ICard } from '@/cards/types';
 import useFetch from '@/fetch/useFetch';
 
 const { data: card } = useFetch<ICard>('/cards/scryfall');
