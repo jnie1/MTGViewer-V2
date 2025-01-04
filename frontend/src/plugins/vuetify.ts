@@ -1,6 +1,4 @@
 import { createVuetify, type ThemeDefinition } from 'vuetify';
-import * as components from 'vuetify/components';
-import * as directives from 'vuetify/directives';
 
 const customTheme: ThemeDefinition = {
   dark: true,
@@ -20,8 +18,6 @@ const customTheme: ThemeDefinition = {
 };
 
 const vuetify = createVuetify({
-  components,
-  directives,
   theme: {
     defaultTheme: 'customTheme',
     themes: { customTheme },
