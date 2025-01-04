@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import CardImage from '@/cards/CardImage.vue';
 import type { ICard } from '@/cards/types';
 import useFetch from '@/fetch/useFetch';
 
