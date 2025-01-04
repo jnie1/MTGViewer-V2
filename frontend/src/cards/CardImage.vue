@@ -44,7 +44,7 @@ const { card } = defineProps<ICardImageProps>();
   }
 
   .card-img.rare:hover {
-    box-shadow: var(--shadow-length) var(--color-yellow);
+    box-shadow: var(--shadow-length) var(--color-primary-variant);
   }
 
   .card-img.mythic:hover {
