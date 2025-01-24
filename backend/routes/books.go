@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -31,7 +32,7 @@ func getBook(c *gin.Context) {
 
 	book, err := books.GetBook(bookId)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}

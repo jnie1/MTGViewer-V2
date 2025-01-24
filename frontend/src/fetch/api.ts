@@ -1,8 +1,7 @@
 import ResponseError from './ResponeError';
 
-const basePath = new URL(import.meta.env.VITE_API_URL);
-
 async function fetchApi<T = undefined>(path: string, init?: RequestInit): Promise<T> {
+  const basePath = import.meta.env.VITE_API_URL;
   const fullPath = new URL(path, basePath);
 
   const headers: HeadersInit = { ...init?.headers, ['Accept']: 'application/json' };

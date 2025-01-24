@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 	"time"
 
@@ -19,7 +20,7 @@ func signup(c *gin.Context) {
 		return
 	}
 
-	if _, err := users.GetUser(request.Email); err != sql.ErrNoRows {
+	if _, err := users.GetUser(request.Email); !errors.Is(err, sql.ErrNoRows) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
