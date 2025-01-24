@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router';
-import HelloWorld from './components/HelloWorld.vue';
-import HomePageHeading from '@/components/HomePageHeading.vue';
 </script>
 
 <template>
-  <h1>Hellosdasd W</h1>
+  <RouterView/>
 </template>
 
 <style scoped>

@@ -2,7 +2,7 @@
 import CardImage from '@/cards/CardImage.vue';
 import type { ICard } from '@/cards/types';
 import useFetch from '@/fetch/useFetch';
-
+import NavBar from '../components/NavBar.vue';
 const capitalize = (str: string | null | undefined) => {
   if (!str) return '';
   return str[0].toUpperCase() + str.slice(1);
@@ -13,6 +13,7 @@ const { data: card } = useFetch<ICard>('/cards/scryfall');
 
 <template>
   <main class="card-view">
+    <NavBar/>
     <card-image :card="card" />
     <v-card width="300" min-height="100" density="comfortable" :loading="!card">
       <v-card-item>

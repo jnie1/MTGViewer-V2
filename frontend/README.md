@@ -43,3 +43,8 @@ npm test
 ```sh
 npm run lint
 ```
+
+#### Create env file for dev branch
+    - under [Front End Folder](../frontend/)
+    - create .env.development.local
+    - once created add VITE_API_URL="http://localhost:8080"
