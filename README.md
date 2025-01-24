@@ -8,7 +8,7 @@ Remake of MTGViewer completely built from ground up with a new technology stack.
     - [Views](./frontend/src/views/)
     - [Components](./frontend/src/components/)
     - [Plugins](./frontend/src/plugins/)
--[Back End Folder](./backend/)
+- [Back End Folder](./backend/)
     - [users](./backend/users/)
     - [routes](./backend/routes/)
     - [books](./backend/books/)
