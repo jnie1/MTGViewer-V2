@@ -3,9 +3,11 @@ package cards
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 var scryfallUrl = "https://api.scryfall.com"
@@ -32,6 +34,11 @@ func FetchRandomCard() (Card, error) {
 	}
 
 	defer resp.Body.Close()
+
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.Contains(contentType, "application/json") {
+		return card, fmt.Errorf("unexpected response content %s", contentType)
+	}
 
 	content, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -83,6 +90,11 @@ func FetchCollection() ([]Card, error) {
 	}
 
 	defer resp.Body.Close()
+
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.Contains(contentType, "application/json") {
+		return cards, fmt.Errorf("unexpected response content %s", contentType)
+	}
 
 	content, err := io.ReadAll(resp.Body)
 	if err != nil {
