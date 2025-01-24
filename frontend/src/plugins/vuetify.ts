@@ -17,10 +17,21 @@ const customTheme: ThemeDefinition = {
   },
 };
 
+const manaColorTheme: ThemeDefinition = {
+  dark: true,
+  colors: {
+    forest: '#C4D3CA',
+    island: '#B3CEEA',
+    plains: '#F8E7B9',
+    mountain: '#EB9F82',
+    swamp: '#A69F9D'
+  }
+}
+
 const vuetify = createVuetify({
   theme: {
     defaultTheme: 'customTheme',
-    themes: { customTheme },
+    themes: { customTheme, manaColorTheme },
   },
 });
 
