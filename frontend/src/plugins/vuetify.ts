@@ -14,24 +14,19 @@ const customTheme: ThemeDefinition = {
     'primary-variant': '#fdc200',
     secondary: '#7aa5f7',
     'secondary-variant': '#02446e',
-  },
+    forest: '#c4d3ca',
+    island: '#b3ceea',
+    plains: '#f8e7b9',
+    mountain: '#eb9f82',
+    swamp: '#a69f9d'
+  }
 };
 
-const manaColorTheme: ThemeDefinition = {
-  dark: true,
-  colors: {
-    forest: '#C4D3CA',
-    island: '#B3CEEA',
-    plains: '#F8E7B9',
-    mountain: '#EB9F82',
-    swamp: '#A69F9D'
-  }
-}
 
 const vuetify = createVuetify({
   theme: {
     defaultTheme: 'customTheme',
-    themes: { customTheme, manaColorTheme },
+    themes: { customTheme },
   },
 });
 
