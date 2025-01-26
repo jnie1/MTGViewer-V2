@@ -59,7 +59,6 @@ const handleSubmit = async () => {
 
 <template>
   <main>
-    <NavBar />
     <v-sheet class="mx-auto" width="300">
       <v-form v-model="valid" validate-on="submit" fail-fast @submit.prevent="handleSubmit">
         <v-text-field label="User Name" v-model="name" required :rules="nameRules" />

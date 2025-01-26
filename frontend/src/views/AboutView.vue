@@ -8,7 +8,6 @@ const { data: card } = useFetch<ICard>('/cards/scryfall');
 
 <template>
   <main> 
-    <NavBar/>
     <div class="about">
       <h1>This is an about page {{ card?.name }}</h1>
     </div>

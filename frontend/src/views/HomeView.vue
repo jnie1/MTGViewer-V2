@@ -4,7 +4,6 @@ import NavBar from '../components/NavBar.vue';
 
 <template>
   <main>
-    <NavBar />
       <h1 class="TitleScreen">
         Welcome To Mana Vault
       </h1>

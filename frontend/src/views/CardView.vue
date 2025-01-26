@@ -13,7 +13,6 @@ const { data: card } = useFetch<ICard>('/cards/scryfall');
 
 <template>
   <main class="card-view">
-    <NavBar/>
     <card-image :card="card" />
     <v-card width="300" min-height="100" density="comfortable" :loading="!card">
       <v-card-item>
