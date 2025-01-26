@@ -18,10 +18,9 @@ const customTheme: ThemeDefinition = {
     island: '#b3ceea',
     plains: '#f8e7b9',
     mountain: '#eb9f82',
-    swamp: '#a69f9d'
-  }
+    swamp: '#a69f9d',
+  },
 };
-
 
 const vuetify = createVuetify({
   theme: {
