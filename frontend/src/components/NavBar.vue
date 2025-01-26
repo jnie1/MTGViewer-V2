@@ -3,7 +3,6 @@ import {RouterLink} from 'vue-router';
 </script>
 
 <template>
-  <header id="NavBar">
     <nav>
       <ul>
         <li><RouterLink to="/">Home</RouterLink></li>
@@ -12,7 +11,6 @@ import {RouterLink} from 'vue-router';
         <li><RouterLink to="/signup">SignUp</RouterLink></li>
       </ul> 
     </nav>
-  </header>
 </template>
 
 
