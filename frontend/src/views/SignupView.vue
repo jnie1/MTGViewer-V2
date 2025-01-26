@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import fetchApi from '@/fetch/api';
 import { ref } from 'vue';
-import NavBar from '../components/NavBar.vue';
 
 const valid = ref(false);
 const name = ref('');
