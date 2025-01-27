@@ -3,14 +3,13 @@ package users
 import "github.com/jnie1/MTGViewer-V2/database"
 
 func GetUser(email string) (UserInfo, error) {
-	user := UserInfo{}
-
 	db := database.Instance()
 	row := db.QueryRow(`
 		SELECT name, password_hash, role
 		FROM users
 		WHERE email = $1`, email)
 
+	user := UserInfo{}
 	if err := row.Scan(&user.Name, &user.PasswordHash, &user.Role); err != nil {
 		return user, err
 	}

@@ -45,19 +45,24 @@ type collectionResult struct {
 	Cards []scryfallCard `json:"data"`
 }
 
+type collectionBatchResult struct {
+	Cards []Card
+	Error error
+}
+
 func toCard(card scryfallCard) Card {
 	images := card.Images
 	return Card{
-		Name:      card.Name,
-		ManaCost:  card.ManaCost,
-		Type:      card.Type,
-		Rarity:    card.Rarity,
-		Power:     card.Power,
-		Toughness: card.Toughness,
-		Images: CardImageUrls{
-			Preview: images.Small,
-			Normal:  images.Normal,
-			Full:    images.Large,
+		card.Name,
+		card.ManaCost,
+		card.Type,
+		card.Rarity,
+		card.Power,
+		card.Toughness,
+		CardImageUrls{
+			images.Small,
+			images.Normal,
+			images.Large,
 		},
 	}
 }
@@ -65,7 +70,7 @@ func toCard(card scryfallCard) Card {
 func toScryfallIdentifiers(ids []string) []scryfallIdentifier {
 	result := make([]scryfallIdentifier, len(ids))
 	for i, id := range ids {
-		result[i] = scryfallIdentifier{Id: id}
+		result[i] = scryfallIdentifier{id}
 	}
 	return result
 }
