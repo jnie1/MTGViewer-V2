@@ -3,10 +3,12 @@ package cards
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -54,7 +56,45 @@ func FetchRandomCard() (Card, error) {
 	return card, nil
 }
 
+type collectionBatchResult struct {
+	Cards []Card
+	Error error
+}
+
 func FetchCollection(scryfallIds []string) ([]Card, error) {
+	batchSizeLimit := 75
+
+	results := make(chan collectionBatchResult)
+	workerCount := 0
+
+	for batch := range slices.Chunk(scryfallIds, batchSizeLimit) {
+		workerCount++
+		go func() {
+			cards, err := fetchCollectionBatch(batch)
+			results <- collectionBatchResult{cards, err}
+		}()
+	}
+
+	var cards [][]Card
+	var errs []error
+
+	for i := 0; i < workerCount; i++ {
+		result := <-results
+		if result.Error != nil {
+			errs = append(errs, result.Error)
+		} else {
+			cards = append(cards, result.Cards)
+		}
+	}
+
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
+	return slices.Concat(cards...), nil
+}
+
+func fetchCollectionBatch(scryfallIds []string) ([]Card, error) {
 	var cards []Card
 
 	collectionUrl, err := url.JoinPath(scryfallUrl, "/cards/collection")
