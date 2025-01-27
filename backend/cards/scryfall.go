@@ -54,7 +54,7 @@ func FetchRandomCard() (Card, error) {
 	return card, nil
 }
 
-func FetchCollection() ([]Card, error) {
+func FetchCollection(scryfallIds []string) ([]Card, error) {
 	var cards []Card
 
 	collectionUrl, err := url.JoinPath(scryfallUrl, "/cards/collection")
@@ -63,10 +63,7 @@ func FetchCollection() ([]Card, error) {
 	}
 
 	query := collectionQuery{
-		Identifiers: []setCollectorNumber{
-			{Set: "FDN", CollectorNumber: "100"},
-			{Set: "FDN", CollectorNumber: "105"},
-		},
+		Identifiers: toScryfallIdentifiers(scryfallIds),
 	}
 
 	payload, err := json.Marshal(query)

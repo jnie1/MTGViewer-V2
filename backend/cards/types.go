@@ -33,13 +33,12 @@ type scryfallCard struct {
 	Rarity     string         `json:"rarity"`
 }
 
-type setCollectorNumber struct {
-	Set             string `json:"set"`
-	CollectorNumber string `json:"collector_number"`
+type scryfallIdentifier struct {
+	Id string `json:"id"`
 }
 
 type collectionQuery struct {
-	Identifiers []setCollectorNumber `json:"identifiers"`
+	Identifiers []scryfallIdentifier `json:"identifiers"`
 }
 
 type collectionResult struct {
@@ -61,6 +60,14 @@ func toCard(card scryfallCard) Card {
 			Full:    images.Large,
 		},
 	}
+}
+
+func toScryfallIdentifiers(ids []string) []scryfallIdentifier {
+	result := make([]scryfallIdentifier, len(ids))
+	for i, id := range ids {
+		result[i] = scryfallIdentifier{Id: id}
+	}
+	return result
 }
 
 func toCards(cards []scryfallCard) []Card {

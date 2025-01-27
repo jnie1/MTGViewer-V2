@@ -19,7 +19,8 @@ func fetchRandomCard(c *gin.Context) {
 }
 
 func fetchCollection(c *gin.Context) {
-	cards, err := cards.FetchCollection()
+	cardIds := c.QueryArray("cards")
+	cards, err := cards.FetchCollection(cardIds)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
