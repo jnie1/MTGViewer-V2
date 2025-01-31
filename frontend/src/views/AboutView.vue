@@ -6,9 +6,11 @@ const { data: card } = useFetch<ICard>('/cards/scryfall');
 </script>
 
 <template>
-  <div class="about">
-    <h1>This is an about page {{ card?.name }}</h1>
-  </div>
+  <main>
+    <div class="about">
+      <h1>This is an about page {{ card?.name }}</h1>
+    </div>
+  </main>
 </template>
 
 <style>

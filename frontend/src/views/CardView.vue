@@ -2,7 +2,6 @@
 import CardImage from '@/cards/CardImage.vue';
 import type { ICard } from '@/cards/types';
 import useFetch from '@/fetch/useFetch';
-
 const capitalize = (str: string | null | undefined) => {
   if (!str) return '';
   return str[0].toUpperCase() + str.slice(1);

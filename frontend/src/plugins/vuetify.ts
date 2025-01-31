@@ -14,6 +14,11 @@ const customTheme: ThemeDefinition = {
     'primary-variant': '#fdc200',
     secondary: '#7aa5f7',
     'secondary-variant': '#02446e',
+    forest: '#c4d3ca',
+    island: '#b3ceea',
+    plains: '#f8e7b9',
+    mountain: '#eb9f82',
+    swamp: '#a69f9d',
   },
 };
 
