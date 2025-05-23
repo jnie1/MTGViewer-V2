@@ -1,5 +1,5 @@
 <template>
-  <v-virtual-scroll :height="500" :items="contents">
+  <v-virtual-scroll :height="500" :items="listOfLogs">
     <template v-slot:default="{ item }">
       <tr>
         <td class="item">{{ item }}</td>
@@ -10,8 +10,17 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import useFetch from '@/fetch/useFetch';
+import type { ITransaction } from '@/components/types';
 
-const contents = ref(Array(10).fill('cell'));
+interface ITransactionProps {
+  transaction?: ITransaction;
+}
+
+//assuming i get the right transaction
+const transaction = defineProps<ITransactionProps>();
+const listOfLogs = useFetch<ITransaction>("/cards/transactions");
+
 </script>
 
 <style lang="css" scoped>
