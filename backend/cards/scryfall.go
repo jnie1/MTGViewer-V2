@@ -55,6 +55,45 @@ func FetchRandomCard() (Card, error) {
 	return toCard(result), nil
 }
 
+func FetchCard(scryfallId uuid.UUID) (Card, error) {
+	randomUrl, err := url.JoinPath(scryfallUrl, fmt.Sprintf("/cards/%s", scryfallId))
+	if err != nil {
+		return Card{}, err
+	}
+
+	req, err := http.NewRequest("GET", randomUrl, nil)
+	if err != nil {
+		return Card{}, err
+	}
+
+	req.Header.Set("User-Agent", "mtg-viewer-v2")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return Card{}, err
+	}
+
+	defer resp.Body.Close()
+
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.Contains(contentType, "application/json") {
+		return Card{}, fmt.Errorf("unexpected response content %s", contentType)
+	}
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return Card{}, err
+	}
+
+	var result scryfallCard
+	if err := json.Unmarshal(content, &result); err != nil {
+		return Card{}, err
+	}
+
+	return toCard(result), nil
+}
+
 func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
 	batchSizeLimit := 75
 
