@@ -36,7 +36,7 @@ type scryfallCard struct {
 }
 
 type scryfallIdentifier struct {
-	Id string `json:"id"`
+	Id uuid.UUID `json:"id"`
 }
 
 type collectionQuery struct {
@@ -69,7 +69,7 @@ func toCard(card scryfallCard) Card {
 	}
 }
 
-func toScryfallIdentifiers(ids []string) []scryfallIdentifier {
+func toScryfallIdentifiers(ids uuid.UUIDs) []scryfallIdentifier {
 	result := make([]scryfallIdentifier, len(ids))
 	for i, id := range ids {
 		result[i] = scryfallIdentifier{id}
