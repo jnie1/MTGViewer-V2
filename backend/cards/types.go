@@ -1,5 +1,7 @@
 package cards
 
+import "github.com/google/uuid"
+
 type CardImageUrls struct {
 	Preview string `json:"preview,omitempty"`
 	Normal  string `json:"normal,omitempty"`
@@ -23,7 +25,7 @@ type scryfallImages struct {
 }
 
 type scryfallCard struct {
-	ScryfallId string         `json:"id"`
+	ScryfallId uuid.UUID      `json:"id"`
 	ManaCost   string         `json:"mana_cost,omitempty"`
 	Name       string         `json:"name"`
 	Power      string         `json:"power,omitempty"`
