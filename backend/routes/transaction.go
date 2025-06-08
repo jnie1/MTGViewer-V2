@@ -17,3 +17,8 @@ func fetchTransactionLogs(c *gin.Context) {
 
 	c.JSON(http.StatusOK, listOfLogs)
 }
+
+func fetchLogsRoutes(router *gin.Engine) {
+	group := router.Group("/transactions")
+	group.GET("/logs", fetchTransactionLogs)
+}
