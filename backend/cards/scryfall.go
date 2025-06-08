@@ -72,7 +72,7 @@ func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
 	var cards [][]Card
 	var errs []error
 
-	for i := 0; i < workerCount; i++ {
+	for range workerCount {
 		result := <-results
 		if result.Error != nil {
 			errs = append(errs, result.Error)
