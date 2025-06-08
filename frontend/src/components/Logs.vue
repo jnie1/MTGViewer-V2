@@ -1,15 +1,18 @@
 <template>
-  <v-virtual-scroll :height="500" :items="listOfLogs">
-    <template v-slot:default="{ item }">
-      <tr>
-        <td class="item">{{ item.scryfall_id }}</td>
-        <td class="item">{{ item.time }}</td>
-        <td class="item">{{ item.quantity }}</td>
-        <td class="item">{{ item.from_container }}</td>
-        <td class="item">{{ item.to_container }}</td>
-      </tr>
-    </template>
-  </v-virtual-scroll>
+  <tr v-if="listOfLogs?.length > 0">
+    <v-virtual-scroll :height="500" :items="listOfLogs">
+      <template v-slot:default="{ item }">
+        <tr>
+          <td class="item">{{ item.scryfall_id }}</td>
+          <td class="item">{{ item.time }}</td>
+          <td class="item">{{ item.quantity }}</td>
+          <td class="item">{{ item.from_container }}</td>
+          <td class="item">{{ item.to_container }}</td>
+        </tr>
+      </template>
+    </v-virtual-scroll>
+  </tr>
+  <p v-else>No Transactions here</p>
 </template>
 
 <script setup lang="ts">
@@ -23,7 +26,7 @@ interface ITransactionProps {
 
 //assuming i get the right transaction
 const transaction = defineProps<ITransactionProps>();
-const {data:listOfLogs, error} = useFetch<ITransaction[]>("/transactions/logs");
+const { data: listOfLogs, error } = useFetch<ITransaction[]>("/transactions/logs");
 
 </script>
 
