@@ -6,5 +6,5 @@ type TransactionLogs struct {
 	FromContainer int `json:"fromContainer"`
 	ToContainer   int `json:"toContainer"`
 	ScryfallId    int `json:"scryfallId"`
-	Quantity       int `json:"quantity"`
+	Quantity      int `json:"quantity"`
 }
