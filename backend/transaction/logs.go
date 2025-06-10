@@ -9,7 +9,13 @@ func FetchLogs() ([]TransactionLogs, error) {
 
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT *
+		SELECT 
+			transaction.transaction_id
+			transaction.group_id       
+			transaction.from_container 
+			transaction.to_container   
+			transaction.scryfall_id    
+			transaction.quantity 	
 		FROM transaction
 	`)
 
@@ -22,7 +28,14 @@ func FetchLogs() ([]TransactionLogs, error) {
 	for row.Next() {
 		logs := TransactionLogs{}
 
-		if err = row.Scan(&logs.Transaction_id); err != nil {
+		if err = row.Scan(
+			&logs.TransactionId, 
+			&logs.GroupId,
+			&logs.FromContainer,
+			&logs.ToContainer,
+			&logs.ScryfallId,
+			&logs.Quantity 
+			); err != nil {
 			return nil, err
 		}
 
