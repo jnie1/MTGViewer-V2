@@ -1,9 +1,9 @@
 export interface ITransaction {
-  transaction_id?: number;
-  group_id?: number;
-  from_container?: number;
-  to_container?: number;
-  scryfall_id?: number;
+  transactionId?: number;
+  groupId?: number;
+  fromContainer?: number;
+  toContainer?: number;
+  scryfallId?: number;
   quantity?: number;
   time?: string;
 }
