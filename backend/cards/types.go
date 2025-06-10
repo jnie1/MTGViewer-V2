@@ -1,5 +1,7 @@
 package cards
 
+import "github.com/google/uuid"
+
 type CardImageUrls struct {
 	Preview string `json:"preview,omitempty"`
 	Normal  string `json:"normal,omitempty"`
@@ -23,7 +25,7 @@ type scryfallImages struct {
 }
 
 type scryfallCard struct {
-	ScryfallId string         `json:"id"`
+	ScryfallId uuid.UUID      `json:"id"`
 	ManaCost   string         `json:"mana_cost,omitempty"`
 	Name       string         `json:"name"`
 	Power      string         `json:"power,omitempty"`
@@ -34,7 +36,7 @@ type scryfallCard struct {
 }
 
 type scryfallIdentifier struct {
-	Id string `json:"id"`
+	Id uuid.UUID `json:"id"`
 }
 
 type collectionQuery struct {
@@ -67,7 +69,7 @@ func toCard(card scryfallCard) Card {
 	}
 }
 
-func toScryfallIdentifiers(ids []string) []scryfallIdentifier {
+func toScryfallIdentifiers(ids uuid.UUIDs) []scryfallIdentifier {
 	result := make([]scryfallIdentifier, len(ids))
 	for i, id := range ids {
 		result[i] = scryfallIdentifier{id}
