@@ -26,8 +26,7 @@ interface ITransactionProps {
 
 //assuming i get the right transaction
 const transaction = defineProps<ITransactionProps>();
-const { data: listOfLogs, error } = useFetch<ITransaction[]>("/transactions/logs");
-
+const { data: listOfLogs, error } = useFetch<ITransaction[]>('/transactions/logs');
 </script>
 
 <style lang="css" scoped>
