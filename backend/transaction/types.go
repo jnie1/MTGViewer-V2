@@ -1,10 +1,10 @@
 package transactions
 
 type TransactionLogs struct {
-	TransactionId int `json:"transaction_id"`
-	GroupId       int `json:"group_id"`
-	FromContainer int `json:"from_container"`
-	ToContainer   int `json:"to_container"`
-	ScryfallId    int `json:"scryfall_id"`
+	TransactionId int `json:"transactionId"`
+	GroupId       int `json:"groupId"`
+	FromContainer int `json:"fromContainer"`
+	ToContainer   int `json:"toContainer"`
+	ScryfallId    int `json:"scryfallId"`
 	Quantity       int `json:"quantity"`
 }
