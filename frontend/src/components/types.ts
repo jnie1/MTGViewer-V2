@@ -5,5 +5,5 @@ export interface ITransaction {
   to_container?: number;
   scryfall_id?: number;
   quantity?: number;
-  time?: Date;
+  time?: string;
 }
