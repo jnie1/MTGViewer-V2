@@ -29,13 +29,12 @@ func FetchLogs() ([]TransactionLogs, error) {
 		logs := TransactionLogs{}
 
 		if err = row.Scan(
-			&logs.TransactionId, 
+			&logs.TransactionId,
 			&logs.GroupId,
 			&logs.FromContainer,
 			&logs.ToContainer,
 			&logs.ScryfallId,
-			&logs.Quantity 
-			); err != nil {
+			&logs.Quantity); err != nil {
 			return nil, err
 		}
 
