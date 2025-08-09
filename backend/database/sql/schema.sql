@@ -2,7 +2,7 @@ CREATE TABLE containers (
 	container_id SERIAL PRIMARY KEY,
 	container_name VARCHAR(32) NOT NULL,
 	capacity INT NOT NULL,
-	deletion_mark BOOLEAN NOT NULL
+	deletion_mark BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE card_deposits (
