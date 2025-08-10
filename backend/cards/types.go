@@ -9,13 +9,14 @@ type CardImageUrls struct {
 }
 
 type Card struct {
-	Name      string        `json:"name"`
-	ManaCost  string        `json:"manaCost,omitempty"`
-	Type      string        `json:"type"`
-	Rarity    string        `json:"rarity"`
-	Power     string        `json:"power,omitempty"`
-	Toughness string        `json:"toughness,omitempty"`
-	Images    CardImageUrls `json:"imageUrls"`
+	ScryfallId uuid.UUID     `json:"scryfallId"`
+	Name       string        `json:"name"`
+	ManaCost   string        `json:"manaCost,omitempty"`
+	Type       string        `json:"type"`
+	Rarity     string        `json:"rarity"`
+	Power      string        `json:"power,omitempty"`
+	Toughness  string        `json:"toughness,omitempty"`
+	Images     CardImageUrls `json:"imageUrls"`
 }
 
 type scryfallImages struct {
@@ -55,6 +56,7 @@ type collectionBatchResult struct {
 func toCard(card scryfallCard) Card {
 	images := card.Images
 	return Card{
+		card.ScryfallId,
 		card.Name,
 		card.ManaCost,
 		card.Type,
