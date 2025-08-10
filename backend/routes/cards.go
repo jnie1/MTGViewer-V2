@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
+	"github.com/jnie1/MTGViewer-V2/containers"
 )
 
 func fetchRandomCard(c *gin.Context) {
@@ -24,7 +25,7 @@ func fetchCard(c *gin.Context) {
 	scryfallId, err := uuid.Parse(cardId)
 
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -60,9 +61,42 @@ func fetchCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, cards)
 }
 
+func importCards(c *gin.Context) {
+	file, err := c.FormFile("file")
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	deposits, err := containers.ParseCardDeposits(file)
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	allocations, err := containers.GetAllocations()
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	changes, err := containers.GetContainerChanges(deposits, allocations)
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
 func AddCardRoutes(router *gin.Engine) {
 	group := router.Group("/cards")
 	group.GET("/scryfall", fetchRandomCard)
 	group.GET("/:card", fetchCard)
 	group.GET("/collection", fetchCollection)
+	group.POST("/import", importCards)
 }
