@@ -8,7 +8,7 @@ func GetContainer(containerId int) (Container, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
-		SELECT container, capacity
+		SELECT container, capacity, deletion_mark
 		FROM container
 		WHERE container_id = $1;`, containerId)
 
@@ -46,12 +46,12 @@ func GetDeposits(containerId int) ([]CardDeposit, error) {
 	return deposits, nil
 }
 
-func AddContainer(cont Container) error {
+func AddContainer(container Container) error {
 	db := database.Instance()
 
 	_, err := db.Exec(`
 		INSERT INTO container (container_name, capacity, deletion_mark) 
-		VALUES ($1, $2, FALSE)`, cont.Name, cont.Capacity)
+		VALUES ($1, $2, FALSE)`, container.Name, container.Capacity)
 
 	return err
 }
@@ -61,7 +61,7 @@ func UpdateContainer(containerId int, container Container) error {
 
 	_, err := db.Exec(`
 		UPDATE container
-		SET container_name = $2, capacity = $3, mark_for_deletion = $4
+		SET container_name = $2, capacity = $3, deletion_mark = $4
 		WHERE container_id = $1;`, containerId, container.Name, container.Capacity, container.MarkForDeletion)
 
 	return err
