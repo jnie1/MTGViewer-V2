@@ -1,6 +1,9 @@
 package containers
 
 import (
+	"cmp"
+	"slices"
+
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
@@ -16,6 +19,10 @@ func GetCardAmounts(deposits []CardDeposit, cards []cards.Card) []CardAmount {
 		amount := amountMap[card.ScryfallId]
 		amounts = append(amounts, CardAmount{card, amount})
 	}
+
+	slices.SortFunc(amounts, func(a, b CardAmount) int {
+		return cmp.Compare(a.Amount, b.Amount)
+	})
 
 	return amounts
 }
