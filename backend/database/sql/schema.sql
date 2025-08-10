@@ -7,7 +7,7 @@ CREATE TABLE containers (
 
 CREATE TABLE card_deposits (
 	card_deposit_id SERIAL PRIMARY KEY,
-	scryfall_id UUID UNIQUE NOT NULL,
+	scryfall_id UUID NOT NULL,
 	amount INT NOT NULL,
 	container_id INT NOT NULL,
 	FOREIGN KEY (container_id) REFERENCES containers(container_id)
