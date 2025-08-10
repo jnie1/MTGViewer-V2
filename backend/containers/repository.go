@@ -103,34 +103,26 @@ func UpdateDeposits(changes []ContainerChanges) error {
 	db := database.Instance()
 
 	valueStatements := []string{}
-	actualArgs := []any{}
-	argsCount := 1
 
 	for _, change := range changes {
 		for _, request := range change.Requests {
-			valueStatements = append(valueStatements, fmt.Sprintf("($%d, $%d, $%d)", argsCount, argsCount+1, argsCount+2))
-			actualArgs = append(actualArgs, change.ContainerId, request.ScryfallId, request.Delta)
-			argsCount += 3
+			valueRow := fmt.Sprintf("(%d, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.Delta)
+			valueStatements = append(valueStatements, valueRow)
 		}
 	}
 
-	allValues := strings.Join(valueStatements, ",\n\t")
+	allValues := strings.Join(valueStatements, ", ")
 
-	statement := `
+	_, err := db.Exec(`
 		MERGE INTO card_deposits AS cd
-		USING VALUES
-		` + allValues + ` AS ds
-		ON cd.container_id = ds.column1 AND cd.scryfall_id = ds.column2
+		USING (VALUES ` + allValues + `) AS ds (container_id, scryfall_id, delta)
+		ON cd.container_id = ds.container_id AND cd.scryfall_id = ds.scryfall_id
 		WHEN NOT MATCHED THEN
-			INSERT (container_id, scryfall_id, amount) VALUES (ds.column1, ds.column2, ds.column3)
-		WHEN MATCHED AND cd.amount + ds.column3 > 0 THEN
-			UPDATE SET amount = cd.amount + ds.column3
+			INSERT (container_id, scryfall_id, amount) VALUES (ds.container_id, ds.scryfall_id, ds.delta)
+		WHEN MATCHED AND cd.amount + ds.delta > 0 THEN
+			UPDATE SET amount = cd.amount + ds.delta
 		WHEN MATCHED THEN
-			DELETE`
-
-	fmt.Printf("got command: %s\n", statement)
-
-	_, err := db.Exec(statement, actualArgs...)
+			DELETE`)
 
 	return err
 }
