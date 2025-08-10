@@ -4,6 +4,35 @@ import (
 	"github.com/jnie1/MTGViewer-V2/database"
 )
 
+func GetAllocations() ([]ContainerAllocation, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT c.container_id, SUM(cd.amount), c.capacity
+		FROM containers c
+		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
+		GROUP BY c.container_id`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+
+	allocations := []ContainerAllocation{}
+
+	for row.Next() {
+		allocation := ContainerAllocation{}
+		if err := row.Scan(&allocation.ContainerId, &allocation.Used, &allocation.MaxCapcity); err != nil {
+			return nil, err
+		}
+
+		allocations = append(allocations, allocation)
+	}
+
+	return allocations, nil
+}
+
 func GetContainer(containerId int) (Container, error) {
 	db := database.Instance()
 

@@ -16,6 +16,17 @@ type CardDeposit struct {
 	Amount     int
 }
 
+type ContainerAllocation struct {
+	ContainerId int
+	Used        int
+	MaxCapcity  int
+}
+
+type ContainerChanges struct {
+	ContainerId int
+	Deposits    []CardDeposit
+}
+
 type CardAmount struct {
 	cards.Card
 	Amount int `json:"amount"`
