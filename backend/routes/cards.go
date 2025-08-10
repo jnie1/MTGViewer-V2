@@ -21,7 +21,7 @@ func fetchRandomCard(c *gin.Context) {
 
 func fetchCard(c *gin.Context) {
 	cardId := c.Param("card")
-	scryfallId, err := uuid.Parse((cardId))
+	scryfallId, err := uuid.Parse(cardId)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)

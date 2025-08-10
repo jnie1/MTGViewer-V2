@@ -39,6 +39,7 @@ func main() {
 	routes.AddUserRoutes(r)
 	routes.AddBookRoutes(r)
 	routes.AddCardRoutes(r)
+	routes.AddContainerRoutes(r)
 	routes.AddTransactionRoutes(r)
 
 	authorized := r.Group("", auth.IsAuthorized)
