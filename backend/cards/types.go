@@ -19,6 +19,11 @@ type Card struct {
 	Images     CardImageUrls `json:"imageUrls"`
 }
 
+type CardAmount struct {
+	Card
+	Amount int `json:"amount"`
+}
+
 type scryfallImages struct {
 	Small  string `json:"small,omitempty"`
 	Normal string `json:"normal,omitempty"`

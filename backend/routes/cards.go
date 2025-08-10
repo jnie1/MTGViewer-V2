@@ -69,7 +69,7 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	deposits, err := containers.ParseCardDeposits(file)
+	requests, err := containers.ParseCardRequests(file)
 
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
@@ -83,10 +83,17 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	changes, err := containers.GetContainerChanges(deposits, allocations)
+	changes, err := containers.GetContainerChanges(requests, allocations)
 
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	err = containers.UpdateDeposits(changes)
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 

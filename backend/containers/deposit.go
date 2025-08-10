@@ -8,19 +8,19 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func GetCardAmounts(deposits []CardDeposit, cards []cards.Card) []CardAmount {
+func GetCardAmounts(deposits []CardDeposit, fullCards []cards.Card) []cards.CardAmount {
 	amountMap := map[uuid.UUID]int{}
 	for _, deposit := range deposits {
 		amountMap[deposit.ScryfallId] = deposit.Amount
 	}
 
-	amounts := []CardAmount{}
-	for _, card := range cards {
+	amounts := []cards.CardAmount{}
+	for _, card := range fullCards {
 		amount := amountMap[card.ScryfallId]
-		amounts = append(amounts, CardAmount{card, amount})
+		amounts = append(amounts, cards.CardAmount{Card: card, Amount: amount})
 	}
 
-	slices.SortFunc(amounts, func(a, b CardAmount) int {
+	slices.SortFunc(amounts, func(a, b cards.CardAmount) int {
 		return cmp.Compare(a.Amount, b.Amount)
 	})
 

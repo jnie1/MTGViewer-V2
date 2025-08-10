@@ -1,6 +1,9 @@
 package containers
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/jnie1/MTGViewer-V2/database"
 )
 
@@ -51,7 +54,7 @@ func GetDeposits(containerId int) ([]CardDeposit, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT scryfall_id, amount
+		SELECT container_id, scryfall_id, amount
 		FROM card_deposits
 		WHERE container_id = $1`, containerId)
 
@@ -65,7 +68,7 @@ func GetDeposits(containerId int) ([]CardDeposit, error) {
 
 	for row.Next() {
 		deposit := CardDeposit{}
-		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
+		if err := row.Scan(&deposit.ContainerId, &deposit.ScryfallId, &deposit.Amount); err != nil {
 			return nil, err
 		}
 
@@ -92,6 +95,42 @@ func UpdateContainer(containerId int, container Container) error {
 		UPDATE container
 		SET container_name = $2, capacity = $3, deletion_mark = $4
 		WHERE container_id = $1;`, containerId, container.Name, container.Capacity, container.MarkForDeletion)
+
+	return err
+}
+
+func UpdateDeposits(changes []ContainerChanges) error {
+	db := database.Instance()
+
+	valueStatements := []string{}
+	actualArgs := []any{}
+	argsCount := 1
+
+	for _, change := range changes {
+		for _, request := range change.Requests {
+			valueStatements = append(valueStatements, fmt.Sprintf("($%d, $%d, $%d)", argsCount, argsCount+1, argsCount+2))
+			actualArgs = append(actualArgs, change.ContainerId, request.ScryfallId, request.Delta)
+			argsCount += 3
+		}
+	}
+
+	allValues := strings.Join(valueStatements, ",\n\t")
+
+	statement := `
+		MERGE INTO card_deposits AS cd
+		USING VALUES
+		` + allValues + ` AS ds
+		ON cd.container_id = ds.column1 AND cd.scryfall_id = ds.column2
+		WHEN NOT MATCHED THEN
+			INSERT (container_id, scryfall_id, amount) VALUES (ds.column1, ds.column2, ds.column3)
+		WHEN MATCHED AND cd.amount + ds.column3 > 0 THEN
+			UPDATE SET amount = cd.amount + ds.column3
+		WHEN MATCHED THEN
+			DELETE`
+
+	fmt.Printf("got command: %s\n", statement)
+
+	_, err := db.Exec(statement, actualArgs...)
 
 	return err
 }

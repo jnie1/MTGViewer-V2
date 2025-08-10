@@ -2,7 +2,6 @@ package containers
 
 import (
 	"github.com/google/uuid"
-	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
 type Container struct {
@@ -12,8 +11,14 @@ type Container struct {
 }
 
 type CardDeposit struct {
+	ContainerId int
+	ScryfallId  uuid.UUID
+	Amount      int
+}
+
+type CardRequest struct {
 	ScryfallId uuid.UUID
-	Amount     int
+	Delta      int
 }
 
 type ContainerAllocation struct {
@@ -24,10 +29,5 @@ type ContainerAllocation struct {
 
 type ContainerChanges struct {
 	ContainerId int
-	Deposits    []CardDeposit
-}
-
-type CardAmount struct {
-	cards.Card
-	Amount int `json:"amount"`
+	Requests    []CardRequest
 }

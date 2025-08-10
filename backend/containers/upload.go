@@ -4,7 +4,7 @@ import (
 	"mime/multipart"
 )
 
-func ParseCardDeposits(formFile *multipart.FileHeader) ([]CardDeposit, error) {
+func ParseCardRequests(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	file, err := formFile.Open()
 
 	if err != nil {
