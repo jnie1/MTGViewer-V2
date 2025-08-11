@@ -29,18 +29,18 @@ func GetCardAmounts(deposits []CardDeposit, fullCards []cards.Card) []cards.Card
 	return amounts
 }
 
-func GetScryfallIds(deposits []CardDeposit) uuid.UUIDs {
+func GetScryfallIds(deposits []CardDeposit) []cards.ScryfallIdentifier {
 	uniqIds := map[uuid.UUID]any{}
 
 	for _, deposit := range deposits {
 		uniqIds[deposit.ScryfallId] = nil
 	}
 
-	allIds := make(uuid.UUIDs, len(uniqIds))
+	allIds := make([]cards.ScryfallIdentifier, len(uniqIds))
 	i := 0
 
 	for id := range uniqIds {
-		allIds[i] = id
+		allIds[i] = cards.ScryfallIdentifier{Id: id}
 		i += 1
 	}
 

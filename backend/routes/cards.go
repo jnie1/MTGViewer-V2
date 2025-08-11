@@ -29,7 +29,7 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	card, err := cards.FetchCard(scryfallId)
+	card, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -40,7 +40,7 @@ func fetchCard(c *gin.Context) {
 
 func fetchCollection(c *gin.Context) {
 	cardIds := c.QueryArray("cards")
-	scryfallIds := make([]uuid.UUID, len(cardIds))
+	scryfallIds := make([]cards.ScryfallIdentifier, len(cardIds))
 
 	for i, cardId := range cardIds {
 		id, err := uuid.Parse(cardId)
@@ -49,7 +49,7 @@ func fetchCollection(c *gin.Context) {
 			return
 		}
 
-		scryfallIds[i] = id
+		scryfallIds[i] = cards.ScryfallIdentifier{Id: id}
 	}
 
 	cards, err := cards.FetchCollection(scryfallIds)
@@ -100,10 +100,38 @@ func importCards(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+func testDepositUpdate(c *gin.Context) {
+	changes := []containers.ContainerChanges{
+		{
+			ContainerId: 25,
+			Requests: []containers.CardRequest{
+				{
+					ScryfallId: uuid.MustParse("a84666a8-4ce5-46e7-9a39-f64a392515e7"),
+					Delta:      3,
+				},
+				{
+					ScryfallId: uuid.MustParse("f30590d7-59c7-4a1a-a8e5-3cc13f69bd41"),
+					Delta:      2,
+				},
+			},
+		},
+	}
+
+	err := containers.UpdateDeposits(changes)
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
 func AddCardRoutes(router *gin.Engine) {
 	group := router.Group("/cards")
 	group.GET("/scryfall", fetchRandomCard)
 	group.GET("/:card", fetchCard)
 	group.GET("/collection", fetchCollection)
 	group.POST("/import", importCards)
+	group.POST("/test", testDepositUpdate)
 }
