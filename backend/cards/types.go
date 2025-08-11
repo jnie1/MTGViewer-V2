@@ -9,14 +9,17 @@ type CardImageUrls struct {
 }
 
 type Card struct {
-	ScryfallId uuid.UUID     `json:"scryfallId"`
-	Name       string        `json:"name"`
-	ManaCost   string        `json:"manaCost,omitempty"`
-	Type       string        `json:"type"`
-	Rarity     string        `json:"rarity"`
-	Power      string        `json:"power,omitempty"`
-	Toughness  string        `json:"toughness,omitempty"`
-	Images     CardImageUrls `json:"imageUrls"`
+	ScryfallId      uuid.UUID     `json:"scryfallId"`
+	Name            string        `json:"name"`
+	ManaCost        string        `json:"manaCost,omitempty"`
+	Set             string        `json:"set"`
+	SetCode         string        `json:"set_code"`
+	CollectorNumber string        `json:"collector_number"`
+	Type            string        `json:"type"`
+	Rarity          string        `json:"rarity"`
+	Power           string        `json:"power,omitempty"`
+	Toughness       string        `json:"toughness,omitempty"`
+	Images          CardImageUrls `json:"imageUrls"`
 }
 
 type CardAmount struct {
@@ -31,14 +34,17 @@ type scryfallImages struct {
 }
 
 type scryfallCard struct {
-	ScryfallId uuid.UUID      `json:"id"`
-	ManaCost   string         `json:"mana_cost,omitempty"`
-	Name       string         `json:"name"`
-	Power      string         `json:"power,omitempty"`
-	Toughness  string         `json:"toughness,omitempty"`
-	Images     scryfallImages `json:"image_uris"`
-	Type       string         `json:"type_line"`
-	Rarity     string         `json:"rarity"`
+	ScryfallId      uuid.UUID      `json:"id"`
+	ManaCost        string         `json:"mana_cost,omitempty"`
+	Name            string         `json:"name"`
+	SetName         string         `json:"set_name"`
+	Set             string         `json:"set"`
+	CollectorNumber string         `json:"collector_number"`
+	Power           string         `json:"power,omitempty"`
+	Toughness       string         `json:"toughness,omitempty"`
+	Images          scryfallImages `json:"image_uris"`
+	Type            string         `json:"type_line"`
+	Rarity          string         `json:"rarity"`
 }
 
 type collectionResult struct {
@@ -56,6 +62,9 @@ func toCard(card scryfallCard) Card {
 		card.ScryfallId,
 		card.Name,
 		card.ManaCost,
+		card.SetName,
+		card.Set,
+		card.CollectorNumber,
 		card.Type,
 		card.Rarity,
 		card.Power,

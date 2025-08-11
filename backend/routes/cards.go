@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"mime/multipart"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -66,6 +67,11 @@ func importCards(c *gin.Context) {
 
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if file.Size >= 5_000_000 {
+		c.AbortWithError(http.StatusBadRequest, multipart.ErrMessageTooLarge)
 		return
 	}
 
