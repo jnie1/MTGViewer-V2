@@ -52,9 +52,9 @@ func ParseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 
 		segments := cardEntryPattern.SubexpNames()
 
-		name := segments[cardEntryPattern.SubexpIndex(("name"))]
-		setCode := segments[cardEntryPattern.SubexpIndex(("set"))]
-		collectorNumber := segments[cardEntryPattern.SubexpIndex(("collector"))]
+		name := segments[cardEntryPattern.SubexpIndex("name")]
+		setCode := segments[cardEntryPattern.SubexpIndex("set")]
+		collectorNumber := segments[cardEntryPattern.SubexpIndex("collector")]
 
 		amount, err := strconv.Atoi(segments[cardEntryPattern.SubexpIndex("amount")])
 
