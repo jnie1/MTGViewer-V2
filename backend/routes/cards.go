@@ -23,8 +23,8 @@ func fetchRandomCard(c *gin.Context) {
 
 func fetchCard(c *gin.Context) {
 	cardId := c.Param("card")
-	scryfallId, err := uuid.Parse(cardId)
 
+	scryfallId, err := uuid.Parse(cardId)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -40,17 +40,12 @@ func fetchCard(c *gin.Context) {
 }
 
 func fetchCollection(c *gin.Context) {
-	cardIds := c.QueryArray("cards")
-	scryfallIds := make([]cards.ScryfallIdentifier, len(cardIds))
+	ids := c.QueryArray("cards")
 
-	for i, cardId := range cardIds {
-		id, err := uuid.Parse(cardId)
-		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-
-		scryfallIds[i] = cards.ScryfallIdentifier{Id: id}
+	scryfallIds, err := cards.ParseScryfallIds(ids)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	cards, err := cards.FetchCollection(scryfallIds)
@@ -64,7 +59,6 @@ func fetchCollection(c *gin.Context) {
 
 func importCards(c *gin.Context) {
 	file, err := c.FormFile("file")
-
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -76,28 +70,24 @@ func importCards(c *gin.Context) {
 	}
 
 	requests, err := containers.ParseCardRequests(file)
-
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	allocations, err := containers.GetAllocations()
-
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	changes, err := containers.GetContainerChanges(requests, allocations)
-
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	err = containers.UpdateDeposits(changes)
-
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
