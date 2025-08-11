@@ -101,7 +101,6 @@ func UpdateContainer(containerId int, container Container) error {
 
 func UpdateDeposits(changes []ContainerChanges) error {
 	db := database.Instance()
-
 	valueStatements := []string{}
 
 	for _, change := range changes {
@@ -128,7 +127,6 @@ func UpdateDeposits(changes []ContainerChanges) error {
 }
 
 func DeleteContainer(containerId int) error {
-
 	db := database.Instance()
 
 	_, err := db.Exec(`
