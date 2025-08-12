@@ -60,11 +60,9 @@ func ParseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 		collectorNumber := segments[cardEntryPattern.SubexpIndex("collector")]
 
 		amount, err := strconv.Atoi(segments[cardEntryPattern.SubexpIndex("amount")])
-
 		if err != nil {
 			return nil, err
 		}
-
 		if amount <= 0 {
 			return nil, fmt.Errorf("invalid amount for %s: %d", name, amount)
 		}
@@ -86,10 +84,9 @@ func ParseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	requests := make([]CardRequest, len(fetchedCards))
 
 	for i, card := range fetchedCards {
-		sourceSetCollector := cards.SetCollectorNumber{Set: card.SetCode, CollectorNumber: card.CollectorNumber}
-		delta := amountMap[sourceSetCollector]
-
-		requests[i] = CardRequest{ScryfallId: card.ScryfallId, Delta: delta}
+		source := cards.SetCollectorNumber{Set: card.SetCode, CollectorNumber: card.CollectorNumber}
+		newRequest := CardRequest{ScryfallId: card.ScryfallId, Delta: amountMap[source]}
+		requests[i] = newRequest
 	}
 
 	return requests, nil
@@ -102,32 +99,38 @@ func ParseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	}
 
 	defer file.Close()
-
 	csvReader := csv.NewReader(file)
-	header, err := csvReader.Read()
 
+	header, err := csvReader.Read()
 	if err == io.EOF {
 		return nil, errors.New("empty csv file received")
 	}
-
 	if err != nil {
 		return nil, err
 	}
 
 	headerPositions := getHeaderPositions(header)
-
 	if !headerPositions.hasValidPosition() {
 		return nil, errors.New("invalid csv header, expected: scryfall id, multiverse id, or set code/collector number")
 	}
 
 	requests := []CardRequest{}
-	quantityMap := map[any]int{}
 
 	multiverseIds := []cards.MultiverseIdentifier{}
 	setCollectors := []cards.SetCollectorNumber{}
 	nameSets := []cards.NameSet{}
 
-	for row, err := csvReader.Read(); err != nil; row, err = csvReader.Read() {
+	quantityMap := map[any]int{}
+
+	for {
+		row, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
 		quantity, err := strconv.Atoi(row[headerPositions.Quantity])
 		if err != nil {
 			return nil, err
@@ -154,18 +157,12 @@ func ParseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 			quantityMap[newId] = quantity
 
 		case headerPositions.SetCode > -1 && headerPositions.CollectorNumber > -1:
-			setCode := row[headerPositions.SetCode]
-			collectorNumber := row[headerPositions.CollectorNumber]
-
-			newId := cards.SetCollectorNumber{Set: setCode, CollectorNumber: collectorNumber}
+			newId := cards.SetCollectorNumber{Set: row[headerPositions.SetCode], CollectorNumber: row[headerPositions.CollectorNumber]}
 			setCollectors = append(setCollectors, newId)
 			quantityMap[newId] = quantity
 
 		case headerPositions.Name > -1 && headerPositions.SetCode > -1:
-			name := row[headerPositions.Name]
-			setCode := row[headerPositions.SetCode]
-
-			newId := cards.NameSet{Name: name, Set: setCode}
+			newId := cards.NameSet{Name: row[headerPositions.Name], Set: row[headerPositions.SetCode]}
 			nameSets = append(nameSets, newId)
 			quantityMap[newId] = quantity
 		}
@@ -208,10 +205,6 @@ func ParseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 			source := cards.NameSet{Name: card.Name, Set: card.SetCode}
 			requests = append(requests, CardRequest{ScryfallId: card.ScryfallId, Delta: quantityMap[source]})
 		}
-	}
-
-	if err != io.EOF {
-		return nil, err
 	}
 
 	return requests, nil
