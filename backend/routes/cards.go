@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
+	transactions "github.com/jnie1/MTGViewer-V2/transaction"
 )
 
 func fetchRandomCard(c *gin.Context) {
@@ -63,7 +64,6 @@ func importCards(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
 	if file.Size >= 5_000_000 {
 		c.AbortWithError(http.StatusBadRequest, multipart.ErrMessageTooLarge)
 		return
@@ -87,8 +87,12 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	err = containers.UpdateDeposits(changes)
-	if err != nil {
+	if err := containers.UpdateDeposits(changes); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := transactions.LogCollectionChanges(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -113,9 +117,12 @@ func testDepositUpdate(c *gin.Context) {
 		},
 	}
 
-	err := containers.UpdateDeposits(changes)
+	if err := containers.UpdateDeposits(changes); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
-	if err != nil {
+	if err := transactions.LogCollectionChanges(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
