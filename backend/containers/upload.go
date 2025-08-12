@@ -2,13 +2,16 @@ package containers
 
 import (
 	"bufio"
+	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"regexp"
 	"slices"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
@@ -94,12 +97,122 @@ func ParseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 
 func ParseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	file, err := formFile.Open()
-
 	if err != nil {
 		return nil, err
 	}
 
 	defer file.Close()
 
-	return nil, nil
+	csvReader := csv.NewReader(file)
+	header, err := csvReader.Read()
+
+	if err == io.EOF {
+		return nil, errors.New("empty csv file received")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	headerPositions := getHeaderPositions(header)
+
+	if !headerPositions.hasValidPosition() {
+		return nil, errors.New("invalid csv header, expected: scryfall id, multiverse id, or set code/collector number")
+	}
+
+	requests := []CardRequest{}
+	quantityMap := map[any]int{}
+
+	multiverseIds := []cards.MultiverseIdentifier{}
+	setCollectors := []cards.SetCollectorNumber{}
+	nameSets := []cards.NameSet{}
+
+	for row, err := csvReader.Read(); err != nil; row, err = csvReader.Read() {
+		quantity, err := strconv.Atoi(row[headerPositions.Quantity])
+		if err != nil {
+			return nil, err
+		}
+
+		switch {
+		case headerPositions.ScryfallId > -1:
+			scryfallId, err := uuid.Parse(row[headerPositions.ScryfallId])
+			if err != nil {
+				return nil, err
+			}
+
+			newRequest := CardRequest{ScryfallId: scryfallId, Delta: quantity}
+			requests = append(requests, newRequest)
+
+		case headerPositions.MultiverseId > -1:
+			multiverseId, err := strconv.Atoi(row[headerPositions.MultiverseId])
+			if err != nil {
+				return nil, err
+			}
+
+			newId := cards.MultiverseIdentifier{MultiverseId: multiverseId}
+			multiverseIds = append(multiverseIds, newId)
+			quantityMap[newId] = quantity
+
+		case headerPositions.SetCode > -1 && headerPositions.CollectorNumber > -1:
+			setCode := row[headerPositions.SetCode]
+			collectorNumber := row[headerPositions.CollectorNumber]
+
+			newId := cards.SetCollectorNumber{Set: setCode, CollectorNumber: collectorNumber}
+			setCollectors = append(setCollectors, newId)
+			quantityMap[newId] = quantity
+
+		case headerPositions.Name > -1 && headerPositions.SetCode > -1:
+			name := row[headerPositions.Name]
+			setCode := row[headerPositions.SetCode]
+
+			newId := cards.NameSet{Name: name, Set: setCode}
+			nameSets = append(nameSets, newId)
+			quantityMap[newId] = quantity
+		}
+	}
+
+	if len(multiverseIds) > 0 {
+		extraCards, err := cards.FetchCollection(multiverseIds)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, card := range extraCards {
+			if len(card.MultiverseIds) == 0 {
+				return nil, fmt.Errorf("card resolved with no multiverse id: %s, (%s) %s", card.Name, card.SetCode, card.CollectorNumber)
+			}
+			source := cards.MultiverseIdentifier{MultiverseId: card.MultiverseIds[0]}
+			requests = append(requests, CardRequest{ScryfallId: card.ScryfallId, Delta: quantityMap[source]})
+		}
+	}
+
+	if len(setCollectors) > 0 {
+		extraCards, err := cards.FetchCollection(setCollectors)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, card := range extraCards {
+			source := cards.SetCollectorNumber{Set: card.SetCode, CollectorNumber: card.CollectorNumber}
+			requests = append(requests, CardRequest{ScryfallId: card.ScryfallId, Delta: quantityMap[source]})
+		}
+	}
+
+	if len(nameSets) > 0 {
+		extraCards, err := cards.FetchCollection(setCollectors)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, card := range extraCards {
+			source := cards.NameSet{Name: card.Name, Set: card.SetCode}
+			requests = append(requests, CardRequest{ScryfallId: card.ScryfallId, Delta: quantityMap[source]})
+		}
+	}
+
+	if err != io.EOF {
+		return nil, err
+	}
+
+	return requests, nil
 }
