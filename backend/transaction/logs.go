@@ -9,15 +9,8 @@ func FetchLogs() ([]TransactionLogs, error) {
 
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT 
-			transaction.transaction_id
-			transaction.group_id       
-			transaction.from_container 
-			transaction.to_container   
-			transaction.scryfall_id    
-			transaction.quantity 	
-		FROM transaction
-	`)
+		SELECT transaction_id, group_id, from_container, to_container, scryfall_id, amount 	
+		FROM transactions`)
 
 	if err != nil {
 		return nil, err
