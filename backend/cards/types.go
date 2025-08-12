@@ -15,6 +15,7 @@ type Card struct {
 	Set             string        `json:"set"`
 	SetCode         string        `json:"set_code"`
 	CollectorNumber string        `json:"collector_number"`
+	MultiverseIds   []int         `json:"multiverse_ids,omitempty"`
 	Type            string        `json:"type"`
 	Rarity          string        `json:"rarity"`
 	Power           string        `json:"power,omitempty"`
@@ -40,6 +41,7 @@ type scryfallCard struct {
 	SetName         string         `json:"set_name"`
 	Set             string         `json:"set"`
 	CollectorNumber string         `json:"collector_number"`
+	MultiverseIds   []int          `json:"multiverse_ids,omitempty"`
 	Power           string         `json:"power,omitempty"`
 	Toughness       string         `json:"toughness,omitempty"`
 	Images          scryfallImages `json:"image_uris"`
@@ -65,6 +67,7 @@ func toCard(card scryfallCard) Card {
 		card.SetName,
 		card.Set,
 		card.CollectorNumber,
+		card.MultiverseIds,
 		card.Type,
 		card.Rarity,
 		card.Power,
