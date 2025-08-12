@@ -19,17 +19,17 @@ func ParseCardRequests(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	contentType := formFile.Header.Values("content-type")
 
 	if slices.Contains(contentType, "text/plain") {
-		return ParseTextFile(formFile)
+		return parseTextFile(formFile)
 	}
 
 	if slices.Contains(contentType, "text/csv") {
-		return ParseCsvFile(formFile)
+		return parseCsvFile(formFile)
 	}
 
 	return nil, errors.New("invalid file format")
 }
 
-func ParseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
+func parseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	cardEntryPattern, err := regexp.Compile(`^(?P<amount>\d+) (?P<name>.+?) \((?P<set>.+?)\) (?P<collector>.+)$`)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func ParseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	return requests, nil
 }
 
-func ParseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
+func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	file, err := formFile.Open()
 	if err != nil {
 		return nil, err
