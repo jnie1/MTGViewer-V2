@@ -92,7 +92,7 @@ func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
 	return toCard(result), nil
 }
 
-func FetchCollection[Id ScryfallIdentifier | SetCollectorNumber](identifiers []Id) ([]Card, error) {
+func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	batchSizeLimit := 75
 
 	results := make(chan collectionBatchResult)
@@ -125,7 +125,7 @@ func FetchCollection[Id ScryfallIdentifier | SetCollectorNumber](identifiers []I
 	return slices.Concat(cards...), nil
 }
 
-func fetchCollectionBatch[Id ScryfallIdentifier | SetCollectorNumber](identifiers []Id) ([]Card, error) {
+func fetchCollectionBatch[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	collectionUrl, err := url.JoinPath(scryfallUrl, "/cards/collection")
 	if err != nil {
 		return nil, err

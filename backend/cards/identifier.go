@@ -6,12 +6,25 @@ type ScryfallIdentifier struct {
 	Id uuid.UUID `json:"id"`
 }
 
+type MultiverseIdentifier struct {
+	MultiverseId int `json:"multiverse_id"`
+}
+
 type SetCollectorNumber struct {
 	Set             string `json:"set"`
 	CollectorNumber string `json:"collector_number"`
 }
 
-type CollectionQuery[Id ScryfallIdentifier | SetCollectorNumber] struct {
+type NameSet struct {
+	Name string `json:"name"`
+	Set  string `json:"set"`
+}
+
+type CardIdentifier interface {
+	ScryfallIdentifier | MultiverseIdentifier | SetCollectorNumber | NameSet
+}
+
+type CollectionQuery[Id CardIdentifier] struct {
 	Identifiers []Id `json:"identifiers"`
 }
 
