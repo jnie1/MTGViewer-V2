@@ -26,7 +26,7 @@ func GetAllocations() ([]ContainerAllocation, error) {
 
 	for row.Next() {
 		allocation := ContainerAllocation{}
-		if err := row.Scan(&allocation.ContainerId, &allocation.Used, &allocation.MaxCapcity); err != nil {
+		if err := row.Scan(&allocation.ContainerId, &allocation.Used, &allocation.MaxCapacity); err != nil {
 			return nil, err
 		}
 

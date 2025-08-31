@@ -34,7 +34,7 @@ type ContainerChanges struct {
 type ContainerAllocation struct {
 	ContainerId int
 	Used        int
-	MaxCapcity  int
+	MaxCapacity int
 }
 
 func GetCardAmounts(deposits []CardDeposit, fullCards []cards.Card) []cards.CardAmount {
