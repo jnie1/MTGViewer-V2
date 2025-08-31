@@ -1,10 +1,9 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
-	transactions "github.com/jnie1/MTGViewer-V2/transaction"
+	"github.com/jnie1/MTGViewer-V2/transactions"
+	"net/http"
 )
 
 func fetchTransactionLogs(c *gin.Context) {

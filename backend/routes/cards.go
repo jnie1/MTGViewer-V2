@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
-	transactions "github.com/jnie1/MTGViewer-V2/transaction"
+	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
 func fetchRandomCard(c *gin.Context) {
