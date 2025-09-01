@@ -37,6 +37,10 @@ type ContainerAllocation struct {
 	MaxCapacity int
 }
 
+func (allocation *ContainerAllocation) Remaining() int {
+	return allocation.MaxCapacity - allocation.Used
+}
+
 func GetCardAmounts(deposits []CardDeposit, fullCards []cards.Card) []cards.CardAmount {
 	amountMap := map[uuid.UUID]int{}
 
