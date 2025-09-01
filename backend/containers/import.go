@@ -43,10 +43,7 @@ func getContainerAdditions(additions []CardRequest, allocations []ContainerAlloc
 
 	if len(fitAllAdds) > 0 {
 		targetContainer := slices.MinFunc(fitAllAdds, compareRemainingAllocations)
-		fitAllChanges := ContainerChanges{
-			ContainerId: targetContainer.ContainerId,
-			Requests:    additions,
-		}
+		fitAllChanges := ContainerChanges{targetContainer.ContainerId, additions}
 		return []ContainerChanges{fitAllChanges}, nil
 	}
 
@@ -98,13 +95,11 @@ func assignContainerChanges(additions []CardRequest, allocations []ContainerAllo
 				currentRequest = CardRequest{}
 			}
 		} else if currentRequest.Delta > remainingAssignments {
-			containerRequests = append(containerRequests, CardRequest{
-				ScryfallId: currentRequest.ScryfallId, Delta: remainingAssignments,
-			})
-			allChanges = append(allChanges, ContainerChanges{ContainerId: currentContainerId, Requests: containerRequests})
+			containerRequests = append(containerRequests, CardRequest{currentRequest.ScryfallId, remainingAssignments})
+			allChanges = append(allChanges, ContainerChanges{currentContainerId, containerRequests})
 
 			leftover := currentRequest.Delta - remainingAssignments
-			currentRequest = CardRequest{ScryfallId: currentRequest.ScryfallId, Delta: leftover}
+			currentRequest = CardRequest{currentRequest.ScryfallId, leftover}
 
 			allocationIndex += 1
 			if allocationIndex < len(allocations) {
@@ -117,7 +112,7 @@ func assignContainerChanges(additions []CardRequest, allocations []ContainerAllo
 			containerRequests = []CardRequest{}
 		} else {
 			containerRequests = append(containerRequests, currentRequest)
-			allChanges = append(allChanges, ContainerChanges{ContainerId: currentContainerId, Requests: containerRequests})
+			allChanges = append(allChanges, ContainerChanges{currentContainerId, containerRequests})
 
 			requestIndex += 1
 			if requestIndex < len(additions) {
