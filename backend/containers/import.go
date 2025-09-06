@@ -3,6 +3,7 @@ package containers
 import (
 	"cmp"
 	"errors"
+	"iter"
 	"slices"
 )
 
@@ -57,7 +58,7 @@ func getContainerAdditions(additions []CardRequest, allocations []ContainerAlloc
 	}
 
 	additionAssignments := findBestFitAssignments(totalAdds, allocations)
-	allChanges := assignContainerChanges(additions, allocations, additionAssignments)
+	allChanges := assignContainerChanges(additions, slices.Collect(additionAssignments))
 
 	return allChanges, nil
 }
@@ -66,26 +67,90 @@ func compareRemainingAllocations(a, b ContainerAllocation) int {
 	return cmp.Compare(a.Remaining(), b.Remaining())
 }
 
-func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) map[int]int {
-	assignments := map[int]int{}
-	return assignments
+func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) iter.Seq[ContainerAllocation] {
+	return func(yield func(ContainerAllocation) bool) {
+		if len(allocations) <= 1 {
+			for _, alloc := range allocations {
+				if !yield(alloc) {
+					break
+				}
+			}
+			return
+		}
+
+		leftCombinations := getAllocationCombinations(0, 0, nil, allocations[:len(allocations)/2])
+		rightCombinations := getAllocationCombinations(0, 0, nil, allocations[len(allocations)/2:])
+
+		slices.SortFunc(leftCombinations, compareRemainingCombinations)
+		combos := [2]allocationCombination{leftCombinations[0], rightCombinations[0]}
+
+		allocationMap := map[int]ContainerAllocation{}
+		for _, allocation := range allocations {
+			allocationMap[allocation.ContainerId] = allocation
+		}
+
+		for _, combo := range combos {
+			for containerId := range combo.getContainerIds() {
+				if alloc, ok := allocationMap[containerId]; ok {
+					if !yield(alloc) {
+						break
+					}
+				}
+			}
+		}
+	}
 }
 
-func assignContainerChanges(additions []CardRequest, allocations []ContainerAllocation, assignments map[int]int) []ContainerChanges {
+type allocationGroup struct {
+	ContainerId int
+	Next        *allocationGroup
+}
+
+type allocationCombination struct {
+	TotalRemaining int
+	Items          *allocationGroup
+}
+
+func (combo allocationCombination) getContainerIds() iter.Seq[int] {
+	return func(yield func(int) bool) {
+		for group := combo.Items; group != nil; group = group.Next {
+			if !yield(group.ContainerId) {
+				return
+			}
+		}
+	}
+}
+
+func compareRemainingCombinations(a, b allocationCombination) int {
+	return cmp.Compare(a.TotalRemaining, b.TotalRemaining)
+}
+
+func getAllocationCombinations(i, totalRemaining int, items *allocationGroup, allocations []ContainerAllocation) []allocationCombination {
+	if i == len(allocations) {
+		return []allocationCombination{{totalRemaining, items}}
+	}
+
+	excludedCombos := getAllocationCombinations(i+1, totalRemaining, items, allocations)
+
+	currentAllocation := allocations[i]
+	withAllocation := allocationGroup{currentAllocation.ContainerId, items}
+	includedCombos := getAllocationCombinations(i+1, totalRemaining+currentAllocation.Remaining(), &withAllocation, allocations)
+
+	return slices.Concat(excludedCombos, includedCombos)
+}
+
+func assignContainerChanges(additions []CardRequest, assignments []ContainerAllocation) []ContainerChanges {
 	allChanges := []ContainerChanges{}
 
 	requestIndex := 0
-	allocationIndex := 0
+	assignmentIndex := 0
 
-	currentRequest := additions[requestIndex]
-	currentContainerId := allocations[allocationIndex].ContainerId
-
-	remainingAssignments := assignments[currentContainerId]
 	containerRequests := []CardRequest{}
+	currentRequest := additions[requestIndex]
+	currentAssignment := assignments[assignmentIndex]
 
-	for requestIndex < len(additions) && allocationIndex < len(allocations) {
-		if currentRequest.Delta < remainingAssignments {
-			remainingAssignments -= currentRequest.Delta
+	for requestIndex < len(additions) && assignmentIndex < len(assignments) {
+		if currentRequest.Delta < currentAssignment.Remaining() {
 			containerRequests = append(containerRequests, currentRequest)
 
 			requestIndex += 1
@@ -94,25 +159,35 @@ func assignContainerChanges(additions []CardRequest, allocations []ContainerAllo
 			} else {
 				currentRequest = CardRequest{}
 			}
-		} else if currentRequest.Delta > remainingAssignments {
-			containerRequests = append(containerRequests, CardRequest{currentRequest.ScryfallId, remainingAssignments})
-			allChanges = append(allChanges, ContainerChanges{currentContainerId, containerRequests})
 
-			leftover := currentRequest.Delta - remainingAssignments
+			currentAssignment = ContainerAllocation{
+				currentAssignment.ContainerId,
+				currentAssignment.Used + currentRequest.Delta,
+				currentAssignment.MaxCapacity,
+			}
+		} else if currentRequest.Delta > currentAssignment.Remaining() {
+			remainingRequest := CardRequest{currentRequest.ScryfallId, currentAssignment.Remaining()}
+			leftover := currentRequest.Delta - currentAssignment.Remaining()
+
+			fullRequests := append(containerRequests, remainingRequest)
+			newChanges := ContainerChanges{currentAssignment.ContainerId, fullRequests}
+
+			allChanges = append(allChanges, newChanges)
+			containerRequests = []CardRequest{}
 			currentRequest = CardRequest{currentRequest.ScryfallId, leftover}
 
-			allocationIndex += 1
-			if allocationIndex < len(allocations) {
-				currentContainerId = allocations[allocationIndex].ContainerId
+			assignmentIndex += 1
+			if assignmentIndex < len(assignments) {
+				currentAssignment = assignments[assignmentIndex]
 			} else {
-				currentContainerId = 0
+				currentAssignment = ContainerAllocation{}
 			}
-
-			remainingAssignments = assignments[currentContainerId]
-			containerRequests = []CardRequest{}
 		} else {
-			containerRequests = append(containerRequests, currentRequest)
-			allChanges = append(allChanges, ContainerChanges{currentContainerId, containerRequests})
+			fullRequests := append(containerRequests, currentRequest)
+			newChanges := ContainerChanges{currentAssignment.ContainerId, fullRequests}
+
+			allChanges = append(allChanges, newChanges)
+			containerRequests = []CardRequest{}
 
 			requestIndex += 1
 			if requestIndex < len(additions) {
@@ -121,15 +196,17 @@ func assignContainerChanges(additions []CardRequest, allocations []ContainerAllo
 				currentRequest = CardRequest{}
 			}
 
-			allocationIndex += 1
-			if allocationIndex < len(allocations) {
-				currentContainerId = allocations[allocationIndex].ContainerId
+			assignmentIndex += 1
+			if assignmentIndex < len(assignments) {
+				currentAssignment = assignments[assignmentIndex]
 			} else {
-				currentContainerId = 0
+				currentAssignment = ContainerAllocation{}
 			}
+		}
 
-			remainingAssignments = assignments[currentContainerId]
-			containerRequests = []CardRequest{}
+		if len(containerRequests) > 0 && currentAssignment.ContainerId != 0 {
+			newChanges := ContainerChanges{currentAssignment.ContainerId, containerRequests}
+			allChanges = append(allChanges, newChanges)
 		}
 	}
 
