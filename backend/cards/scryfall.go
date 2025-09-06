@@ -10,8 +10,6 @@ import (
 	"net/url"
 	"slices"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 var scryfallUrl = "https://api.scryfall.com"
@@ -55,8 +53,8 @@ func FetchRandomCard() (Card, error) {
 	return toCard(result), nil
 }
 
-func FetchCard(scryfallId uuid.UUID) (Card, error) {
-	randomUrl, err := url.JoinPath(scryfallUrl, fmt.Sprintf("/cards/%s", scryfallId))
+func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
+	randomUrl, err := url.JoinPath(scryfallUrl, fmt.Sprintf("/cards/%s", scryfallId.Id))
 	if err != nil {
 		return Card{}, err
 	}
@@ -94,13 +92,13 @@ func FetchCard(scryfallId uuid.UUID) (Card, error) {
 	return toCard(result), nil
 }
 
-func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
+func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	batchSizeLimit := 75
 
 	results := make(chan collectionBatchResult)
 	workerCount := 0
 
-	for batch := range slices.Chunk(scryfallIds, batchSizeLimit) {
+	for batch := range slices.Chunk(identifiers, batchSizeLimit) {
 		workerCount++
 		go func() {
 			cards, err := fetchCollectionBatch(batch)
@@ -127,16 +125,13 @@ func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
 	return slices.Concat(cards...), nil
 }
 
-func fetchCollectionBatch(scryfallIds uuid.UUIDs) ([]Card, error) {
+func fetchCollectionBatch[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	collectionUrl, err := url.JoinPath(scryfallUrl, "/cards/collection")
 	if err != nil {
 		return nil, err
 	}
 
-	query := collectionQuery{
-		Identifiers: toScryfallIdentifiers(scryfallIds),
-	}
-
+	query := CollectionQuery[Id]{identifiers}
 	payload, err := json.Marshal(query)
 	if err != nil {
 		return nil, err

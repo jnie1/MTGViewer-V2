@@ -9,14 +9,23 @@ type CardImageUrls struct {
 }
 
 type Card struct {
-	ScryfallId uuid.UUID     `json:"scryfallId"`
-	Name       string        `json:"name"`
-	ManaCost   string        `json:"manaCost,omitempty"`
-	Type       string        `json:"type"`
-	Rarity     string        `json:"rarity"`
-	Power      string        `json:"power,omitempty"`
-	Toughness  string        `json:"toughness,omitempty"`
-	Images     CardImageUrls `json:"imageUrls"`
+	ScryfallId      uuid.UUID     `json:"scryfallId"`
+	Name            string        `json:"name"`
+	ManaCost        string        `json:"manaCost,omitempty"`
+	Set             string        `json:"set"`
+	SetCode         string        `json:"set_code"`
+	CollectorNumber string        `json:"collector_number"`
+	MultiverseIds   []int         `json:"multiverse_ids,omitempty"`
+	Type            string        `json:"type"`
+	Rarity          string        `json:"rarity"`
+	Power           string        `json:"power,omitempty"`
+	Toughness       string        `json:"toughness,omitempty"`
+	Images          CardImageUrls `json:"imageUrls"`
+}
+
+type CardAmount struct {
+	Card
+	Amount int `json:"amount"`
 }
 
 type scryfallImages struct {
@@ -26,22 +35,18 @@ type scryfallImages struct {
 }
 
 type scryfallCard struct {
-	ScryfallId uuid.UUID      `json:"id"`
-	ManaCost   string         `json:"mana_cost,omitempty"`
-	Name       string         `json:"name"`
-	Power      string         `json:"power,omitempty"`
-	Toughness  string         `json:"toughness,omitempty"`
-	Images     scryfallImages `json:"image_uris"`
-	Type       string         `json:"type_line"`
-	Rarity     string         `json:"rarity"`
-}
-
-type scryfallIdentifier struct {
-	Id uuid.UUID `json:"id"`
-}
-
-type collectionQuery struct {
-	Identifiers []scryfallIdentifier `json:"identifiers"`
+	ScryfallId      uuid.UUID      `json:"id"`
+	ManaCost        string         `json:"mana_cost,omitempty"`
+	Name            string         `json:"name"`
+	SetName         string         `json:"set_name"`
+	Set             string         `json:"set"`
+	CollectorNumber string         `json:"collector_number"`
+	MultiverseIds   []int          `json:"multiverse_ids,omitempty"`
+	Power           string         `json:"power,omitempty"`
+	Toughness       string         `json:"toughness,omitempty"`
+	Images          scryfallImages `json:"image_uris"`
+	Type            string         `json:"type_line"`
+	Rarity          string         `json:"rarity"`
 }
 
 type collectionResult struct {
@@ -59,6 +64,10 @@ func toCard(card scryfallCard) Card {
 		card.ScryfallId,
 		card.Name,
 		card.ManaCost,
+		card.SetName,
+		card.Set,
+		card.CollectorNumber,
+		card.MultiverseIds,
 		card.Type,
 		card.Rarity,
 		card.Power,
@@ -69,14 +78,6 @@ func toCard(card scryfallCard) Card {
 			images.Large,
 		},
 	}
-}
-
-func toScryfallIdentifiers(ids uuid.UUIDs) []scryfallIdentifier {
-	result := make([]scryfallIdentifier, len(ids))
-	for i, id := range ids {
-		result[i] = scryfallIdentifier{id}
-	}
-	return result
 }
 
 func toCards(cards []scryfallCard) []Card {
