@@ -238,11 +238,11 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 				currentAssignment = ContainerAllocation{}
 			}
 		}
+	}
 
-		if len(containerRequests) > 0 && currentAssignment.ContainerId != 0 {
-			newChanges := ContainerChanges{currentAssignment.ContainerId, containerRequests}
-			allChanges = append(allChanges, newChanges)
-		}
+	if len(containerRequests) > 0 && currentAssignment.ContainerId != 0 {
+		newChanges := ContainerChanges{currentAssignment.ContainerId, containerRequests}
+		allChanges = append(allChanges, newChanges)
 	}
 
 	return allChanges
