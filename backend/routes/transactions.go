@@ -1,9 +1,11 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/jnie1/MTGViewer-V2/transactions"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jnie1/MTGViewer-V2/cards"
+	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
 func fetchTransactionLogs(c *gin.Context) {
@@ -14,7 +16,15 @@ func fetchTransactionLogs(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, listOfLogs)
+	scryfallIds := transactions.GetScryfallIds(listOfLogs)
+	cards, err := cards.FetchCollection(scryfallIds)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	listOfReportCards := transactions.JoinReportCards(cards, listOfLogs)
+	c.JSON(http.StatusOK, listOfReportCards)
 }
 
 func AddTransactionRoutes(router *gin.Engine) {
