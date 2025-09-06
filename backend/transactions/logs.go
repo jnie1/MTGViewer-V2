@@ -42,7 +42,7 @@ func LogCollectionChanges(changes []containers.ContainerChanges) error {
 	}
 
 	db := database.Instance()
-	now := time.Now()
+	now := time.Now().UTC()
 
 	valueStatements := []string{}
 
@@ -51,11 +51,11 @@ func LogCollectionChanges(changes []containers.ContainerChanges) error {
 
 			switch {
 			case request.Delta > 0:
-				valueRow := fmt.Sprintf("('%s'::uuid, %d, NULL, '%s'::uuid, %d, '%v')", groupId, change.ContainerId, request.ScryfallId, -request.Delta, now)
+				valueRow := fmt.Sprintf("('%s'::uuid, %d, NULL, '%s'::uuid, %d, '%s')", groupId, change.ContainerId, request.ScryfallId, -request.Delta, now.Format(time.RFC3339))
 				valueStatements = append(valueStatements, valueRow)
 
 			case request.Delta < 0:
-				valueRow := fmt.Sprintf("('%s'::uuid, NULL, %d, '%s'::uuid, %d, '%v')", groupId, change.ContainerId, request.ScryfallId, request.Delta, now)
+				valueRow := fmt.Sprintf("('%s'::uuid, NULL, %d, '%s'::uuid, %d, '%s')", groupId, change.ContainerId, request.ScryfallId, request.Delta, now.Format(time.RFC3339))
 				valueStatements = append(valueStatements, valueRow)
 			}
 		}
