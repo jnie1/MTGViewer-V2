@@ -44,7 +44,7 @@ func FetchLogs() ([]TransactionLogs, error) {
 		}
 
 		if toMaybeBoxId.Valid && toMaybeBoxName.Valid {
-			logs.ToContainer = &TransactionContainer{toMaybeBoxId.V, fromMaybeBoxName.String}
+			logs.ToContainer = &TransactionContainer{toMaybeBoxId.V, toMaybeBoxName.String}
 		}
 
 		listOfLogs = append(listOfLogs, logs)
