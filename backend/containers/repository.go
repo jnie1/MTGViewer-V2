@@ -40,7 +40,7 @@ func GetContainer(containerId int) (Container, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
-		SELECT container, capacity, deletion_mark
+		SELECT container_name, capacity, deletion_mark
 		FROM containers
 		WHERE container_id = $1;`, containerId)
 

@@ -1,6 +1,7 @@
 package transactions
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -13,8 +14,10 @@ import (
 func FetchLogs() ([]TransactionLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT transaction_id, group_id, from_container_id, to_container_id, scryfall_id, amount 	
-		FROM transactions`)
+		SELECT transaction_id, group_id, from_container_id, fc.container_name, to_container_id, tc.container_name, scryfall_id, amount
+		FROM transactions as t
+		LEFT JOIN containers as fc ON from_container_id = fc.container_id
+		LEFT JOIN containers as tc ON to_container_id = tc.container_id;`)
 
 	if err != nil {
 		return nil, err
@@ -25,8 +28,23 @@ func FetchLogs() ([]TransactionLogs, error) {
 
 	for row.Next() {
 		logs := TransactionLogs{}
-		if err := row.Scan(&logs.TransactionId, &logs.GroupId, &logs.FromContainer, &logs.ToContainer, &logs.ScryfallId, &logs.Quantity); err != nil {
+
+		var fromMaybeBoxId sql.Null[int]
+		var fromMaybeBoxName sql.NullString
+
+		var toMaybeBoxId sql.Null[int]
+		var toMaybeBoxName sql.NullString
+
+		if err := row.Scan(&logs.TransactionId, &logs.GroupId, &fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &logs.ScryfallId, &logs.Quantity); err != nil {
 			return nil, err
+		}
+
+		if fromMaybeBoxId.Valid && fromMaybeBoxName.Valid {
+			logs.FromContainer = &TransactionContainer{fromMaybeBoxId.V, fromMaybeBoxName.String}
+		}
+
+		if toMaybeBoxId.Valid && toMaybeBoxName.Valid {
+			logs.FromContainer = &TransactionContainer{toMaybeBoxId.V, fromMaybeBoxName.String}
 		}
 
 		listOfLogs = append(listOfLogs, logs)
