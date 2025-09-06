@@ -1,6 +1,10 @@
 package cards
 
-import "github.com/google/uuid"
+import (
+	"strings"
+
+	"github.com/google/uuid"
+)
 
 type CardImageUrls struct {
 	Preview string `json:"preview,omitempty"`
@@ -65,7 +69,7 @@ func toCard(card scryfallCard) Card {
 		card.Name,
 		card.ManaCost,
 		card.SetName,
-		card.Set,
+		strings.ToUpper(card.Set),
 		card.CollectorNumber,
 		card.MultiverseIds,
 		card.Type,

@@ -101,7 +101,7 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 				continue
 			}
 
-			secondCombo := leftCombinations[secondComboIndex+1]
+			secondCombo := leftCombinations[secondComboIndex]
 			remainingSpace := firstCombo.TotalRemaining + secondCombo.TotalRemaining - totalAdds
 
 			if remainingSpace < minRemainingSpace {
@@ -238,11 +238,11 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 				currentAssignment = ContainerAllocation{}
 			}
 		}
+	}
 
-		if len(containerRequests) > 0 && currentAssignment.ContainerId != 0 {
-			newChanges := ContainerChanges{currentAssignment.ContainerId, containerRequests}
-			allChanges = append(allChanges, newChanges)
-		}
+	if len(containerRequests) > 0 && currentAssignment.ContainerId != 0 {
+		newChanges := ContainerChanges{currentAssignment.ContainerId, containerRequests}
+		allChanges = append(allChanges, newChanges)
 	}
 
 	return allChanges

@@ -49,17 +49,16 @@ func parseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if !cardEntryPattern.MatchString(line) {
+		match := cardEntryPattern.FindStringSubmatch(line)
+		if match == nil {
 			return nil, fmt.Errorf("unexpected card format encountered: %s", line)
 		}
 
-		segments := cardEntryPattern.SubexpNames()
+		name := match[cardEntryPattern.SubexpIndex("name")]
+		setCode := match[cardEntryPattern.SubexpIndex("set")]
+		collectorNumber := match[cardEntryPattern.SubexpIndex("collector")]
 
-		name := segments[cardEntryPattern.SubexpIndex("name")]
-		setCode := segments[cardEntryPattern.SubexpIndex("set")]
-		collectorNumber := segments[cardEntryPattern.SubexpIndex("collector")]
-
-		amount, err := strconv.Atoi(segments[cardEntryPattern.SubexpIndex("amount")])
+		amount, err := strconv.Atoi(match[cardEntryPattern.SubexpIndex("amount")])
 		if err != nil {
 			return nil, err
 		}
