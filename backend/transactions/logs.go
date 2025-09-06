@@ -45,29 +45,26 @@ func LogCollectionChanges(changes []containers.ContainerChanges) error {
 	now := time.Now()
 
 	valueStatements := []string{}
-	actualArgs := []any{}
 
-	for i, change := range changes {
-		for j, request := range change.Requests {
-			index := i * j * 6
-			valueRow := fmt.Sprintf("(%d, %d, %d, %d, %d, %d)", index, index+1, index+2, index+3, index+4, index+5)
-			valueStatements = append(valueStatements, valueRow)
+	for _, change := range changes {
+		for _, request := range change.Requests {
 
 			switch {
 			case request.Delta > 0:
-				actualArgs = append(actualArgs, groupId, nil, change.ContainerId, request.ScryfallId, request.Delta, now)
+				valueRow := fmt.Sprintf("('%s'::uuid, %d, NULL, '%s'::uuid, %d, '%v')", groupId, change.ContainerId, request.ScryfallId, -request.Delta, now)
+				valueStatements = append(valueStatements, valueRow)
 
 			case request.Delta < 0:
-				actualArgs = append(actualArgs, groupId, change.ContainerId, nil, request.ScryfallId, -request.Delta, now)
+				valueRow := fmt.Sprintf("('%s'::uuid, NULL, %d, '%s'::uuid, %d, '%v')", groupId, change.ContainerId, request.ScryfallId, request.Delta, now)
+				valueStatements = append(valueStatements, valueRow)
 			}
 		}
 	}
-
 	allValues := strings.Join(valueStatements, ", ")
 
 	_, err = db.Exec(`
 		INSERT INTO transactions (group_id, from_container_id, to_container_id, scryfall_id, amount, time)
-		VALUES `+allValues, actualArgs...)
+		VALUES ` + allValues + `;`)
 
 	return err
 }
