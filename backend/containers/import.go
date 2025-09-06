@@ -101,7 +101,7 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 				continue
 			}
 
-			secondCombo := leftCombinations[secondComboIndex+1]
+			secondCombo := leftCombinations[secondComboIndex]
 			remainingSpace := firstCombo.TotalRemaining + secondCombo.TotalRemaining - totalAdds
 
 			if remainingSpace < minRemainingSpace {
