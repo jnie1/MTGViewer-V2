@@ -21,7 +21,6 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	}
 
 	defer row.Close()
-
 	allocations := []ContainerAllocation{}
 
 	for row.Next() {
@@ -36,12 +35,39 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	return allocations, nil
 }
 
+func GetContainers() ([]ContainerPreview, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT container_id, container_name, capacity
+		FROM containers;`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	containers := []ContainerPreview{}
+
+	for row.Next() {
+		container := ContainerPreview{}
+		if err := row.Scan(&container.ContainerId, &container.Name, &container.Capacity); err != nil {
+			return nil, err
+		}
+		containers = append(containers, container)
+	}
+
+	return containers, nil
+}
+
 func GetContainer(containerId int) (Container, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
-		SELECT container_name, capacity, deletion_mark
+		SELECT container_name, SUM(cd.amount) as used, capacity, deletion_mark
 		FROM containers
+		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
+		GROUP BY c.container_id
 		WHERE container_id = $1;`, containerId)
 
 	container := Container{}
