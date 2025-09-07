@@ -161,15 +161,24 @@ func checkRemainingCombinations(a allocationCombination, target int) int {
 }
 
 func getAllocationCombinations(i, totalRemaining int, items *allocationGroup, allocations []ContainerAllocation) []allocationCombination {
+	if i == len(allocations) && items == nil {
+		return nil
+	}
+
 	if i == len(allocations) {
 		return []allocationCombination{{totalRemaining, items}}
 	}
 
 	excludedCombos := getAllocationCombinations(i+1, totalRemaining, items, allocations)
-
 	currentAllocation := allocations[i]
+	remaining := currentAllocation.Remaining()
+
+	if remaining == 0 {
+		return excludedCombos
+	}
+
 	withAllocation := allocationGroup{currentAllocation.ContainerId, items}
-	includedCombos := getAllocationCombinations(i+1, totalRemaining+currentAllocation.Remaining(), &withAllocation, allocations)
+	includedCombos := getAllocationCombinations(i+1, totalRemaining+remaining, &withAllocation, allocations)
 
 	return slices.Concat(excludedCombos, includedCombos)
 }
