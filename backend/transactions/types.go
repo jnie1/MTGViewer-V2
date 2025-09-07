@@ -57,30 +57,28 @@ func GetScryfallIds(transactionLogs []TransactionLogs) []cards.ScryfallIdentifie
 }
 
 func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) ([]ReportCard, error) {
-	cardMap := map[uuid.UUID]cards.Card{}
+	reportCards := make([]ReportCard, len(logs))
+	cardMap := make(map[uuid.UUID]cards.Card, len(loggedCards))
 
 	for _, loggedCard := range loggedCards {
 		cardMap[loggedCard.ScryfallId] = loggedCard
 	}
 
-	reportCards := make([]ReportCard, len(logs))
-
 	for i, log := range logs {
-		if reportedCard, ok := cardMap[log.ScryfallId]; ok {
-			reportCards[i] = ReportCard{
-				GroupId:       log.GroupId,
-				FromContainer: log.FromContainer,
-				ToContainer:   log.ToContainer,
-				Card:          reportedCard,
-				Quantity:      log.Quantity,
-			}
-		} else {
+		reportedCard, ok := cardMap[log.ScryfallId]
+		if !ok {
 			return nil, fmt.Errorf("cannot resolve card id %s", log.ScryfallId)
+		}
+		reportCards[i] = ReportCard{
+			GroupId:       log.GroupId,
+			FromContainer: log.FromContainer,
+			ToContainer:   log.ToContainer,
+			Card:          reportedCard,
+			Quantity:      log.Quantity,
 		}
 	}
 
 	slices.SortFunc(reportCards, compareReportCards)
-
 	return reportCards, nil
 }
 

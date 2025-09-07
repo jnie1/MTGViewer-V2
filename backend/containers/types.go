@@ -43,24 +43,25 @@ func (allocation *ContainerAllocation) Remaining() int {
 }
 
 func GetCardAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]cards.CardAmount, error) {
-	cardMap := map[uuid.UUID]cards.Card{}
+	amounts := make([]cards.CardAmount, len(deposits))
+	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
 
 	for _, card := range fullCards {
 		cardMap[card.ScryfallId] = card
 	}
 
-	amounts := make([]cards.CardAmount, len(deposits))
-
 	for i, deposit := range deposits {
-		if card, ok := cardMap[deposit.ScryfallId]; ok {
-			amounts[i] = cards.CardAmount{Card: card, Amount: deposit.Amount}
-		} else {
+		card, ok := cardMap[deposit.ScryfallId]
+		if !ok {
 			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
+		}
+		amounts[i] = cards.CardAmount{
+			Card:   card,
+			Amount: deposit.Amount,
 		}
 	}
 
 	slices.SortFunc(amounts, compareCardAmounts)
-
 	return amounts, nil
 }
 
