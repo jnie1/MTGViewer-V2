@@ -10,8 +10,15 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
+type ContainerPreview struct {
+	ContainerId int
+	Name        string
+	Capacity    int
+}
+
 type Container struct {
 	Name            string
+	Used            int
 	Capacity        int
 	MarkForDeletion bool
 }
