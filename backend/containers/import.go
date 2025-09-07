@@ -185,8 +185,11 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 	currentAssignment := assignments[assignmentIndex]
 
 	for requestIndex < len(additions) && assignmentIndex < len(assignments) {
-		if currentRequest.Delta < currentAssignment.Remaining() {
+		assignmentRemaining := currentAssignment.Remaining()
+
+		if currentRequest.Delta < assignmentRemaining {
 			containerRequests = append(containerRequests, currentRequest)
+			currentAssignmentUsed := currentRequest.Delta + currentAssignment.Used
 
 			requestIndex += 1
 			if requestIndex < len(additions) {
@@ -197,18 +200,18 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 
 			currentAssignment = ContainerAllocation{
 				currentAssignment.ContainerId,
-				currentAssignment.Used + currentRequest.Delta,
+				currentAssignmentUsed,
 				currentAssignment.MaxCapacity,
 			}
-		} else if currentRequest.Delta > currentAssignment.Remaining() {
-			remainingRequest := CardRequest{currentRequest.ScryfallId, currentAssignment.Remaining()}
-			leftover := currentRequest.Delta - currentAssignment.Remaining()
-
+		} else if currentRequest.Delta > assignmentRemaining {
+			remainingRequest := CardRequest{currentRequest.ScryfallId, assignmentRemaining}
 			fullRequests := append(containerRequests, remainingRequest)
-			newChanges := ContainerChanges{currentAssignment.ContainerId, fullRequests}
 
+			newChanges := ContainerChanges{currentAssignment.ContainerId, fullRequests}
 			allChanges = append(allChanges, newChanges)
+
 			containerRequests = []CardRequest{}
+			leftover := currentRequest.Delta - assignmentRemaining
 			currentRequest = CardRequest{currentRequest.ScryfallId, leftover}
 
 			assignmentIndex += 1
