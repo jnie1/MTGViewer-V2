@@ -23,7 +23,7 @@ type TransactionContainer struct {
 	Name        string `json:"name"`
 }
 
-func (container *TransactionContainer) GetContainer() TransactionContainer {
+func (container *TransactionContainer) Container() TransactionContainer {
 	if container == nil {
 		return TransactionContainer{}
 	}
@@ -83,11 +83,11 @@ func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) ([]Report
 }
 
 func compareReportCards(a, b ReportCard) int {
-	if c := cmp.Compare(a.FromContainer.GetContainer().Name, b.FromContainer.GetContainer().Name); c != 0 {
+	if c := cmp.Compare(a.FromContainer.Container().Name, b.FromContainer.Container().Name); c != 0 {
 		return c
 	}
 
-	if c := cmp.Compare(a.ToContainer.GetContainer().Name, b.ToContainer.GetContainer().Name); c != 0 {
+	if c := cmp.Compare(a.ToContainer.Container().Name, b.ToContainer.Container().Name); c != 0 {
 		return c
 	}
 
