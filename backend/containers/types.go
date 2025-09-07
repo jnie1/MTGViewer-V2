@@ -46,7 +46,6 @@ type ContainerAllocation struct {
 }
 
 func (allocation ContainerAllocation) Remaining() int {
-
 	return allocation.MaxCapacity - allocation.Used
 }
 
@@ -104,7 +103,7 @@ type csvHeaderPositions struct {
 	Quantity        int
 }
 
-func (positions *csvHeaderPositions) hasValidPosition() bool {
+func (positions *csvHeaderPositions) Valid() bool {
 	if positions == nil {
 		return false
 	}
