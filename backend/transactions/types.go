@@ -2,11 +2,18 @@ package transactions
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
+
+type UpdateLogs struct {
+	GroupId uuid.UUID `json:"groupId"`
+	Time    time.Time `json:"time"`
+}
 
 type TransactionLogs struct {
 	TransactionId int                   `json:"transactionId"`
@@ -22,7 +29,7 @@ type TransactionContainer struct {
 	Name        string `json:"name"`
 }
 
-func (container *TransactionContainer) GetContainer() TransactionContainer {
+func (container *TransactionContainer) Container() TransactionContainer {
 	if container == nil {
 		return TransactionContainer{}
 	}
@@ -55,29 +62,40 @@ func GetScryfallIds(transactionLogs []TransactionLogs) []cards.ScryfallIdentifie
 	return allIds
 }
 
-func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) []ReportCard {
-	cardMap := map[uuid.UUID]cards.Card{}
+func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) ([]ReportCard, error) {
+	reportCards := make([]ReportCard, len(logs))
+	cardMap := make(map[uuid.UUID]cards.Card, len(loggedCards))
 
 	for _, loggedCard := range loggedCards {
 		cardMap[loggedCard.ScryfallId] = loggedCard
 	}
 
-	reportCards := make([]ReportCard, len(logs))
-
 	for i, log := range logs {
-		reportedCard := cardMap[log.ScryfallId]
-		reportCards[i] = ReportCard{GroupId: log.GroupId, FromContainer: log.FromContainer, ToContainer: log.ToContainer, Card: reportedCard, Quantity: log.Quantity}
+		reportedCard, ok := cardMap[log.ScryfallId]
+		if !ok {
+			return nil, fmt.Errorf("cannot resolve card id %s", log.ScryfallId)
+		}
+		reportCards[i] = ReportCard{
+			GroupId:       log.GroupId,
+			FromContainer: log.FromContainer,
+			ToContainer:   log.ToContainer,
+			Card:          reportedCard,
+			Quantity:      log.Quantity,
+		}
 	}
 
-	slices.SortFunc(reportCards, func(a, b ReportCard) int {
-		if c := cmp.Compare(a.FromContainer.GetContainer().Name, b.FromContainer.GetContainer().Name); c != 0 {
-			return c
-		}
-		if c := cmp.Compare(a.ToContainer.GetContainer().Name, b.ToContainer.GetContainer().Name); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.Card.Name, b.Card.Name)
-	})
+	slices.SortFunc(reportCards, compareReportCards)
+	return reportCards, nil
+}
 
-	return reportCards
+func compareReportCards(a, b ReportCard) int {
+	if c := cmp.Compare(a.FromContainer.Container().Name, b.FromContainer.Container().Name); c != 0 {
+		return c
+	}
+
+	if c := cmp.Compare(a.ToContainer.Container().Name, b.ToContainer.Container().Name); c != 0 {
+		return c
+	}
+
+	return cmp.Compare(a.Card.Name, b.Card.Name)
 }

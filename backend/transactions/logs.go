@@ -11,13 +11,41 @@ import (
 	"github.com/jnie1/MTGViewer-V2/database"
 )
 
-func FetchLogs() ([]TransactionLogs, error) {
+func FetchUpdateLogs() ([]UpdateLogs, error) {
+	db := database.Instance()
+	row, err := db.Query(`
+		SELECT group_id, time
+		FROM transactions
+		GROUP BY group_id, time;`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	listOfLogs := []UpdateLogs{}
+
+	for row.Next() {
+		log := UpdateLogs{}
+
+		if err := row.Scan(&log.GroupId, &log.Time); err != nil {
+			return nil, err
+		}
+
+		listOfLogs = append(listOfLogs, log)
+	}
+
+	return listOfLogs, nil
+}
+
+func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
 		SELECT transaction_id, group_id, from_container_id, fc.container_name, to_container_id, tc.container_name, scryfall_id, amount
-		FROM transactions as t
-		LEFT JOIN containers as fc ON from_container_id = fc.container_id
-		LEFT JOIN containers as tc ON to_container_id = tc.container_id;`)
+		FROM transactions AS t
+		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
+		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
+		WHERE t.group_id = $1;`, groupId)
 
 	if err != nil {
 		return nil, err
@@ -27,7 +55,7 @@ func FetchLogs() ([]TransactionLogs, error) {
 	listOfLogs := []TransactionLogs{}
 
 	for row.Next() {
-		logs := TransactionLogs{}
+		log := TransactionLogs{}
 
 		var fromMaybeBoxId sql.Null[int]
 		var fromMaybeBoxName sql.NullString
@@ -35,19 +63,19 @@ func FetchLogs() ([]TransactionLogs, error) {
 		var toMaybeBoxId sql.Null[int]
 		var toMaybeBoxName sql.NullString
 
-		if err := row.Scan(&logs.TransactionId, &logs.GroupId, &fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &logs.ScryfallId, &logs.Quantity); err != nil {
+		if err := row.Scan(&log.TransactionId, &log.GroupId, &fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &log.ScryfallId, &log.Quantity); err != nil {
 			return nil, err
 		}
 
 		if fromMaybeBoxId.Valid && fromMaybeBoxName.Valid {
-			logs.FromContainer = &TransactionContainer{fromMaybeBoxId.V, fromMaybeBoxName.String}
+			log.FromContainer = &TransactionContainer{fromMaybeBoxId.V, fromMaybeBoxName.String}
 		}
 
 		if toMaybeBoxId.Valid && toMaybeBoxName.Valid {
-			logs.ToContainer = &TransactionContainer{toMaybeBoxId.V, toMaybeBoxName.String}
+			log.ToContainer = &TransactionContainer{toMaybeBoxId.V, toMaybeBoxName.String}
 		}
 
-		listOfLogs = append(listOfLogs, logs)
+		listOfLogs = append(listOfLogs, log)
 	}
 
 	return listOfLogs, nil

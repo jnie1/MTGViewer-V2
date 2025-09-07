@@ -2,6 +2,7 @@ package containers
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -9,10 +10,17 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
+type ContainerPreview struct {
+	ContainerId int    `json:"containerId"`
+	Name        string `json:"name"`
+	Capacity    int    `json:"capacity"`
+}
+
 type Container struct {
-	Name            string
-	Capacity        int
-	MarkForDeletion bool
+	Name      string `json:"name"`
+	Used      int    `json:"used"`
+	Capacity  int    `json:"capacity"`
+	IsDeleted bool   `json:"isDeleted"`
 }
 
 type CardDeposit struct {
@@ -37,29 +45,35 @@ type ContainerAllocation struct {
 	MaxCapacity int
 }
 
-func (allocation *ContainerAllocation) Remaining() int {
+func (allocation ContainerAllocation) Remaining() int {
 	return allocation.MaxCapacity - allocation.Used
 }
 
-func GetCardAmounts(deposits []CardDeposit, fullCards []cards.Card) []cards.CardAmount {
-	amountMap := map[uuid.UUID]int{}
+func GetCardAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]cards.CardAmount, error) {
+	amounts := make([]cards.CardAmount, len(deposits))
+	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
 
-	for _, deposit := range deposits {
-		amountMap[deposit.ScryfallId] = deposit.Amount
+	for _, card := range fullCards {
+		cardMap[card.ScryfallId] = card
 	}
 
-	amounts := make([]cards.CardAmount, len(fullCards))
-
-	for i, card := range fullCards {
-		amount := amountMap[card.ScryfallId]
-		amounts[i] = cards.CardAmount{Card: card, Amount: amount}
+	for i, deposit := range deposits {
+		card, ok := cardMap[deposit.ScryfallId]
+		if !ok {
+			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
+		}
+		amounts[i] = cards.CardAmount{
+			Card:   card,
+			Amount: deposit.Amount,
+		}
 	}
 
-	slices.SortFunc(amounts, func(a, b cards.CardAmount) int {
-		return cmp.Compare(a.Amount, b.Amount)
-	})
+	slices.SortFunc(amounts, compareCardAmounts)
+	return amounts, nil
+}
 
-	return amounts
+func compareCardAmounts(a, b cards.CardAmount) int {
+	return cmp.Compare(a.Amount, b.Amount)
 }
 
 func GetScryfallIds(deposits []CardDeposit) []cards.ScryfallIdentifier {
@@ -89,7 +103,7 @@ type csvHeaderPositions struct {
 	Quantity        int
 }
 
-func (positions *csvHeaderPositions) hasValidPosition() bool {
+func (positions *csvHeaderPositions) Valid() bool {
 	if positions == nil {
 		return false
 	}

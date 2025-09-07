@@ -40,7 +40,7 @@ func fetchCard(c *gin.Context) {
 
 	card, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 

@@ -109,7 +109,7 @@ func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	}
 
 	headerPositions := getHeaderPositions(header)
-	if !headerPositions.hasValidPosition() {
+	if !headerPositions.Valid() {
 		return nil, errors.New("invalid csv header, expected: scryfall id, multiverse id, or set code/collector number")
 	}
 

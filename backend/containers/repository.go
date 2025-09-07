@@ -11,7 +11,7 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT c.container_id, SUM(cd.amount), c.capacity
+		SELECT c.container_id, COALESCE(SUM(cd.amount), 0), c.capacity
 		FROM containers c
 		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
 		GROUP BY c.container_id`)
@@ -21,7 +21,6 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	}
 
 	defer row.Close()
-
 	allocations := []ContainerAllocation{}
 
 	for row.Next() {
@@ -36,16 +35,47 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	return allocations, nil
 }
 
+func GetContainers() ([]ContainerPreview, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT container_id, container_name, capacity
+		FROM containers;`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	containers := []ContainerPreview{}
+
+	for row.Next() {
+		container := ContainerPreview{}
+		if err := row.Scan(&container.ContainerId, &container.Name, &container.Capacity); err != nil {
+			return nil, err
+		}
+		containers = append(containers, container)
+	}
+
+	return containers, nil
+}
+
 func GetContainer(containerId int) (Container, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
-		SELECT container_name, capacity, deletion_mark
-		FROM containers
-		WHERE container_id = $1;`, containerId)
+		SELECT c2.container_name, c1.used, c2.capacity, c2.deletion_mark
+		FROM (
+			SELECT c.container_id, COALESCE(SUM(cd.amount), 0) as used
+			FROM containers c
+			LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
+			WHERE c.container_id = $1
+			GROUP BY c.container_id
+		) AS c1
+		JOIN containers AS c2 ON c1.container_id = c2.container_id;`, containerId)
 
 	container := Container{}
-	err := row.Scan(&container.Name, &container.Capacity, &container.MarkForDeletion)
+	err := row.Scan(&container.Name, &container.Used, &container.Capacity, &container.IsDeleted)
 
 	return container, err
 }
@@ -94,7 +124,7 @@ func UpdateContainer(containerId int, container Container) error {
 	_, err := db.Exec(`
 		UPDATE containers
 		SET container_name = $2, capacity = $3, deletion_mark = $4
-		WHERE container_id = $1;`, containerId, container.Name, container.Capacity, container.MarkForDeletion)
+		WHERE container_id = $1;`, containerId, container.Name, container.Capacity, container.IsDeleted)
 
 	return err
 }
