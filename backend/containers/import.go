@@ -81,19 +81,22 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 
 		leftCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[:len(allocations)/2])
 		rightCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[len(allocations)/2:])
-
 		slices.SortFunc(leftCombinations, compareRemainingCombinations)
-		combos := [2]allocationCombination{}
+
 		minRemainingSpace := totalAdds
+		bestCombos := []allocationPair{}
 
 		for _, firstCombo := range rightCombinations {
 			remaining := max(totalAdds-firstCombo.TotalRemaining, 0)
 			secondComboIndex, found := slices.BinarySearchFunc(leftCombinations, remaining, checkRemainingCombinations)
 
 			if found {
-				combos[0] = firstCombo
-				combos[1] = leftCombinations[secondComboIndex]
-				break
+				if minRemainingSpace != 0 {
+					minRemainingSpace = 0
+					clear(bestCombos)
+				}
+				bestCombos = append(bestCombos, allocationPair{firstCombo, leftCombinations[secondComboIndex]})
+				continue
 			}
 
 			if secondComboIndex == len(leftCombinations) {
@@ -104,14 +107,27 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 			secondCombo := leftCombinations[secondComboIndex]
 			remainingSpace := firstCombo.TotalRemaining + secondCombo.TotalRemaining - totalAdds
 
-			if remainingSpace < minRemainingSpace {
-				combos[0] = firstCombo
-				combos[1] = secondCombo
-				minRemainingSpace = remainingSpace
+			if remaining > minRemainingSpace {
+				continue
 			}
+
+			if remainingSpace < minRemainingSpace {
+				minRemainingSpace = remainingSpace
+				clear(bestCombos)
+			}
+
+			bestCombos = append(bestCombos, allocationPair{firstCombo, secondCombo})
 		}
 
-		if combos[0].TotalRemaining == 0 && combos[1].TotalRemaining == 0 {
+		if len(bestCombos) == 0 {
+			return
+		}
+
+		smallestCombo := slices.MinFunc(bestCombos, func(a, b allocationPair) int {
+			return cmp.Compare(a.Size(), b.Size())
+		})
+
+		if smallestCombo.First.TotalRemaining == 0 && smallestCombo.Second.TotalRemaining == 0 {
 			return
 		}
 
@@ -120,12 +136,10 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 			allocationMap[allocation.ContainerId] = allocation
 		}
 
-		for _, combo := range combos {
-			for containerId := range combo.getContainerIds() {
-				if alloc, ok := allocationMap[containerId]; ok {
-					if !yield(alloc) {
-						return
-					}
+		for containerId := range smallestCombo.ContainerIds() {
+			if alloc, ok := allocationMap[containerId]; ok {
+				if !yield(alloc) {
+					return
 				}
 			}
 		}
@@ -134,6 +148,7 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 
 type allocationGroup struct {
 	ContainerId int
+	Size        int
 	Next        *allocationGroup
 }
 
@@ -142,9 +157,35 @@ type allocationCombination struct {
 	Items          *allocationGroup
 }
 
-func (combo allocationCombination) getContainerIds() iter.Seq[int] {
+type allocationPair struct {
+	First  allocationCombination
+	Second allocationCombination
+}
+
+func (pair allocationPair) Size() int {
+	size := 0
+
+	firstItems := pair.First.Items
+	if firstItems != nil {
+		size += firstItems.Size
+	}
+
+	secondItems := pair.Second.Items
+	if secondItems != nil {
+		size += secondItems.Size
+	}
+
+	return size
+}
+
+func (pair allocationPair) ContainerIds() iter.Seq[int] {
 	return func(yield func(int) bool) {
-		for group := combo.Items; group != nil; group = group.Next {
+		for group := pair.First.Items; group != nil; group = group.Next {
+			if !yield(group.ContainerId) {
+				return
+			}
+		}
+		for group := pair.Second.Items; group != nil; group = group.Next {
 			if !yield(group.ContainerId) {
 				return
 			}
@@ -173,7 +214,14 @@ func getAllocationCombinations(i, totalRemaining, target int, items *allocationG
 		return excludedCombos
 	}
 
-	withAllocation := allocationGroup{currentAllocation.ContainerId, items}
+	var groupSize int
+	if items != nil {
+		groupSize = items.Size + 1
+	} else {
+		groupSize = 1
+	}
+
+	withAllocation := allocationGroup{currentAllocation.ContainerId, groupSize, items}
 	includedCombos := getAllocationCombinations(i+1, totalRemaining+remaining, target, &withAllocation, allocations)
 
 	return slices.Concat(excludedCombos, includedCombos)
@@ -215,7 +263,7 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 			newChanges := ContainerChanges{currentAssignment.ContainerId, fullRequests}
 			allChanges = append(allChanges, newChanges)
 
-			containerRequests = []CardRequest{}
+			containerRequests = nil
 			leftover := currentRequest.Delta - assignmentRemaining
 			currentRequest = CardRequest{currentRequest.ScryfallId, leftover}
 
@@ -230,7 +278,7 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 			newChanges := ContainerChanges{currentAssignment.ContainerId, fullRequests}
 
 			allChanges = append(allChanges, newChanges)
-			containerRequests = []CardRequest{}
+			containerRequests = nil
 
 			requestIndex += 1
 			if requestIndex < len(additions) {
