@@ -79,15 +79,15 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 			return
 		}
 
-		leftCombinations := getAllocationCombinations(0, 0, nil, allocations[:len(allocations)/2])
-		rightCombinations := getAllocationCombinations(0, 0, nil, allocations[len(allocations)/2:])
+		leftCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[:len(allocations)/2])
+		rightCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[len(allocations)/2:])
 
 		slices.SortFunc(leftCombinations, compareRemainingCombinations)
 		combos := [2]allocationCombination{}
 		minRemainingSpace := totalAdds
 
 		for _, firstCombo := range rightCombinations {
-			remaining := totalAdds - firstCombo.TotalRemaining
+			remaining := max(totalAdds-firstCombo.TotalRemaining, 0)
 			secondComboIndex, found := slices.BinarySearchFunc(leftCombinations, remaining, checkRemainingCombinations)
 
 			if found {
@@ -160,16 +160,12 @@ func checkRemainingCombinations(a allocationCombination, target int) int {
 	return cmp.Compare(a.TotalRemaining, target)
 }
 
-func getAllocationCombinations(i, totalRemaining int, items *allocationGroup, allocations []ContainerAllocation) []allocationCombination {
-	if i == len(allocations) && items == nil {
-		return nil
-	}
-
-	if i == len(allocations) {
+func getAllocationCombinations(i, totalRemaining, target int, items *allocationGroup, allocations []ContainerAllocation) []allocationCombination {
+	if i == len(allocations) || totalRemaining >= target {
 		return []allocationCombination{{totalRemaining, items}}
 	}
 
-	excludedCombos := getAllocationCombinations(i+1, totalRemaining, items, allocations)
+	excludedCombos := getAllocationCombinations(i+1, totalRemaining, target, items, allocations)
 	currentAllocation := allocations[i]
 	remaining := currentAllocation.Remaining()
 
@@ -178,7 +174,7 @@ func getAllocationCombinations(i, totalRemaining int, items *allocationGroup, al
 	}
 
 	withAllocation := allocationGroup{currentAllocation.ContainerId, items}
-	includedCombos := getAllocationCombinations(i+1, totalRemaining+remaining, &withAllocation, allocations)
+	includedCombos := getAllocationCombinations(i+1, totalRemaining+remaining, target, &withAllocation, allocations)
 
 	return slices.Concat(excludedCombos, includedCombos)
 }
