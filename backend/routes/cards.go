@@ -11,15 +11,22 @@ import (
 	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
-func fetchRandomCard(c *gin.Context) {
-	card, err := cards.FetchRandomCard()
+func fetchCollection(c *gin.Context) {
+	ids := c.QueryArray("cards")
 
+	scryfallIds, err := cards.ParseScryfallIds(ids)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	cards, err := cards.FetchCollection(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, card)
+	c.JSON(http.StatusOK, cards)
 }
 
 func fetchCard(c *gin.Context) {
@@ -40,22 +47,15 @@ func fetchCard(c *gin.Context) {
 	c.JSON(http.StatusOK, card)
 }
 
-func fetchCollection(c *gin.Context) {
-	ids := c.QueryArray("cards")
+func fetchRandomCard(c *gin.Context) {
+	card, err := cards.FetchRandomCard()
 
-	scryfallIds, err := cards.ParseScryfallIds(ids)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	cards, err := cards.FetchCollection(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, cards)
+	c.JSON(http.StatusOK, card)
 }
 
 func importCards(c *gin.Context) {
@@ -102,8 +102,8 @@ func importCards(c *gin.Context) {
 
 func AddCardRoutes(router *gin.Engine) {
 	group := router.Group("/cards")
-	group.GET("/scryfall", fetchRandomCard)
+	group.GET("/", fetchCollection)
 	group.GET("/:card", fetchCard)
-	group.GET("/collection", fetchCollection)
+	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
 }

@@ -11,13 +11,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Handlers
-func greetHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Hello, welcome to the Go server!",
-	})
-}
-
 func main() {
 	// Loading environment variables
 	if err := godotenv.Load(); err != nil {
@@ -35,9 +28,7 @@ func main() {
 	r.Use(auth.AddCors)
 
 	// Define routes and associate them with handlers
-	r.GET("/greet", greetHandler)
 	routes.AddUserRoutes(r)
-	routes.AddBookRoutes(r)
 	routes.AddCardRoutes(r)
 	routes.AddContainerRoutes(r)
 	routes.AddTransactionRoutes(r)
