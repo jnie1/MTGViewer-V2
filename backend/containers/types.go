@@ -11,16 +11,16 @@ import (
 )
 
 type ContainerPreview struct {
-	ContainerId int
-	Name        string
-	Capacity    int
+	ContainerId int    `json:"containerId"`
+	Name        string `json:"name"`
+	Capacity    int    `json:"capacity"`
 }
 
 type Container struct {
-	Name            string
-	Used            int
-	Capacity        int
-	MarkForDeletion bool
+	Name      string `json:"name"`
+	Used      int    `json:"used"`
+	Capacity  int    `json:"capacity"`
+	IsDeleted bool   `json:"isDeleted"`
 }
 
 type CardDeposit struct {

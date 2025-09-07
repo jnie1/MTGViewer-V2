@@ -71,7 +71,7 @@ func fetchContainerCards(c *gin.Context) {
 
 func AddContainerRoutes(router *gin.Engine) {
 	group := router.Group("/containers")
-	group.GET("/", fetchContainerPreviews)
+	group.GET("", fetchContainerPreviews)
 	group.GET("/:container", fetchContainer)
 	group.GET("/:container/cards", fetchContainerCards)
 }
