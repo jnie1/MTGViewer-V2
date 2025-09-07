@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 
 	"github.com/google/uuid"
@@ -55,7 +56,7 @@ func GetScryfallIds(transactionLogs []TransactionLogs) []cards.ScryfallIdentifie
 	return allIds
 }
 
-func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) []ReportCard {
+func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) ([]ReportCard, error) {
 	cardMap := map[uuid.UUID]cards.Card{}
 
 	for _, loggedCard := range loggedCards {
@@ -65,19 +66,32 @@ func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) []ReportC
 	reportCards := make([]ReportCard, len(logs))
 
 	for i, log := range logs {
-		reportedCard := cardMap[log.ScryfallId]
-		reportCards[i] = ReportCard{GroupId: log.GroupId, FromContainer: log.FromContainer, ToContainer: log.ToContainer, Card: reportedCard, Quantity: log.Quantity}
+		if reportedCard, ok := cardMap[log.ScryfallId]; ok {
+			reportCards[i] = ReportCard{
+				GroupId:       log.GroupId,
+				FromContainer: log.FromContainer,
+				ToContainer:   log.ToContainer,
+				Card:          reportedCard,
+				Quantity:      log.Quantity,
+			}
+		} else {
+			return nil, fmt.Errorf("cannot resolve card id %s", log.ScryfallId)
+		}
 	}
 
-	slices.SortFunc(reportCards, func(a, b ReportCard) int {
-		if c := cmp.Compare(a.FromContainer.GetContainer().Name, b.FromContainer.GetContainer().Name); c != 0 {
-			return c
-		}
-		if c := cmp.Compare(a.ToContainer.GetContainer().Name, b.ToContainer.GetContainer().Name); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.Card.Name, b.Card.Name)
-	})
+	slices.SortFunc(reportCards, compareReportCards)
 
-	return reportCards
+	return reportCards, nil
+}
+
+func compareReportCards(a, b ReportCard) int {
+	if c := cmp.Compare(a.FromContainer.GetContainer().Name, b.FromContainer.GetContainer().Name); c != 0 {
+		return c
+	}
+
+	if c := cmp.Compare(a.ToContainer.GetContainer().Name, b.ToContainer.GetContainer().Name); c != 0 {
+		return c
+	}
+
+	return cmp.Compare(a.Card.Name, b.Card.Name)
 }
