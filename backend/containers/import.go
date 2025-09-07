@@ -83,58 +83,37 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 		rightCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[len(allocations)/2:])
 		slices.SortFunc(rightCombinations, compareRemainingCombinations)
 
-		minRemainingSpace := totalAdds
-		bestCombos := []allocationPair{}
+		var bestCombo *allocationPair
+		minSize := len(allocations)
 
 		for _, firstCombo := range leftCombinations {
 			remaining := max(totalAdds-firstCombo.TotalRemaining, 0)
-			secondComboIndex, found := slices.BinarySearchFunc(rightCombinations, remaining, checkRemainingCombinations)
+			secondComboIndex, _ := slices.BinarySearchFunc(rightCombinations, remaining, checkRemainingCombinations)
 
 			if secondComboIndex == len(rightCombinations) {
 				// too small
 				continue
 			}
 
-			secondCombo := rightCombinations[secondComboIndex]
+			possibleCombo := allocationPair{firstCombo, rightCombinations[secondComboIndex]}
 
-			if found {
-				if minRemainingSpace != 0 {
-					minRemainingSpace = 0
-					clear(bestCombos)
-				}
-				bestCombos = append(bestCombos, allocationPair{firstCombo, secondCombo})
-				continue
+			if possibleCombo.Size() < minSize {
+				bestCombo = &possibleCombo
+				minSize = possibleCombo.Size()
 			}
-
-			remainingSpace := firstCombo.TotalRemaining + secondCombo.TotalRemaining - totalAdds
-
-			if remaining > minRemainingSpace {
-				continue
-			}
-
-			if remainingSpace < minRemainingSpace {
-				minRemainingSpace = remainingSpace
-				clear(bestCombos)
-			}
-
-			bestCombos = append(bestCombos, allocationPair{firstCombo, secondCombo})
 		}
 
-		if len(bestCombos) == 0 {
+		if bestCombo == nil {
 			return
 		}
 
-		smallestCombo := slices.MinFunc(bestCombos, func(a, b allocationPair) int {
-			return cmp.Compare(a.Size(), b.Size())
-		})
-
-		allocationMap := map[int]ContainerAllocation{}
-		for _, allocation := range allocations {
-			allocationMap[allocation.ContainerId] = allocation
+		chosenContainerIds := map[int]bool{}
+		for containerId := range bestCombo.ContainerIds() {
+			chosenContainerIds[containerId] = true
 		}
 
-		for containerId := range smallestCombo.ContainerIds() {
-			if alloc, ok := allocationMap[containerId]; ok {
+		for _, alloc := range allocations {
+			if chosenContainerIds[alloc.ContainerId] {
 				if !yield(alloc) {
 					return
 				}
