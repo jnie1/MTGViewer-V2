@@ -32,7 +32,12 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
-	cardAmounts := containers.GetCardAmounts(deposits, cards)
+	cardAmounts, err := containers.GetCardAmounts(cards, deposits)
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+	}
+
 	c.JSON(http.StatusOK, cardAmounts)
 }
 

@@ -2,6 +2,7 @@ package containers
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -41,25 +42,30 @@ func (allocation *ContainerAllocation) Remaining() int {
 	return allocation.MaxCapacity - allocation.Used
 }
 
-func GetCardAmounts(deposits []CardDeposit, fullCards []cards.Card) []cards.CardAmount {
-	amountMap := map[uuid.UUID]int{}
+func GetCardAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]cards.CardAmount, error) {
+	cardMap := map[uuid.UUID]cards.Card{}
 
-	for _, deposit := range deposits {
-		amountMap[deposit.ScryfallId] = deposit.Amount
+	for _, card := range fullCards {
+		cardMap[card.ScryfallId] = card
 	}
 
-	amounts := make([]cards.CardAmount, len(fullCards))
+	amounts := make([]cards.CardAmount, len(deposits))
 
-	for i, card := range fullCards {
-		amount := amountMap[card.ScryfallId]
-		amounts[i] = cards.CardAmount{Card: card, Amount: amount}
+	for i, deposit := range deposits {
+		if card, ok := cardMap[deposit.ScryfallId]; ok {
+			amounts[i] = cards.CardAmount{Card: card, Amount: deposit.Amount}
+		} else {
+			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
+		}
 	}
 
-	slices.SortFunc(amounts, func(a, b cards.CardAmount) int {
-		return cmp.Compare(a.Amount, b.Amount)
-	})
+	slices.SortFunc(amounts, compareCardAmounts)
 
-	return amounts
+	return amounts, nil
+}
+
+func compareCardAmounts(a, b cards.CardAmount) int {
+	return cmp.Compare(a.Amount, b.Amount)
 }
 
 func GetScryfallIds(deposits []CardDeposit) []cards.ScryfallIdentifier {
