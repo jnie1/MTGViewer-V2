@@ -64,14 +64,18 @@ func GetContainer(containerId int) (Container, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
-		SELECT container_name, SUM(cd.amount) as used, capacity, deletion_mark
-		FROM containers
-		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
-		GROUP BY c.container_id
-		WHERE container_id = $1;`, containerId)
+		SELECT c2.container_name, c1.used, c2.capacity, c2.deletion_mark
+		FROM (
+			SELECT c.container_id, SUM(cd.amount) as used
+			FROM containers c
+			LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
+			WHERE c.container_id = $1
+			GROUP BY c.container_id
+		) AS c1
+		JOIN containers AS c2 ON c1.container_id = c2.container_id;`, containerId)
 
 	container := Container{}
-	err := row.Scan(&container.Name, &container.Capacity, &container.MarkForDeletion)
+	err := row.Scan(&container.Name, &container.Used, &container.Capacity, &container.IsDeleted)
 
 	return container, err
 }
@@ -120,7 +124,7 @@ func UpdateContainer(containerId int, container Container) error {
 	_, err := db.Exec(`
 		UPDATE containers
 		SET container_name = $2, capacity = $3, deletion_mark = $4
-		WHERE container_id = $1;`, containerId, container.Name, container.Capacity, container.MarkForDeletion)
+		WHERE container_id = $1;`, containerId, container.Name, container.Capacity, container.IsDeleted)
 
 	return err
 }

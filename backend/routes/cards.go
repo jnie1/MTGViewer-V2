@@ -102,7 +102,7 @@ func importCards(c *gin.Context) {
 
 func AddCardRoutes(router *gin.Engine) {
 	group := router.Group("/cards")
-	group.GET("/", fetchCollection)
+	group.GET("", fetchCollection)
 	group.GET("/:card", fetchCard)
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
