@@ -4,10 +4,16 @@ import (
 	"cmp"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
+
+type UpdateLogs struct {
+	GroupId uuid.UUID `json:"groupId"`
+	Time    time.Time `json:"time"`
+}
 
 type TransactionLogs struct {
 	TransactionId int                   `json:"transactionId"`

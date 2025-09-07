@@ -4,12 +4,31 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
+func fetchUpdateLogs(c *gin.Context) {
+	listOfLogs, err := transactions.FetchUpdateLogs()
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, listOfLogs)
+}
+
 func fetchTransactionLogs(c *gin.Context) {
-	listOfLogs, err := transactions.FetchLogs()
+	group := c.Param("group")
+
+	groupId, err := uuid.Parse(group)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	listOfLogs, err := transactions.FetchLogs(groupId)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -33,6 +52,7 @@ func fetchTransactionLogs(c *gin.Context) {
 }
 
 func AddTransactionRoutes(router *gin.Engine) {
-	group := router.Group("/transactions")
-	group.GET("/logs", fetchTransactionLogs)
+	group := router.Group("/logs")
+	group.GET("", fetchUpdateLogs)
+	group.GET("/:group", fetchTransactionLogs)
 }
