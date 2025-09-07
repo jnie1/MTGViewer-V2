@@ -81,30 +81,31 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 
 		leftCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[:len(allocations)/2])
 		rightCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[len(allocations)/2:])
-		slices.SortFunc(leftCombinations, compareRemainingCombinations)
+		slices.SortFunc(rightCombinations, compareRemainingCombinations)
 
 		minRemainingSpace := totalAdds
 		bestCombos := []allocationPair{}
 
-		for _, firstCombo := range rightCombinations {
+		for _, firstCombo := range leftCombinations {
 			remaining := max(totalAdds-firstCombo.TotalRemaining, 0)
-			secondComboIndex, found := slices.BinarySearchFunc(leftCombinations, remaining, checkRemainingCombinations)
+			secondComboIndex, found := slices.BinarySearchFunc(rightCombinations, remaining, checkRemainingCombinations)
+
+			if secondComboIndex == len(rightCombinations) {
+				// too small
+				continue
+			}
+
+			secondCombo := rightCombinations[secondComboIndex]
 
 			if found {
 				if minRemainingSpace != 0 {
 					minRemainingSpace = 0
 					clear(bestCombos)
 				}
-				bestCombos = append(bestCombos, allocationPair{firstCombo, leftCombinations[secondComboIndex]})
+				bestCombos = append(bestCombos, allocationPair{firstCombo, secondCombo})
 				continue
 			}
 
-			if secondComboIndex == len(leftCombinations) {
-				// too small
-				continue
-			}
-
-			secondCombo := leftCombinations[secondComboIndex]
 			remainingSpace := firstCombo.TotalRemaining + secondCombo.TotalRemaining - totalAdds
 
 			if remaining > minRemainingSpace {
@@ -126,10 +127,6 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) it
 		smallestCombo := slices.MinFunc(bestCombos, func(a, b allocationPair) int {
 			return cmp.Compare(a.Size(), b.Size())
 		})
-
-		if smallestCombo.First.TotalRemaining == 0 && smallestCombo.Second.TotalRemaining == 0 {
-			return
-		}
 
 		allocationMap := map[int]ContainerAllocation{}
 		for _, allocation := range allocations {
