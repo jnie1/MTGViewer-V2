@@ -46,6 +46,9 @@ type ContainerAllocation struct {
 }
 
 func (allocation *ContainerAllocation) Remaining() int {
+	if allocation == nil {
+		return 0
+	}
 	return allocation.MaxCapacity - allocation.Used
 }
 
