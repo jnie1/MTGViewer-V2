@@ -57,13 +57,7 @@ func getContainerAdditions(additions []CardRequest, allocations []ContainerAlloc
 		return nil, errors.New("not enough space to fit the new additions")
 	}
 
-	bestFit := findBestFitAssignments(totalAdds, allocations)
-	additionAssignments := slices.Collect(bestFit)
-
-	if len(additionAssignments) == 0 {
-		additionAssignments = append(additionAssignments, allocations...)
-	}
-
+	additionAssignments := findBestFitAssignments(totalAdds, allocations)
 	allChanges := assignContainerChanges(additions, additionAssignments)
 
 	return allChanges, nil
@@ -73,53 +67,48 @@ func compareRemainingAllocations(a, b ContainerAllocation) int {
 	return cmp.Compare(a.Remaining(), b.Remaining())
 }
 
-func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) iter.Seq[ContainerAllocation] {
-	return func(yield func(ContainerAllocation) bool) {
-		if len(allocations) <= 1 {
-			return
+func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) []ContainerAllocation {
+	var bestCombo *allocationPair
+	minSize := len(allocations)
+
+	leftCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[:len(allocations)/2])
+	rightCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[len(allocations)/2:])
+	slices.SortFunc(rightCombinations, compareRemainingCombinations)
+
+	for _, firstCombo := range leftCombinations {
+		remaining := max(totalAdds-firstCombo.TotalRemaining, 0)
+		secondComboIndex, _ := slices.BinarySearchFunc(rightCombinations, remaining, checkRemainingCombinations)
+
+		if secondComboIndex == len(rightCombinations) {
+			// too small
+			continue
 		}
 
-		leftCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[:len(allocations)/2])
-		rightCombinations := getAllocationCombinations(0, 0, totalAdds, nil, allocations[len(allocations)/2:])
-		slices.SortFunc(rightCombinations, compareRemainingCombinations)
+		possibleCombo := allocationPair{firstCombo, rightCombinations[secondComboIndex]}
 
-		var bestCombo *allocationPair
-		minSize := len(allocations)
-
-		for _, firstCombo := range leftCombinations {
-			remaining := max(totalAdds-firstCombo.TotalRemaining, 0)
-			secondComboIndex, _ := slices.BinarySearchFunc(rightCombinations, remaining, checkRemainingCombinations)
-
-			if secondComboIndex == len(rightCombinations) {
-				// too small
-				continue
-			}
-
-			possibleCombo := allocationPair{firstCombo, rightCombinations[secondComboIndex]}
-
-			if possibleCombo.Size() < minSize {
-				bestCombo = &possibleCombo
-				minSize = possibleCombo.Size()
-			}
-		}
-
-		if bestCombo == nil {
-			return
-		}
-
-		chosenContainerIds := map[int]bool{}
-		for containerId := range bestCombo.ContainerIds() {
-			chosenContainerIds[containerId] = true
-		}
-
-		for _, alloc := range allocations {
-			if chosenContainerIds[alloc.ContainerId] {
-				if !yield(alloc) {
-					return
-				}
-			}
+		if possibleCombo.Size() < minSize {
+			bestCombo = &possibleCombo
+			minSize = possibleCombo.Size()
 		}
 	}
+
+	if bestCombo == nil {
+		return nil
+	}
+
+	chosenContainerIds := map[int]bool{}
+	for containerId := range bestCombo.ContainerIds() {
+		chosenContainerIds[containerId] = true
+	}
+
+	assignments := []ContainerAllocation{}
+	for _, allocation := range allocations {
+		if chosenContainerIds[allocation.ContainerId] {
+			assignments = append(assignments, allocation)
+		}
+	}
+
+	return assignments
 }
 
 type allocationGroup struct {
