@@ -23,10 +23,21 @@ type Container struct {
 	IsDeleted bool   `json:"isDeleted"`
 }
 
+type CardDepositAmount struct {
+	ContainerId   int    `json:"containerId"`
+	ContainerName string `json:"containerName"`
+	cards.CardAmount
+}
+
+type CardDepositPreview struct {
+	ScryfallId uuid.UUID
+	Amount     int
+}
+
 type CardDeposit struct {
-	ContainerId int
-	ScryfallId  uuid.UUID
-	Amount      int
+	ContainerId   int
+	ContainerName string
+	CardDepositPreview
 }
 
 type CardRequest struct {
@@ -49,7 +60,7 @@ func (allocation ContainerAllocation) Remaining() int {
 	return allocation.MaxCapacity - allocation.Used
 }
 
-func GetCardAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]cards.CardAmount, error) {
+func GetCardAmounts(fullCards []cards.Card, deposits []CardDepositPreview) ([]cards.CardAmount, error) {
 	amounts := make([]cards.CardAmount, len(deposits))
 	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
 
@@ -68,15 +79,38 @@ func GetCardAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]cards.Car
 		}
 	}
 
-	slices.SortFunc(amounts, compareCardAmounts)
+	slices.SortFunc(amounts, func(a, b cards.CardAmount) int {
+		return cmp.Compare(a.Amount, b.Amount)
+	})
+
 	return amounts, nil
 }
 
-func compareCardAmounts(a, b cards.CardAmount) int {
-	return cmp.Compare(a.Amount, b.Amount)
+func GetCardDepositAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]CardDepositAmount, error) {
+	depositAmounts := make([]CardDepositAmount, len(deposits))
+	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
+
+	for _, card := range fullCards {
+		cardMap[card.ScryfallId] = card
+	}
+
+	for i, deposit := range deposits {
+		card, ok := cardMap[deposit.ScryfallId]
+		if !ok {
+			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
+		}
+		amount := cards.CardAmount{Card: card, Amount: deposit.Amount}
+		depositAmounts[i] = CardDepositAmount{CardAmount: amount, ContainerId: deposit.ContainerId, ContainerName: deposit.ContainerName}
+	}
+
+	slices.SortFunc(depositAmounts, func(a, b CardDepositAmount) int {
+		return cmp.Compare(a.Amount, b.Amount)
+	})
+
+	return depositAmounts, nil
 }
 
-func GetScryfallIds(deposits []CardDeposit) []cards.ScryfallIdentifier {
+func GetScryfallIds(deposits []CardDepositPreview) []cards.ScryfallIdentifier {
 	uniqIds := map[uuid.UUID]any{}
 
 	for _, deposit := range deposits {

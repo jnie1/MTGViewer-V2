@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
 )
@@ -52,6 +53,11 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
+	if len(deposits) == 0 {
+		c.JSON(http.StatusOK, []cards.CardAmount{})
+		return
+	}
+
 	scryfallIds := containers.GetScryfallIds(deposits)
 	cards, err := cards.FetchCollection(scryfallIds)
 
@@ -61,9 +67,43 @@ func fetchContainerCards(c *gin.Context) {
 	}
 
 	cardAmounts, err := containers.GetCardAmounts(cards, deposits)
-
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, cardAmounts)
+}
+
+func searchCards(c *gin.Context) {
+	cardQuery := c.Query("q")
+
+	cardPage, err := cards.SearchCards(cardQuery, 1)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(cardPage.Cards) == 0 {
+		c.JSON(http.StatusOK, []containers.CardDepositAmount{})
+		return
+	}
+
+	cardIds := make(uuid.UUIDs, len(cardPage.Cards))
+	for i, card := range cardPage.Cards {
+		cardIds[i] = card.ScryfallId
+	}
+
+	deposits, err := containers.SearchCards(cardIds)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	cardAmounts, err := containers.GetCardDepositAmounts(cardPage.Cards, deposits)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
 	c.JSON(http.StatusOK, cardAmounts)
@@ -74,4 +114,5 @@ func AddContainerRoutes(router *gin.Engine) {
 	group.GET("", fetchContainerPreviews)
 	group.GET("/:container", fetchContainer)
 	group.GET("/:container/cards", fetchContainerCards)
+	group.GET("/cards", searchCards)
 }

@@ -14,6 +14,11 @@ import (
 func fetchCollection(c *gin.Context) {
 	ids := c.QueryArray("cards")
 
+	if len(ids) == 0 {
+		c.JSON(http.StatusOK, []cards.Card{})
+		return
+	}
+
 	scryfallIds, err := cards.ParseScryfallIds(ids)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)

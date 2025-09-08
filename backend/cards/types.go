@@ -32,6 +32,13 @@ type CardAmount struct {
 	Amount int `json:"amount"`
 }
 
+type SearchCardPage struct {
+	TotalCards int
+	Cards      []Card
+	Page       int
+	HasMore    bool
+}
+
 type scryfallImages struct {
 	Small  string `json:"small,omitempty"`
 	Normal string `json:"normal,omitempty"`
@@ -51,6 +58,12 @@ type scryfallCard struct {
 	Images          scryfallImages `json:"image_uris"`
 	Type            string         `json:"type_line"`
 	Rarity          string         `json:"rarity"`
+}
+
+type searchResult struct {
+	TotalCards int            `json:"total_cards"`
+	HasMore    bool           `json:"has_more"`
+	Cards      []scryfallCard `json:"data"`
 }
 
 type collectionResult struct {
