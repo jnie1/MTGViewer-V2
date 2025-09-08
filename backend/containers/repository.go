@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/database"
+	"github.com/lib/pq"
 )
 
 func GetAllocations() ([]ContainerAllocation, error) {
@@ -87,6 +89,34 @@ func GetDeposits(containerId int) ([]CardDeposit, error) {
 		SELECT container_id, scryfall_id, amount
 		FROM card_deposits
 		WHERE container_id = $1`, containerId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+
+	deposits := []CardDeposit{}
+
+	for row.Next() {
+		deposit := CardDeposit{}
+		if err := row.Scan(&deposit.ContainerId, &deposit.ScryfallId, &deposit.Amount); err != nil {
+			return nil, err
+		}
+
+		deposits = append(deposits, deposit)
+	}
+
+	return deposits, nil
+}
+
+func SearchCards(scryfallIds uuid.UUIDs) ([]CardDeposit, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT container_id, scryfall_id, amount
+		FROM card_deposits
+		WHERE scryfall_id = ANY($1);`, pq.Array(scryfallIds))
 
 	if err != nil {
 		return nil, err
