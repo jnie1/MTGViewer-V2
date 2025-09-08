@@ -53,6 +53,11 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
+	if len(deposits) == 0 {
+		c.JSON(http.StatusOK, []cards.CardAmount{})
+		return
+	}
+
 	scryfallIds := containers.GetScryfallIds(deposits)
 	cards, err := cards.FetchCollection(scryfallIds)
 
@@ -64,6 +69,7 @@ func fetchContainerCards(c *gin.Context) {
 	cardAmounts, err := containers.GetCardAmounts(cards, deposits)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
 	c.JSON(http.StatusOK, cardAmounts)
@@ -75,6 +81,11 @@ func searchCards(c *gin.Context) {
 	cardPage, err := cards.SearchCards(cardQuery, 1)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(cardPage.Cards) == 0 {
+		c.JSON(http.StatusOK, []containers.CardDepositAmount{})
 		return
 	}
 
@@ -92,6 +103,7 @@ func searchCards(c *gin.Context) {
 	cardAmounts, err := containers.GetCardDepositAmounts(cardPage.Cards, deposits)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
 	c.JSON(http.StatusOK, cardAmounts)
