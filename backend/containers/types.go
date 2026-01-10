@@ -80,7 +80,11 @@ func GetCardAmounts(fullCards []cards.Card, deposits []CardDepositPreview) ([]ca
 	}
 
 	slices.SortFunc(amounts, func(a, b cards.CardAmount) int {
-		return cmp.Compare(a.Amount, b.Amount)
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare == 0 {
+			return strings.Compare(a.Set, b.Set)
+		}
+		return nameCompare
 	})
 
 	return amounts, nil
