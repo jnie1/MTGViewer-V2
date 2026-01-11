@@ -42,7 +42,8 @@ func GetContainers() ([]ContainerPreview, error) {
 
 	row, err := db.Query(`
 		SELECT container_id, container_name, capacity
-		FROM containers;`)
+		FROM containers
+		ORDER BY container_name;`)
 
 	if err != nil {
 		return nil, err

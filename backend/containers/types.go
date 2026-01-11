@@ -1,7 +1,6 @@
 package containers
 
 import (
-	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -108,7 +107,11 @@ func GetCardDepositAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]Ca
 	}
 
 	slices.SortFunc(depositAmounts, func(a, b CardDepositAmount) int {
-		return cmp.Compare(a.Amount, b.Amount)
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare == 0 {
+			return strings.Compare(a.Set, b.Set)
+		}
+		return nameCompare
 	})
 
 	return depositAmounts, nil
