@@ -16,7 +16,8 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 	row, err := db.Query(`
 		SELECT group_id, time
 		FROM transactions
-		GROUP BY group_id, time;`)
+		GROUP BY group_id, time
+		ORDER BY time DESC;`)
 
 	if err != nil {
 		return nil, err

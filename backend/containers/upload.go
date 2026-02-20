@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"path/filepath"
 	"regexp"
-	"slices"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -16,13 +16,13 @@ import (
 )
 
 func ParseCardRequests(formFile *multipart.FileHeader) ([]CardRequest, error) {
-	contentType := formFile.Header.Values("content-type")
+	fileExtension := filepath.Ext(formFile.Filename)
 
-	if slices.Contains(contentType, "text/plain") {
+	if fileExtension == ".txt" {
 		return parseTextFile(formFile)
 	}
 
-	if slices.Contains(contentType, "text/csv") {
+	if fileExtension == ".csv" {
 		return parseCsvFile(formFile)
 	}
 
