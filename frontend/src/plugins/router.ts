@@ -34,6 +34,12 @@ const router = createRouter({
       name: 'logs',
       component: ChangeView,
     },
+    {
+      path: '/transaction/:groupId',
+      name: 'TransactionDetail',
+      component: () => import('../views/Transaction.vue'),
+      props: true,
+    }
   ],
 });
 
