@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import useFetch from '@/fetch/useFetch';
-import type { ITransaction } from '@/components/types';
+import type { ILogs } from '@/components/types';
 import { useRouter } from 'vue-router';
 
-interface ITransactionProps {
-  transaction?: ITransaction;
+interface ILogsProps {
+  logs?: ILogs[];
 }
 
 //assuming i get the right transaction
-const transaction = defineProps<ITransactionProps>();
-const { data: listOfLogs, error } = useFetch<ITransaction[]>('/logs');
+const transaction = defineProps<ILogsProps>();
+const { data: listOfLogs, error } = useFetch<ILogs[]>('/logs');
 const router = useRouter();
 const handleGroupIdClick = (groupId: string) => {
   console.log('Clicked groupId:', groupId);
