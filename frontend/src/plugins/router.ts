@@ -3,6 +3,7 @@ import HomeView from '@/views/HomeView.vue';
 import SignupView from '@/views/SignupView.vue';
 import CardView from '@/views/CardView.vue';
 import ChangeView from '@/views/ChangeView.vue';
+import TransactionDetail from '@/views/Transaction.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -37,7 +38,7 @@ const router = createRouter({
     {
       path: '/transaction/:groupId',
       name: 'TransactionDetail',
-      component: () => import('../views/Transaction.vue'),
+      component: TransactionDetail,
       props: true,
     }
   ],
