@@ -8,6 +8,7 @@ interface ILogsProps {
 
 //assuming i get the right transaction
 const { logs } = defineProps<ILogsProps>();
+
 </script>
 
 <template>
@@ -15,11 +16,8 @@ const { logs } = defineProps<ILogsProps>();
     <v-row>
       <v-col>
         <router-link :to="{ name: 'TransactionDetail', params: { groupId: log.groupId } }" class="clickable">
-          {{ log.groupId }}
+          {{ new Date(log.time).toLocaleString() }}
         </router-link>
-      </v-col>
-      <v-col>
-        {{ log.time }}
       </v-col>
     </v-row>
   </div>
