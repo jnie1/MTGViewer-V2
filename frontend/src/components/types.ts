@@ -1,4 +1,5 @@
 import {ICard} from '@/cards/types';
+
 export interface ILogs {
   groupId?: number;
   time?: string;
@@ -11,8 +12,13 @@ export interface IContainer {
 
 export interface ITransactionProps {
   groupId?: number;
-  fromContainer?: number;
+  fromContainer?: IContainer;
   toContainer?: IContainer;
   card?: ICard;
   quantity?: number;
+}
+
+export interface ITransactionDetailProps {
+  boxId?: number;
+  transactions?: ITransactionProps;
 }
