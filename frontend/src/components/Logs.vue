@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import useFetch from '@/fetch/useFetch';
 import type { ILogs } from '@/components/types';
 import { useRouter } from 'vue-router';
 
 interface ILogsProps {
-  logs?: ILogs[];
+  logs: ILogs[];
 }
 
 //assuming i get the right transaction
-const transaction = defineProps<ILogsProps>();
-const { data: listOfLogs, error } = useFetch<ILogs[]>('/logs');
+const { logs } = defineProps<ILogsProps>();
 const router = useRouter();
+
 const handleGroupIdClick = (groupId: string) => {
   console.log('Clicked groupId:', groupId);
   // You can add more logic here, such as navigating to a detailed view of the logs for this groupId
@@ -23,8 +21,8 @@ const handleGroupIdClick = (groupId: string) => {
 </script>
 
 <template>
-  <tr v-if="listOfLogs && listOfLogs?.length > 0">
-    <v-virtual-scroll :height="500" :items="listOfLogs">
+  <tr v-if="logs && logs?.length > 0">
+    <v-virtual-scroll :height="500" :items="logs">
       <template v-slot:default="{ item }">
   <tr>
     <td class="item"><a class="clickable" @click="handleGroupIdClick(item.groupId)">{{ item.groupId }}</a></td>

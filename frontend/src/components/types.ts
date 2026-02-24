@@ -1,8 +1,8 @@
-import {ICard} from '@/cards/types';
+import { type ICard } from '@/cards/types';
 
 export interface ILogs {
-  groupId?: number;
-  time?: string;
+  groupId: string;
+  time: string;
 }
 
 export interface IContainer {
@@ -10,15 +10,10 @@ export interface IContainer {
   name: string;
 }
 
-export interface ITransactionProps {
-  groupId?: number;
+export interface ITransactionChange {
+  groupId: string;
   fromContainer?: IContainer;
   toContainer?: IContainer;
-  card?: ICard;
-  quantity?: number;
-}
-
-export interface ITransactionDetailProps {
-  boxId?: number;
-  transactions?: ITransactionProps;
+  card: ICard;
+  quantity: number;
 }

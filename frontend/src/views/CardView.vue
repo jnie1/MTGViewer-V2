@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import CardImage from '@/cards/CardImage.vue';
 import type { ICard } from '@/cards/types';
-import useFetch from '@/fetch/useFetch';
+import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
+
+defineOptions({
+  async beforeRouteEnter(to, _, next) {
+    await loadRouteData('/cards/random', to.meta, next);
+  }
+})
+
 const capitalize = (str: string | null | undefined) => {
   if (!str) return '';
   return str[0].toUpperCase() + str.slice(1);
 };
 
-const { data: card } = useFetch<ICard>('/cards/scryfall');
+const card = useRouteData<ICard>();
 </script>
 
 <template>
