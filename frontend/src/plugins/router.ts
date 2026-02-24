@@ -39,7 +39,6 @@ const router = createRouter({
       path: '/transaction/:groupId',
       name: 'TransactionDetail',
       component: TransactionDetail,
-      props: true,
     }
   ],
 });
