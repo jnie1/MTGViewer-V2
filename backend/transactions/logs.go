@@ -29,7 +29,7 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 	for row.Next() {
 		log := UpdateLogs{}
 
-		if err := row.Scan(&log.GroupId, &log.Time, &log.Quantity); err != nil {
+		if err := row.Scan(&log.GroupId, &log.Time, &log.Amount); err != nil {
 			return nil, err
 		}
 
