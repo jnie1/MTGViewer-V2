@@ -6,19 +6,19 @@ import { RouterLink } from 'vue-router';
   <nav>
     <ul>
       <li>
-        <RouterLink to="/">Home</RouterLink>
+        <router-link to="/">Home</router-link>
       </li>
       <li>
-        <RouterLink to="/about">About</RouterLink>
+        <router-link to="/about">About</router-link>
       </li>
       <li>
-        <RouterLink to="/card">Card</RouterLink>
+        <router-link to="/card">Card</router-link>
       </li>
       <li>
-        <RouterLink to="/signup">SignUp</RouterLink>
+        <router-link to="/signup">SignUp</router-link>
       </li>
       <li>
-        <RouterLink to="/logs">Logs</RouterLink>
+        <router-link to="/logs">Logs</router-link>
       </li>
     </ul>
   </nav>
