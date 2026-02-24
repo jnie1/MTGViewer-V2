@@ -1,6 +1,7 @@
-import { useRoute, type NavigationGuard, type NavigationGuardNext, type RouteLocation, type RouteMeta } from "vue-router";
-import fetchApi from "./api";
-import ResponseError from "./ResponeError";
+import { useRoute } from 'vue-router';
+import type { NavigationGuardNext, RouteMeta } from 'vue-router';
+import fetchApi from './api';
+import ResponseError from './ResponeError';
 
 export async function loadRouteData(path: string, meta: RouteMeta, next: NavigationGuardNext) {
   try {
@@ -22,4 +23,3 @@ export function useRouteData<T>() {
   const route = useRoute();
   return route.meta._data as T;
 }
-

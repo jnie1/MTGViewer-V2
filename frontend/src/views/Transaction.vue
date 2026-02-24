@@ -5,13 +5,12 @@ import type { ITransactionChange } from '@/components/types';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
-    const groupId = to.params.groupId;
+    const { groupId } = to.params;
     await loadRouteData(`logs/${groupId}`, to.meta, next);
   }
 })
 
 const changes = useRouteData<ITransactionChange[]>()
-
 </script>
 <template>
   <main>

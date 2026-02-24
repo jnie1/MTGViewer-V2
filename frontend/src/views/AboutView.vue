@@ -14,7 +14,7 @@ const card = useRouteData<ICard>();
 <template>
   <main>
     <div class="about">
-      <h1>This is an about page {{ card?.name }}</h1>
+      <h1>This is an about page {{ card.name }}</h1>
     </div>
   </main>
 </template>

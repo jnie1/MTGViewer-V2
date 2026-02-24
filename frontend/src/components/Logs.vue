@@ -21,7 +21,7 @@ const handleGroupIdClick = (groupId: string) => {
 </script>
 
 <template>
-  <tr v-if="logs && logs?.length > 0">
+  <tr v-if="logs.length > 0">
     <v-virtual-scroll :height="500" :items="logs">
       <template v-slot:default="{ item }">
   <tr>
