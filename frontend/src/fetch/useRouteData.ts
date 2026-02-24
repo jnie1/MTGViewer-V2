@@ -5,8 +5,7 @@ import ResponseError from './ResponeError';
 
 export async function loadRouteData(path: string, meta: RouteMeta, next: NavigationGuardNext) {
   try {
-    const card = await fetchApi(path);
-    meta._data = card;
+    meta._data = await fetchApi(path);
     next();
   } catch (e) {
     if (e instanceof ResponseError) {
