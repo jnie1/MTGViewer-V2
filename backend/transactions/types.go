@@ -11,8 +11,9 @@ import (
 )
 
 type UpdateLogs struct {
-	GroupId uuid.UUID `json:"groupId"`
-	Time    time.Time `json:"time"`
+	GroupId  uuid.UUID `json:"groupId"`
+	Time     time.Time `json:"time"`
+	Quantity int       `json:"amount"`
 }
 
 type TransactionLogs struct {

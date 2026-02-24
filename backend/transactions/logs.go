@@ -14,7 +14,7 @@ import (
 func FetchUpdateLogs() ([]UpdateLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT group_id, time
+		SELECT group_id, time, SUM(amount) AS amount
 		FROM transactions
 		GROUP BY group_id, time
 		ORDER BY time DESC;`)
@@ -29,7 +29,7 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 	for row.Next() {
 		log := UpdateLogs{}
 
-		if err := row.Scan(&log.GroupId, &log.Time); err != nil {
+		if err := row.Scan(&log.GroupId, &log.Time, &log.Quantity); err != nil {
 			return nil, err
 		}
 
