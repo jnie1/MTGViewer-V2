@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ILogs } from '@/components/types';
+import type { ILogs } from './types';
 import { useRouter } from 'vue-router';
 
 interface ILogsProps {
@@ -8,30 +8,21 @@ interface ILogsProps {
 
 //assuming i get the right transaction
 const { logs } = defineProps<ILogsProps>();
-const router = useRouter();
-
-const handleGroupIdClick = (groupId: string) => {
-  console.log('Clicked groupId:', groupId);
-  // You can add more logic here, such as navigating to a detailed view of the logs for this groupId
-  router.push({
-    name: 'TransactionDetail',
-    params: { groupId },
-  });
-};
 </script>
 
 <template>
-  <tr v-if="logs.length > 0">
-    <v-virtual-scroll :height="500" :items="logs">
-      <template v-slot:default="{ item }">
-  <tr>
-    <td class="item"><a class="clickable" @click="handleGroupIdClick(item.groupId)">{{ item.groupId }}</a></td>
-    <td class="item">{{ item.time }}</td>
-  </tr>
-</template>
-</v-virtual-scroll>
-</tr>
-<p v-else>No Transactions here</p>
+  <div v-for="log in logs" :key="log.groupId">
+    <v-row>
+      <v-col>
+        <router-link :to="{ name: 'TransactionDetail', params: { groupId: log.groupId } }" class="clickable">
+          {{ log.groupId }}
+        </router-link>
+      </v-col>
+      <v-col>
+        {{ log.time }}
+      </v-col>
+    </v-row>
+  </div>
 </template>
 
 <style lang="css" scoped>

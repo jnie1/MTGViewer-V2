@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
-import Logs from '../components/Logs.vue';
-import type { ILogs } from '@/components/types';
-
+import type { ILogs } from '@/transaction/types';
+import Logs from '@/transaction/Logs.vue';
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     await loadRouteData('/logs', to.meta, next);

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
-import TransactionDetail from '../components/TransactionDetail.vue';
 import type { ITransactionChange } from '@/components/types';
-
+import TransactionDetail from '@/transaction/TransactionDetail.vue';
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     const { groupId } = to.params;
