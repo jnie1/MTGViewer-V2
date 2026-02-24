@@ -153,7 +153,6 @@ func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
 		return Card{}, err
 	}
 	if result.CardFaces != nil && len(result.CardFaces) > 0 {
-		println("card has faces")
 		result.Images = result.CardFaces[0].Images
 	}
 	return toCard(result), nil
