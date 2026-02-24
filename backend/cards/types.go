@@ -45,19 +45,27 @@ type scryfallImages struct {
 	Large  string `json:"large,omitempty"`
 }
 
+type scryfallCardFace struct {
+	Name     string         `json:"name"`
+	ManaCost string         `json:"mana_cost,omitempty"`
+	Type     string         `json:"type_line"`
+	Images   scryfallImages `json:"image_uris"`
+}
+
 type scryfallCard struct {
-	ScryfallId      uuid.UUID      `json:"id"`
-	ManaCost        string         `json:"mana_cost,omitempty"`
-	Name            string         `json:"name"`
-	SetName         string         `json:"set_name"`
-	Set             string         `json:"set"`
-	CollectorNumber string         `json:"collector_number"`
-	MultiverseIds   []int          `json:"multiverse_ids,omitempty"`
-	Power           string         `json:"power,omitempty"`
-	Toughness       string         `json:"toughness,omitempty"`
-	Images          scryfallImages `json:"image_uris"`
-	Type            string         `json:"type_line"`
-	Rarity          string         `json:"rarity"`
+	ScryfallId      uuid.UUID          `json:"id"`
+	ManaCost        string             `json:"mana_cost,omitempty"`
+	Name            string             `json:"name"`
+	SetName         string             `json:"set_name"`
+	Set             string             `json:"set"`
+	CollectorNumber string             `json:"collector_number"`
+	MultiverseIds   []int              `json:"multiverse_ids,omitempty"`
+	Power           string             `json:"power,omitempty"`
+	Toughness       string             `json:"toughness,omitempty"`
+	Images          scryfallImages     `json:"image_uris"`
+	CardFaces       []scryfallCardFace `json:"card_faces,omitempty"`
+	Type            string             `json:"type_line"`
+	Rarity          string             `json:"rarity"`
 }
 
 type searchResult struct {
@@ -100,6 +108,9 @@ func toCard(card scryfallCard) Card {
 func toCards(cards []scryfallCard) []Card {
 	result := make([]Card, len(cards))
 	for i, card := range cards {
+		if card.CardFaces != nil && len(card.CardFaces) > 0 {
+			card.Images = card.CardFaces[0].Images
+		}
 		result[i] = toCard(card)
 	}
 	return result
