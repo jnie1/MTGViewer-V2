@@ -1,4 +1,4 @@
-//go:build !dev
+//go:build dev
 
 package main
 
@@ -10,16 +10,14 @@ import (
 	"github.com/jnie1/MTGViewer-V2/auth"
 	"github.com/jnie1/MTGViewer-V2/database"
 	"github.com/jnie1/MTGViewer-V2/routes"
+	"github.com/joho/godotenv"
 )
 
-// Handlers
-func greetHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Hello, welcome to the Go server!",
-	})
-}
-
 func main() {
+	// Loading environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	if err := database.Open(); err != nil {
 		log.Fatal("Error opening database: ", err)
