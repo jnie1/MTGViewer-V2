@@ -1,4 +1,4 @@
-import ResponseError from './ResponeError';
+import ResponseError from './ResponseError';
 
 async function fetchApi<T = undefined>(path: string, init?: RequestInit): Promise<T> {
   const basePath = import.meta.env.VITE_API_URL;

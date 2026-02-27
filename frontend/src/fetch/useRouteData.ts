@@ -1,7 +1,7 @@
 import { useRoute } from 'vue-router';
 import type { NavigationGuardNext, RouteMeta } from 'vue-router';
 import fetchApi from './api';
-import ResponseError from './ResponeError';
+import ResponseError from './ResponseError';
 
 export async function loadRouteData(path: string, meta: RouteMeta, next: NavigationGuardNext) {
   try {
