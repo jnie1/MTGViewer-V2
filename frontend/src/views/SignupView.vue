@@ -60,11 +60,11 @@ const handleSubmit = async () => {
   <main>
     <v-sheet class="mx-auto" width="300">
       <v-form v-model="valid" validate-on="submit" fail-fast @submit.prevent="handleSubmit">
-        <v-text-field label="User Name" v-model="name" required :rules="nameRules" />
-        <v-text-field label="Email" v-model="email" required type="email" :rules="emailRules" />
+        <v-text-field v-model="name" label="User Name" required :rules="nameRules" />
+        <v-text-field v-model="email" label="Email" required type="email" :rules="emailRules" />
         <v-text-field
-          label="Password"
           v-model="password"
+          label="Password"
           required
           type="password"
           :rules="passwordRules"
