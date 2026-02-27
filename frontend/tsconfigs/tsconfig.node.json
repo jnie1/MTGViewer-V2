@@ -3,6 +3,7 @@
   "include": [
     "../vite.config.*",
     "../vitest.config.*",
+    "../eslint.config.*"
   ],
   "compilerOptions": {
     "composite": true,
