@@ -7,8 +7,8 @@ import { capitalize } from '@/utils';
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     await loadRouteData('/cards/random', to.meta, next);
-  }
-})
+  },
+});
 
 const card = useRouteData<ICard>();
 </script>
