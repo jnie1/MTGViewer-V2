@@ -19,6 +19,7 @@ export default defineConfigWithVueTs([
     rules: {
       'vue/component-name-in-template-casing': ['error', 'kebab-case'],
       'vue/require-default-prop': ['off'],
+      'vue/component-api-style': ['error', ['script-setup']],
     },
   },
   vueTsConfigs.strict,
