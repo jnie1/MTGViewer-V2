@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import type { ICard } from '@/cards/types';
-import useFetch from '@/fetch/useFetch';
+import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 
-const { data: card } = useFetch<ICard>('/cards/scryfall');
+defineOptions({
+  async beforeRouteEnter(to, _, next) {
+    await loadRouteData('/cards/random', to.meta, next);
+  }
+})
+
+const card = useRouteData<ICard>();
 </script>
 
 <template>
   <main>
     <div class="about">
-      <h1>This is an about page {{ card?.name }}</h1>
+      <h1>This is an about page {{ card.name }}</h1>
     </div>
   </main>
 </template>
