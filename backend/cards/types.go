@@ -110,5 +110,8 @@ func toCard(card scryfallCard) Card {
 
 func toCards(cards []scryfallCard) []Card {
 	result := make([]Card, len(cards))
+	for i, card := range cards {
+		result[i] = toCard(card)
+	}
 	return result
 }
