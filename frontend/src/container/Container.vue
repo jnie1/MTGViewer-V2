@@ -10,7 +10,7 @@ const { cards } = defineProps<ICardProps>();
 </script>
 
 <template>
-  <v-slide-group showArrows>
+  <v-slide-group class="slide-content" showArrows>
     <template #next>
       <v-icon icon="$right" size="x-large" />
     </template>
@@ -23,4 +23,10 @@ const { cards } = defineProps<ICardProps>();
   </v-slide-group>
 </template>
 
-<style lang="css" scoped></style>
+<style lang="css" scoped>
+.slide-content {
+  position: absolute;
+  left: 1em;
+  right: 1em
+}
+</style>

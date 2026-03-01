@@ -86,7 +86,7 @@ type collectionBatchResult struct {
 func toCard(card scryfallCard) Card {
 	images := card.Images
 	if card.CardFaces != nil && len(card.CardFaces) > 0 {
-		card.Images = card.CardFaces[0].Images
+		images = card.CardFaces[0].Images
 	}
 	return Card{
 		card.ScryfallId,
@@ -110,5 +110,8 @@ func toCard(card scryfallCard) Card {
 
 func toCards(cards []scryfallCard) []Card {
 	result := make([]Card, len(cards))
+	for i, card := range cards {
+		result[i] = toCard(card)
+	}
 	return result
 }
