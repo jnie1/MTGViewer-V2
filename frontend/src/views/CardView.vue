@@ -15,7 +15,7 @@ const card = useRouteData<ICard>();
 
 <template>
   <main class="card-view">
-    <card-image :card="card" />
+    <card-image :card />
     <v-card width="300" min-height="100" density="comfortable" :loading="!card">
       <v-card-item>
         <v-card-title>{{ card.name }}</v-card-title>

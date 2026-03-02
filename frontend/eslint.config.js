@@ -16,10 +16,12 @@ export default defineConfigWithVueTs([
 
   ...pluginVue.configs['flat/recommended-error'],
   {
+    name: 'vue/rule-overrides',
     rules: {
+      'vue/v-bind-style': ['error', 'shorthand', { sameNameShorthand: 'always' }],
       'vue/component-name-in-template-casing': ['error', 'kebab-case'],
-      'vue/require-default-prop': ['off'],
       'vue/component-api-style': ['error', ['script-setup']],
+      'vue/require-default-prop': ['off'],
     },
   },
   vueTsConfigs.strict,
