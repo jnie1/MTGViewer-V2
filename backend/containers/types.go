@@ -64,6 +64,28 @@ func CompareRemaining(a, b ContainerAllocation) int {
 	return cmp.Compare(a.Remaining(), b.Remaining())
 }
 
+func MergeCardRequests(requests []CardRequest) []CardRequest {
+	cardCounter := map[uuid.UUID]int{}
+	for _, request := range requests {
+		cardCounter[request.ScryfallId] = cardCounter[request.ScryfallId] + request.Delta
+	}
+
+	if len(cardCounter) == len(requests) {
+		// no requests were merged, so just use original array
+		return requests
+	}
+
+	mergedRequests := make([]CardRequest, len(cardCounter))
+	i := 0
+
+	for cardId, delta := range cardCounter {
+		mergedRequests[i] = CardRequest{cardId, delta}
+		i += 1
+	}
+
+	return mergedRequests
+}
+
 func GetCardAmounts(fullCards []cards.Card, deposits []CardDepositPreview) ([]cards.CardAmount, error) {
 	amounts := make([]cards.CardAmount, len(deposits))
 	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
