@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"strings"
@@ -57,6 +58,10 @@ type ContainerAllocation struct {
 
 func (allocation ContainerAllocation) Remaining() int {
 	return allocation.MaxCapacity - allocation.Used
+}
+
+func CompareRemaining(a, b ContainerAllocation) int {
+	return cmp.Compare(a.Remaining(), b.Remaining())
 }
 
 func GetCardAmounts(fullCards []cards.Card, deposits []CardDepositPreview) ([]cards.CardAmount, error) {

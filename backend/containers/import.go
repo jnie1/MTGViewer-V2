@@ -7,8 +7,6 @@ import (
 	"slices"
 )
 
-// TODO: get container removals
-
 func GetContainerChanges(requests []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
 	additions := []CardRequest{}
 	for _, request := range requests {
@@ -17,15 +15,6 @@ func GetContainerChanges(requests []CardRequest, allocations []ContainerAllocati
 		}
 	}
 
-	addChanges, err := getContainerAdditions(additions, allocations)
-	if err != nil {
-		return nil, err
-	}
-
-	return addChanges, nil
-}
-
-func getContainerAdditions(additions []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
 	if len(additions) == 0 {
 		return []ContainerChanges{}, nil
 	}
@@ -43,7 +32,7 @@ func getContainerAdditions(additions []CardRequest, allocations []ContainerAlloc
 	}
 
 	if len(fitAllAdds) > 0 {
-		targetContainer := slices.MinFunc(fitAllAdds, compareRemainingAllocations)
+		targetContainer := slices.MinFunc(fitAllAdds, CompareRemaining)
 		fitAllChanges := ContainerChanges{targetContainer.ContainerId, additions}
 		return []ContainerChanges{fitAllChanges}, nil
 	}
@@ -61,10 +50,6 @@ func getContainerAdditions(additions []CardRequest, allocations []ContainerAlloc
 	allChanges := assignContainerChanges(additions, additionAssignments)
 
 	return allChanges, nil
-}
-
-func compareRemainingAllocations(a, b ContainerAllocation) int {
-	return cmp.Compare(a.Remaining(), b.Remaining())
 }
 
 func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) []ContainerAllocation {
