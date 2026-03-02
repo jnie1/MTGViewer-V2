@@ -13,7 +13,7 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT c.container_id, COALESCE(SUM(cd.amount), 0), c.capacity
+		SELECT c.container_id, COALESCE(SUM(cd.amount), 0) AS used, c.capacity
 		FROM containers c
 		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
 		GROUP BY c.container_id`)
@@ -67,15 +67,12 @@ func GetContainer(containerId int) (Container, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
-		SELECT c2.container_name, c1.used, c2.capacity, c2.deletion_mark
-		FROM (
-			SELECT c.container_id, COALESCE(SUM(cd.amount), 0) as used
-			FROM containers c
-			LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
-			WHERE c.container_id = $1
-			GROUP BY c.container_id
-		) AS c1
-		JOIN containers AS c2 ON c1.container_id = c2.container_id;`, containerId)
+		SELECT c.container_name, COALESCE(SUM(cd.amount), 0) AS used, c.capacity, c.deletion_mark
+		FROM containers c
+		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
+		WHERE c.container_id = $1
+		GROUP BY c.container_id
+		LIMIT 1;`, containerId)
 
 	container := Container{}
 	err := row.Scan(&container.Name, &container.Used, &container.Capacity, &container.IsDeleted)
