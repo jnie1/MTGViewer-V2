@@ -64,7 +64,7 @@ func CompareRemaining(a, b ContainerAllocation) int {
 	return cmp.Compare(a.Remaining(), b.Remaining())
 }
 
-func MergeCardRequests(requests []CardRequest) []CardRequest {
+func MergeCardRequests(requests []CardRequest) ([]CardRequest, bool) {
 	cardCounter := map[uuid.UUID]int{}
 	for _, request := range requests {
 		cardCounter[request.ScryfallId] = cardCounter[request.ScryfallId] + request.Delta
@@ -72,7 +72,7 @@ func MergeCardRequests(requests []CardRequest) []CardRequest {
 
 	if len(cardCounter) == len(requests) {
 		// no requests were merged, so just use original array
-		return requests
+		return requests, false
 	}
 
 	mergedRequests := make([]CardRequest, len(cardCounter))
@@ -83,7 +83,31 @@ func MergeCardRequests(requests []CardRequest) []CardRequest {
 		i += 1
 	}
 
-	return mergedRequests
+	return mergedRequests, true
+}
+
+func MergeContainerChanges(changes []ContainerChanges) ([]ContainerChanges, bool) {
+	requestsById := map[int][]CardRequest{}
+	for _, change := range changes {
+		requestsById[change.ContainerId] = append(requestsById[change.ContainerId], change.Requests...)
+	}
+
+	hasChanges := false
+	mergedChanges := []ContainerChanges{}
+
+	for containerId, requests := range requestsById {
+		mergedRequests, requestsChanged := MergeCardRequests(requests)
+		if requestsChanged {
+			hasChanges = true
+		}
+		mergedChanges = append(mergedChanges, ContainerChanges{containerId, mergedRequests})
+	}
+
+	if !hasChanges && len(mergedChanges) == len(changes) {
+		return changes, false
+	}
+
+	return mergedChanges, true
 }
 
 func GetCardAmounts(fullCards []cards.Card, deposits []CardDepositPreview) ([]cards.CardAmount, error) {
