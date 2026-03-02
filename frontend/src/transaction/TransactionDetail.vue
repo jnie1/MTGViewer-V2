@@ -30,8 +30,13 @@ const { changes } = defineProps<ITransactionProps>();
         <v-col>{{ change.card.name }}</v-col>
         <v-col>{{ change.fromContainer?.name }}</v-col>
         <v-col>
-          <router-link :to="{ name: 'ContainerDetail', params: { containerId: change.toContainer?.containerId } }">{{
-            change.toContainer?.name }}</router-link>
+          <router-link
+            :to="{
+              name: 'ContainerDetail',
+              params: { containerId: change.toContainer?.containerId },
+            }"
+            >{{ change.toContainer?.name }}</router-link
+          >
         </v-col>
         <v-col>{{ change.quantity }}</v-col>
       </v-row>

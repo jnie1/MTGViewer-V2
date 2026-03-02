@@ -45,7 +45,7 @@ const router = createRouter({
       path: '/containers/:containerId',
       name: 'ContainerDetail',
       component: ContainerDetail,
-    }
+    },
   ],
 });
 

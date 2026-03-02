@@ -10,15 +10,15 @@ const { cards } = defineProps<ICardProps>();
 </script>
 
 <template>
-  <v-slide-group class="slide-content" showArrows>
+  <v-slide-group class="slide-content" show-arrows>
     <template #next>
       <v-icon icon="$right" size="x-large" />
     </template>
     <template #prev>
       <v-icon icon="$left" size="x-large" />
     </template>
-    <v-slide-group-item v-for="card in cards">
-      <card-image :card="card" />
+    <v-slide-group-item v-for="card in cards" :key="card.scryfallId">
+      <card-image :card />
     </v-slide-group-item>
   </v-slide-group>
 </template>
@@ -27,6 +27,6 @@ const { cards } = defineProps<ICardProps>();
 .slide-content {
   position: absolute;
   left: 1em;
-  right: 1em
+  right: 1em;
 }
 </style>
