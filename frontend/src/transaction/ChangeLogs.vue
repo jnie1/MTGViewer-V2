@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { ILogs } from './types';
-import { useRouter } from 'vue-router';
 
 interface ILogsProps {
   logs: ILogs[];
@@ -8,7 +7,6 @@ interface ILogsProps {
 
 //assuming i get the right transaction
 const { logs } = defineProps<ILogsProps>();
-
 </script>
 
 <template>
@@ -20,7 +18,10 @@ const { logs } = defineProps<ILogsProps>();
     <div v-for="log in logs" :key="log.groupId">
       <v-row>
         <v-col>
-          <router-link :to="{ name: 'TransactionDetail', params: { groupId: log.groupId } }" class="clickable">
+          <router-link
+            :to="{ name: 'TransactionDetail', params: { groupId: log.groupId } }"
+            class="clickable"
+          >
             {{ new Date(log.time).toLocaleString() }}
           </router-link>
         </v-col>
