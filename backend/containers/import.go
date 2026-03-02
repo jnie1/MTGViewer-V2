@@ -7,7 +7,7 @@ import (
 	"slices"
 )
 
-func GetContainerChanges(requests []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
+func GetContainerAdditions(requests []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
 	additions := []CardRequest{}
 	for _, request := range requests {
 		if request.Delta > 0 {

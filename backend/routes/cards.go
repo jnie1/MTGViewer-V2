@@ -86,7 +86,7 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	changes, err := containers.GetContainerChanges(requests, allocations)
+	changes, err := containers.GetContainerAdditions(requests, allocations)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
