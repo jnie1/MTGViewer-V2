@@ -7,15 +7,15 @@ import { capitalize } from '@/utils';
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     await loadRouteData('/cards/random', to.meta, next);
-  }
-})
+  },
+});
 
 const card = useRouteData<ICard>();
 </script>
 
 <template>
   <main class="card-view">
-    <card-image :card="card" />
+    <card-image :card />
     <v-card width="300" min-height="100" density="comfortable" :loading="!card">
       <v-card-item>
         <v-card-title>{{ card.name }}</v-card-title>
