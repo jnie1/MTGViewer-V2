@@ -3,8 +3,8 @@ class ResponseError extends Error {
   type: string;
   url: string;
 
-  constructor(response: Response) {
-    super('received an error response');
+  constructor(response: Response, message?: string) {
+    super(message ?? 'received an error response');
     this.status = response.status;
     this.type = response.type;
     this.url = response.url;
