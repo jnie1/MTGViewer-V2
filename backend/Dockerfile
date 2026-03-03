@@ -11,7 +11,7 @@ RUN go mod download
 COPY . .
 
 #Compile code
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o mtgviewer-v2-backend .
+RUN CGO_ENABLED=0 go build -tags=prod -ldflags="-s -w" -o mtgviewer-v2-backend .
 
 #Runtime stage
 FROM debian:bookworm-slim
