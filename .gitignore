@@ -1,6 +1,7 @@
 # Environment files
 .env
 .env.local
+.env.*
 .env.*.local
 
 # IDE/Editor files
