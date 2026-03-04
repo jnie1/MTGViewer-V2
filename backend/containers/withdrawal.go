@@ -6,10 +6,24 @@ import (
 	"github.com/google/uuid"
 )
 
-// have finer grain of control for removing cards
-// so can assume request will specify the container changes
-// all we have to do is just validate them
-// also handle concurrency cases, which maybe we just fail if that happens? or yagni
+func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
+	uniqIds := map[uuid.UUID]bool{}
+	for _, targets := range withdrawals {
+		for _, withdrawal := range targets {
+			uniqIds[withdrawal.ScryfallId] = true
+		}
+	}
+
+	scryfallIds := make(uuid.UUIDs, len(uniqIds))
+	i := 0
+
+	for id, _ := range uniqIds {
+		scryfallIds[i] = id
+		i += 1
+	}
+
+	return scryfallIds
+}
 
 type depositKey struct {
 	ContainerId int
@@ -28,10 +42,10 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 		amountsByContainers[key] = deposit.Amount
 	}
 
-	for containerId, withdrawalTargets := range withdrawals {
+	for containerId, targets := range withdrawals {
 		requests := []CardRequest{}
 
-		for _, withdrawal := range withdrawalTargets {
+		for _, withdrawal := range targets {
 			if withdrawal.Amount < 0 {
 				return nil, ErrNegativeWithdrawal
 			}

@@ -105,10 +105,43 @@ func importCards(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+func withdrawCards(c *gin.Context) {
+	var withdrawals containers.ContainerWithdrawals
+	if err := c.ShouldBind(&withdrawals); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	scryfallIds := containers.FindScryfallIds(withdrawals)
+	deposits, err := containers.SearchCards(scryfallIds)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+	}
+
+	changes, err := containers.ValidateCardWithdrawals(withdrawals, deposits)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if err := containers.UpdateDeposits(changes); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := transactions.LogCollectionChanges(changes); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
 func AddCardRoutes(router *gin.Engine) {
 	group := router.Group("/cards")
 	group.GET("/", fetchCollection)
 	group.GET("/:card", fetchCard)
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
+	group.POST("/withdrawal", withdrawCards)
 }
