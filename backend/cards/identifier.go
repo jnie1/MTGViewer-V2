@@ -28,22 +28,22 @@ type CardIdentifier interface {
 	Convert(card Card) (CardIdentifier, error)
 }
 
-func (id ScryfallIdentifier) Convert(card Card) (CardIdentifier, error) {
+func (si ScryfallIdentifier) Convert(card Card) (CardIdentifier, error) {
 	return ScryfallIdentifier{card.ScryfallId}, nil
 }
 
-func (id MultiverseIdentifier) Convert(card Card) (CardIdentifier, error) {
+func (mi MultiverseIdentifier) Convert(card Card) (CardIdentifier, error) {
 	if len(card.MultiverseIds) == 0 {
 		return nil, fmt.Errorf("card resolved with no multiverse id: %s, (%s) %s", card.Name, card.SetCode, card.CollectorNumber)
 	}
 	return MultiverseIdentifier{card.MultiverseIds[0]}, nil
 }
 
-func (id SetCollectorNumber) Convert(card Card) (CardIdentifier, error) {
+func (sc SetCollectorNumber) Convert(card Card) (CardIdentifier, error) {
 	return SetCollectorNumber{card.SetCode, card.CollectorNumber}, nil
 }
 
-func (id NameSet) Convert(card Card) (CardIdentifier, error) {
+func (ns NameSet) Convert(card Card) (CardIdentifier, error) {
 	return NameSet{card.Name, card.SetCode}, nil
 }
 

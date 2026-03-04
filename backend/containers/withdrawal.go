@@ -8,10 +8,10 @@ import (
 )
 
 func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
-	uniqIds := map[cards.ScryfallIdentifier]bool{}
+	uniqIds := map[ScryfallIdentifier]bool{}
 	for _, targets := range withdrawals {
 		for _, target := range targets {
-			if scryfallId, ok := target.Copy().(cards.ScryfallIdentifier); ok {
+			if scryfallId, ok := target.Card.(ScryfallIdentifier); ok {
 				uniqIds[scryfallId] = true
 			}
 		}
@@ -31,19 +31,22 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 
 	for _, targets := range withdrawals {
 		for _, target := range targets {
-			copy := target.Copy()
+			copy := target.Card.Copy()
 
-			// last one wins, intentional
+			var key int
 			switch copy.(type) {
 			case cards.NameSet:
-				identifierOptions[3] = copy
+				key = 3
 			case cards.SetCollectorNumber:
-				identifierOptions[2] = copy
+				key = 2
 			case cards.MultiverseIdentifier:
 			case cards.ScryfallIdentifier:
 			default:
-				identifierOptions[1] = copy
+				key = 1
 			}
+
+			// last one wins, intentional
+			identifierOptions[key] = copy
 
 			if _, ok := copy.(cards.ScryfallIdentifier); !ok {
 				extraIds = append(extraIds, copy)
@@ -65,8 +68,7 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 
 	for _, card := range results {
 		for _, converter := range identifierOptions {
-			id, err := converter.Convert(card)
-			if err == nil {
+			if id, err := converter.Convert(card); err == nil {
 				scryfallIdMappings[id] = card.ScryfallId
 			}
 		}
@@ -75,11 +77,11 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 	for _, targets := range withdrawals {
 		for i := range targets {
 			target := targets[i]
-			copy := target.Copy()
+			copy := target.Card.Copy()
 			if scryfallId, ok := scryfallIdMappings[copy]; ok {
 				targets[i] = CardIdentifierAmount{
-					CardIdentifier: ScryfallIdentifier{Id: scryfallId},
-					Amount:         target.Amount,
+					Card:   ScryfallIdentifier{Id: scryfallId},
+					Amount: target.Amount,
 				}
 			}
 		}
@@ -113,7 +115,7 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 				return nil, ErrNegativeWithdrawal
 			}
 
-			scryfallId, ok := withdrawal.Copy().(cards.ScryfallIdentifier)
+			scryfallId, ok := withdrawal.Card.(ScryfallIdentifier)
 			if !ok {
 				return nil, ErrInsufficientDeposits
 			}

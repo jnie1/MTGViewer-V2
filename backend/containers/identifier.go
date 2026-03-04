@@ -27,18 +27,18 @@ type CardIdentifier interface {
 	Copy() cards.CardIdentifier
 }
 
-func (id ScryfallIdentifier) Copy() cards.CardIdentifier {
-	return cards.ScryfallIdentifier{Id: id.Id}
+func (si ScryfallIdentifier) Copy() cards.CardIdentifier {
+	return cards.ScryfallIdentifier{Id: si.Id}
 }
 
-func (id MultiverseIdentifier) Copy() cards.CardIdentifier {
-	return cards.MultiverseIdentifier{MultiverseId: id.MultiverseId}
+func (mi MultiverseIdentifier) Copy() cards.CardIdentifier {
+	return cards.MultiverseIdentifier{MultiverseId: mi.MultiverseId}
 }
 
-func (id SetCollectorNumber) Copy() cards.CardIdentifier {
-	return cards.SetCollectorNumber{Set: id.Set, CollectorNumber: id.CollectorNumber}
+func (sc SetCollectorNumber) Copy() cards.CardIdentifier {
+	return cards.SetCollectorNumber{Set: sc.Set, CollectorNumber: sc.CollectorNumber}
 }
 
-func (id NameSet) Copy() cards.CardIdentifier {
-	return cards.NameSet{Name: id.Name, Set: id.Set}
+func (ns NameSet) Copy() cards.CardIdentifier {
+	return cards.NameSet{Name: ns.Name, Set: ns.Set}
 }
