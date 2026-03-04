@@ -19,8 +19,14 @@ const { changes } = defineProps<ITransactionProps>();
     </v-row>
     <div v-for="change in changes" :key="change.groupId" class="table">
       <v-row>
-        <v-col><img v-if="change.card.imageUrls?.preview" :src="change.card.imageUrls.preview" alt="Card Image"
-            class="card-image"></v-col>
+        <v-col>
+          <img
+            v-if="change.card.imageUrls?.preview"
+            :src="change.card.imageUrls.preview"
+            alt="Card Image"
+            class="card-image"
+          />
+        </v-col>
         <v-col>{{ change.card.name }}</v-col>
         <v-col>{{ change.fromContainer?.name }}</v-col>
         <v-col>{{ change.toContainer?.name }}</v-col>
