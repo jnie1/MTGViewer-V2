@@ -7,6 +7,8 @@ import (
 	"slices"
 )
 
+var ErrInsufficientAllocations = errors.New("not enough space to fit the new additions")
+
 func GetContainerAdditions(requests []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
 	additions := []CardRequest{}
 	for _, request := range requests {
@@ -43,7 +45,7 @@ func GetContainerAdditions(requests []CardRequest, allocations []ContainerAlloca
 	}
 
 	if totalRemaining < totalAdds {
-		return nil, errors.New("not enough space to fit the new additions")
+		return nil, ErrInsufficientDeposits
 	}
 
 	additionAssignments := findBestFitAssignments(totalAdds, allocations)

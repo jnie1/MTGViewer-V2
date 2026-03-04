@@ -158,7 +158,7 @@ func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
 
 func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	if len(identifiers) == 0 {
-		return nil, errors.New("no ids are specified")
+		return []Card{}, nil
 	}
 
 	batchSizeLimit := 75

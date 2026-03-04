@@ -16,8 +16,8 @@ type depositKey struct {
 	ScryfallId  uuid.UUID
 }
 
-var NegativeWithdrawalError = errors.New("negative withdrawal amount specified")
-var InsufficientDepositsError = errors.New("unsufficient cards in containers to fullfill withdrawal")
+var ErrNegativeWithdrawal = errors.New("negative withdrawal amount specified")
+var ErrInsufficientDeposits = errors.New("unsufficient cards in containers to fullfill withdrawal")
 
 func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDeposit) ([]ContainerChanges, error) {
 	changes := []ContainerChanges{}
@@ -33,11 +33,11 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 
 		for _, withdrawal := range withdrawalTargets {
 			if withdrawal.Amount < 0 {
-				return nil, NegativeWithdrawalError
+				return nil, ErrNegativeWithdrawal
 			}
 			key := depositKey{containerId, withdrawal.ScryfallId}
 			if amountsByContainers[key]-withdrawal.Amount < 0 {
-				return nil, InsufficientDepositsError
+				return nil, ErrInsufficientDeposits
 			}
 
 			requests = append(requests, CardRequest{withdrawal.ScryfallId, -withdrawal.Amount})

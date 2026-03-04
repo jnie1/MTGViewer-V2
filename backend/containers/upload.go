@@ -15,6 +15,8 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
+var ErrFileFormat = errors.New("invalid file format")
+
 func ParseCardRequests(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	fileExtension := filepath.Ext(formFile.Filename)
 
@@ -26,7 +28,7 @@ func ParseCardRequests(formFile *multipart.FileHeader) ([]CardRequest, error) {
 		return parseCsvFile(formFile)
 	}
 
-	return nil, errors.New("invalid file format")
+	return nil, ErrFileFormat
 }
 
 func parseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
@@ -101,16 +103,13 @@ func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	csvReader := csv.NewReader(file)
 
 	header, err := csvReader.Read()
-	if err == io.EOF {
-		return nil, errors.New("empty csv file received")
-	}
 	if err != nil {
 		return nil, err
 	}
 
 	headerPositions := getHeaderPositions(header)
 	if !headerPositions.Valid() {
-		return nil, errors.New("invalid csv header, expected: scryfall id, multiverse id, or set code/collector number")
+		return nil, csv.ErrFieldCount
 	}
 
 	requests := []CardRequest{}
