@@ -50,6 +50,11 @@ type ContainerChanges struct {
 	Requests    []CardRequest
 }
 
+type ContainerWithdrawals map[int][]struct {
+	ScryfallId uuid.UUID `json:"scryfallId"`
+	Amount     int       `json:"amount"`
+}
+
 type ContainerAllocation struct {
 	ContainerId int
 	Used        int
