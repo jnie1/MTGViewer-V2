@@ -143,5 +143,5 @@ func AddCardRoutes(router *gin.Engine) {
 	group.GET("/:card", fetchCard)
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
-	group.POST("/withdrawal", withdrawCards)
+	group.POST("/withdraw", withdrawCards)
 }

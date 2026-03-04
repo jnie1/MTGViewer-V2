@@ -13,15 +13,12 @@ func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
 			uniqIds[withdrawal.ScryfallId] = true
 		}
 	}
-
 	scryfallIds := make(uuid.UUIDs, len(uniqIds))
 	i := 0
-
-	for id, _ := range uniqIds {
+	for id := range uniqIds {
 		scryfallIds[i] = id
 		i += 1
 	}
-
 	return scryfallIds
 }
 
