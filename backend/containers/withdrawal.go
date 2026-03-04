@@ -11,7 +11,7 @@ func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
 	uniqIds := map[cards.ScryfallIdentifier]bool{}
 	for _, targets := range withdrawals {
 		for _, target := range targets {
-			if scryfallId, ok := target.Clone().(cards.ScryfallIdentifier); ok {
+			if scryfallId, ok := target.Copy().(cards.ScryfallIdentifier); ok {
 				uniqIds[scryfallId] = true
 			}
 		}
@@ -31,7 +31,7 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 
 	for _, targets := range withdrawals {
 		for _, target := range targets {
-			copy := target.Clone()
+			copy := target.Copy()
 
 			// last one wins, intentional
 			switch copy.(type) {
@@ -46,7 +46,7 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 			}
 
 			if _, ok := copy.(cards.ScryfallIdentifier); !ok {
-				extraIds = append(extraIds, target)
+				extraIds = append(extraIds, copy)
 			}
 		}
 	}
@@ -75,10 +75,10 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 	for _, targets := range withdrawals {
 		for i := range targets {
 			target := targets[i]
-			copy := target.Clone()
+			copy := target.Copy()
 			if scryfallId, ok := scryfallIdMappings[copy]; ok {
 				targets[i] = CardIdentifierAmount{
-					CardIdentifier: cards.ScryfallIdentifier{Id: scryfallId},
+					CardIdentifier: ScryfallIdentifier{Id: scryfallId},
 					Amount:         target.Amount,
 				}
 			}
@@ -113,7 +113,7 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 				return nil, ErrNegativeWithdrawal
 			}
 
-			scryfallId, ok := withdrawal.Clone().(cards.ScryfallIdentifier)
+			scryfallId, ok := withdrawal.Copy().(cards.ScryfallIdentifier)
 			if !ok {
 				return nil, ErrInsufficientDeposits
 			}

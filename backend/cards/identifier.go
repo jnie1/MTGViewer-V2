@@ -26,15 +26,10 @@ type NameSet struct {
 
 type CardIdentifier interface {
 	Convert(card Card) (CardIdentifier, error)
-	Clone() CardIdentifier
 }
 
 func (id ScryfallIdentifier) Convert(card Card) (CardIdentifier, error) {
 	return ScryfallIdentifier{card.ScryfallId}, nil
-}
-
-func (id ScryfallIdentifier) Clone() CardIdentifier {
-	return ScryfallIdentifier{id.Id}
 }
 
 func (id MultiverseIdentifier) Convert(card Card) (CardIdentifier, error) {
@@ -44,24 +39,12 @@ func (id MultiverseIdentifier) Convert(card Card) (CardIdentifier, error) {
 	return MultiverseIdentifier{card.MultiverseIds[0]}, nil
 }
 
-func (id MultiverseIdentifier) Clone() CardIdentifier {
-	return MultiverseIdentifier{id.MultiverseId}
-}
-
 func (id SetCollectorNumber) Convert(card Card) (CardIdentifier, error) {
 	return SetCollectorNumber{card.SetCode, card.CollectorNumber}, nil
 }
 
-func (id SetCollectorNumber) Clone() CardIdentifier {
-	return SetCollectorNumber{id.Set, id.CollectorNumber}
-}
-
 func (id NameSet) Convert(card Card) (CardIdentifier, error) {
 	return NameSet{card.Name, card.SetCode}, nil
-}
-
-func (id NameSet) Clone() CardIdentifier {
-	return NameSet{id.Name, id.Set}
 }
 
 type CollectionQuery[Id CardIdentifier] struct {

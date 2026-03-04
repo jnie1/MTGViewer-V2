@@ -51,8 +51,8 @@ type ContainerChanges struct {
 }
 
 type CardIdentifierAmount struct {
-	cards.CardIdentifier
-	Amount int `json:"amount"`
+	CardIdentifier     // TODO: check that json works here as expected, might be a nested property
+	Amount         int `json:"amount"`
 }
 
 type ContainerWithdrawals map[int][]CardIdentifierAmount
