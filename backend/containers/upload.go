@@ -113,11 +113,8 @@ func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	}
 
 	requests := []CardRequest{}
-
-	multiverseIds := []cards.MultiverseIdentifier{}
-	setCollectors := []cards.SetCollectorNumber{}
-	nameSets := []cards.NameSet{}
-
+	identifierOptions := map[int]cards.CardIdentifier{}
+	extraIds := []cards.CardIdentifier{}
 	quantityMap := map[any]int{}
 
 	for {
@@ -151,57 +148,40 @@ func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 			}
 
 			newId := cards.MultiverseIdentifier{MultiverseId: multiverseId}
-			multiverseIds = append(multiverseIds, newId)
+			identifierOptions[1] = newId
+			extraIds = append(extraIds, newId)
 			quantityMap[newId] = quantity
 
 		case headerPositions.SetCode > -1 && headerPositions.CollectorNumber > -1:
 			newId := cards.SetCollectorNumber{Set: row[headerPositions.SetCode], CollectorNumber: row[headerPositions.CollectorNumber]}
-			setCollectors = append(setCollectors, newId)
+			identifierOptions[2] = newId
+			extraIds = append(extraIds, newId)
 			quantityMap[newId] = quantity
 
 		case headerPositions.Name > -1 && headerPositions.SetCode > -1:
 			newId := cards.NameSet{Name: row[headerPositions.Name], Set: row[headerPositions.SetCode]}
-			nameSets = append(nameSets, newId)
+			identifierOptions[3] = newId
+			extraIds = append(extraIds, newId)
 			quantityMap[newId] = quantity
 		}
 	}
 
-	if len(multiverseIds) > 0 {
-		extraCards, err := cards.FetchCollection(multiverseIds)
+	if len(extraIds) > 0 {
+		extraCards, err := cards.FetchCollection(extraIds)
 		if err != nil {
 			return nil, err
 		}
-
 		for _, card := range extraCards {
-			if len(card.MultiverseIds) == 0 {
-				return nil, fmt.Errorf("card resolved with no multiverse id: %s, (%s) %s", card.Name, card.SetCode, card.CollectorNumber)
+			for _, id := range identifierOptions {
+				source, err := id.Convert(card)
+				if err != nil {
+					continue
+				}
+				if amount, ok := quantityMap[source]; ok {
+					requests = append(requests, CardRequest{card.ScryfallId, amount})
+					break
+				}
 			}
-			source := cards.MultiverseIdentifier{MultiverseId: card.MultiverseIds[0]}
-			requests = append(requests, CardRequest{ScryfallId: card.ScryfallId, Delta: quantityMap[source]})
-		}
-	}
-
-	if len(setCollectors) > 0 {
-		extraCards, err := cards.FetchCollection(setCollectors)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, card := range extraCards {
-			source := cards.SetCollectorNumber{Set: card.SetCode, CollectorNumber: card.CollectorNumber}
-			requests = append(requests, CardRequest{ScryfallId: card.ScryfallId, Delta: quantityMap[source]})
-		}
-	}
-
-	if len(nameSets) > 0 {
-		extraCards, err := cards.FetchCollection(setCollectors)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, card := range extraCards {
-			source := cards.NameSet{Name: card.Name, Set: card.SetCode}
-			requests = append(requests, CardRequest{ScryfallId: card.ScryfallId, Delta: quantityMap[source]})
 		}
 	}
 
