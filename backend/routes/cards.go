@@ -69,6 +69,7 @@ func importCards(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+
 	if file.Size >= 5_000_000 {
 		c.AbortWithError(http.StatusBadRequest, multipart.ErrMessageTooLarge)
 		return
@@ -112,10 +113,16 @@ func withdrawCards(c *gin.Context) {
 		return
 	}
 
+	if err := containers.ResolveExtraIdentifiers(withdrawals); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
 	scryfallIds := containers.FindScryfallIds(withdrawals)
 	deposits, err := containers.SearchCards(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
 	changes, err := containers.ValidateCardWithdrawals(withdrawals, deposits)

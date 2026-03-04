@@ -4,22 +4,88 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
 func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]bool{}
+	uniqIds := map[cards.ScryfallIdentifier]bool{}
 	for _, targets := range withdrawals {
-		for _, withdrawal := range targets {
-			uniqIds[withdrawal.ScryfallId] = true
+		for _, target := range targets {
+			if scryfallId, ok := target.Clone().(cards.ScryfallIdentifier); ok {
+				uniqIds[scryfallId] = true
+			}
 		}
 	}
-	scryfallIds := make(uuid.UUIDs, len(uniqIds))
+	identifiers := make(uuid.UUIDs, len(uniqIds))
 	i := 0
-	for id := range uniqIds {
-		scryfallIds[i] = id
+	for scryfallId := range uniqIds {
+		identifiers[i] = scryfallId.Id
 		i += 1
 	}
-	return scryfallIds
+	return identifiers
+}
+
+func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
+	identifierOptions := map[int]cards.CardIdentifier{}
+	extraIds := []cards.CardIdentifier{}
+
+	for _, targets := range withdrawals {
+		for _, target := range targets {
+			copy := target.Clone()
+
+			// last one wins, intentional
+			switch copy.(type) {
+			case cards.NameSet:
+				identifierOptions[3] = copy
+			case cards.SetCollectorNumber:
+				identifierOptions[2] = copy
+			case cards.MultiverseIdentifier:
+			case cards.ScryfallIdentifier:
+			default:
+				identifierOptions[1] = copy
+			}
+
+			if _, ok := copy.(cards.ScryfallIdentifier); !ok {
+				extraIds = append(extraIds, target)
+			}
+		}
+	}
+
+	if len(extraIds) == 0 {
+		return nil
+	}
+
+	results, err := cards.FetchCollection(extraIds)
+	if err != nil {
+		return err
+	}
+
+	// hacky way to remap cards back to source id, just get all unique id types per card
+	scryfallIdMappings := make(map[cards.CardIdentifier]uuid.UUID, len(results)*len(identifierOptions))
+
+	for _, card := range results {
+		for _, converter := range identifierOptions {
+			id, err := converter.Convert(card)
+			if err == nil {
+				scryfallIdMappings[id] = card.ScryfallId
+			}
+		}
+	}
+
+	for _, targets := range withdrawals {
+		for i := range targets {
+			target := targets[i]
+			copy := target.Clone()
+			if scryfallId, ok := scryfallIdMappings[copy]; ok {
+				targets[i] = CardIdentifierAmount{
+					CardIdentifier: cards.ScryfallIdentifier{Id: scryfallId},
+					Amount:         target.Amount,
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 type depositKey struct {
@@ -46,12 +112,18 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 			if withdrawal.Amount < 0 {
 				return nil, ErrNegativeWithdrawal
 			}
-			key := depositKey{containerId, withdrawal.ScryfallId}
+
+			scryfallId, ok := withdrawal.Clone().(cards.ScryfallIdentifier)
+			if !ok {
+				return nil, ErrInsufficientDeposits
+			}
+
+			key := depositKey{containerId, scryfallId.Id}
 			if amountsByContainers[key]-withdrawal.Amount < 0 {
 				return nil, ErrInsufficientDeposits
 			}
 
-			requests = append(requests, CardRequest{withdrawal.ScryfallId, -withdrawal.Amount})
+			requests = append(requests, CardRequest{scryfallId.Id, -withdrawal.Amount})
 		}
 
 		changes = append(changes, ContainerChanges{containerId, requests})
