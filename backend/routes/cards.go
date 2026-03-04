@@ -114,7 +114,7 @@ func withdrawCards(c *gin.Context) {
 	}
 
 	if err := containers.ResolveExtraIdentifiers(withdrawals); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
