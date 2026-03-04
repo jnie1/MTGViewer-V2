@@ -24,6 +24,8 @@ func RegisterRouter() {
 	// Define routes and associate them with handlers
 	routes.AddUserRoutes(r)
 	routes.AddCardRoutes(r)
+	routes.AddContainerRoutes(r)
+	routes.AddTransactionRoutes(r)
 
 	authorized := r.Group("", auth.IsAuthorized)
 
