@@ -1,6 +1,10 @@
 package cards
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 type ScryfallIdentifier struct {
 	Id uuid.UUID `json:"id"`
@@ -21,7 +25,43 @@ type NameSet struct {
 }
 
 type CardIdentifier interface {
-	ScryfallIdentifier | MultiverseIdentifier | SetCollectorNumber | NameSet
+	Convert(card Card) (CardIdentifier, error)
+	Clone() CardIdentifier
+}
+
+func (id ScryfallIdentifier) Convert(card Card) (CardIdentifier, error) {
+	return ScryfallIdentifier{card.ScryfallId}, nil
+}
+
+func (id ScryfallIdentifier) Clone() CardIdentifier {
+	return ScryfallIdentifier{id.Id}
+}
+
+func (id MultiverseIdentifier) Convert(card Card) (CardIdentifier, error) {
+	if len(card.MultiverseIds) == 0 {
+		return nil, fmt.Errorf("card resolved with no multiverse id: %s, (%s) %s", card.Name, card.SetCode, card.CollectorNumber)
+	}
+	return MultiverseIdentifier{card.MultiverseIds[0]}, nil
+}
+
+func (id MultiverseIdentifier) Clone() CardIdentifier {
+	return MultiverseIdentifier{id.MultiverseId}
+}
+
+func (id SetCollectorNumber) Convert(card Card) (CardIdentifier, error) {
+	return SetCollectorNumber{card.SetCode, card.CollectorNumber}, nil
+}
+
+func (id SetCollectorNumber) Clone() CardIdentifier {
+	return SetCollectorNumber{id.Set, id.CollectorNumber}
+}
+
+func (id NameSet) Convert(card Card) (CardIdentifier, error) {
+	return NameSet{card.Name, card.SetCode}, nil
+}
+
+func (id NameSet) Clone() CardIdentifier {
+	return NameSet{id.Name, id.Set}
 }
 
 type CollectionQuery[Id CardIdentifier] struct {
