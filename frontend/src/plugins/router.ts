@@ -4,7 +4,8 @@ import SignupView from '@/views/SignupView.vue';
 import CardView from '@/views/CardView.vue';
 import ChangeView from '@/views/ChangeView.vue';
 import TransactionView from '@/views/TransactionView.vue';
-import ContainerDetail from '@/views/Container.vue';
+import ContainerView from '@/views/ContainerView.vue';
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -44,7 +45,7 @@ const router = createRouter({
     {
       path: '/containers/:containerId',
       name: 'ContainerDetail',
-      component: ContainerDetail,
+      component: ContainerView,
     },
   ],
 });
