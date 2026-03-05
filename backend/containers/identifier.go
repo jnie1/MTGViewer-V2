@@ -21,11 +21,6 @@ type SetCollectorNumber struct {
 	CollectorNumber string `json:"collectorNumber"`
 }
 
-type NameSet struct {
-	Name string `json:"name"`
-	Set  string `json:"set"`
-}
-
 type CardIdentifier interface {
 	Copy() cards.CardIdentifier
 }
@@ -40,10 +35,6 @@ func (mi MultiverseIdentifier) Copy() cards.CardIdentifier {
 
 func (sc SetCollectorNumber) Copy() cards.CardIdentifier {
 	return cards.SetCollectorNumber{Set: sc.Set, CollectorNumber: sc.CollectorNumber}
-}
-
-func (ns NameSet) Copy() cards.CardIdentifier {
-	return cards.NameSet{Name: ns.Name, Set: ns.Set}
 }
 
 var ErrUnknownCardIdentifier = errors.New("unknown card identifier specified")
@@ -71,14 +62,6 @@ func FromObj(obj map[string]any) (CardIdentifier, error) {
 		if set, ok := obj["set"].(string); ok {
 			if len(obj) == 2 {
 				return SetCollectorNumber{set, collectorNumber}, nil
-			}
-		}
-	}
-
-	if name, ok := obj["name"].(string); ok {
-		if set, ok := obj["set"].(string); ok {
-			if len(obj) == 2 {
-				return NameSet{name, set}, nil
 			}
 		}
 	}
