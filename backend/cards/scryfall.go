@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"slices"
@@ -58,13 +57,10 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 		return SearchCardPage{}, fmt.Errorf("unexpected response content %s", contentType)
 	}
 
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return SearchCardPage{}, err
-	}
+	decoder := json.NewDecoder(resp.Body)
 
 	var result searchResult
-	if err := json.Unmarshal(content, &result); err != nil {
+	if err := decoder.Decode(&result); err != nil {
 		return SearchCardPage{}, err
 	}
 
@@ -104,13 +100,10 @@ func FetchRandomCard() (Card, error) {
 		return Card{}, fmt.Errorf("unexpected response content %s", contentType)
 	}
 
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return Card{}, err
-	}
+	decoder := json.NewDecoder(resp.Body)
 
 	var result scryfallCard
-	if err := json.Unmarshal(content, &result); err != nil {
+	if err := decoder.Decode(&result); err != nil {
 		return Card{}, err
 	}
 
@@ -143,13 +136,10 @@ func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
 		return Card{}, fmt.Errorf("unexpected response content %s", contentType)
 	}
 
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return Card{}, err
-	}
+	decoder := json.NewDecoder(resp.Body)
 
 	var result scryfallCard
-	if err := json.Unmarshal(content, &result); err != nil {
+	if err := decoder.Decode(&result); err != nil {
 		return Card{}, err
 	}
 
@@ -158,7 +148,7 @@ func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
 
 func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	if len(identifiers) == 0 {
-		return nil, errors.New("no ids are specified")
+		return []Card{}, nil
 	}
 
 	batchSizeLimit := 75
@@ -227,13 +217,10 @@ func fetchCollectionBatch[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 		return nil, fmt.Errorf("unexpected response content %s", contentType)
 	}
 
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	decoder := json.NewDecoder(resp.Body)
 
 	var result collectionResult
-	if err := json.Unmarshal(content, &result); err != nil {
+	if err := decoder.Decode(&result); err != nil {
 		return nil, err
 	}
 

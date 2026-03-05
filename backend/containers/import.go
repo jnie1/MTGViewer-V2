@@ -7,9 +7,9 @@ import (
 	"slices"
 )
 
-// TODO: get container removals
+var ErrInsufficientAllocations = errors.New("not enough space to fit the new additions")
 
-func GetContainerChanges(requests []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
+func GetContainerAdditions(requests []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
 	additions := []CardRequest{}
 	for _, request := range requests {
 		if request.Delta > 0 {
@@ -17,15 +17,6 @@ func GetContainerChanges(requests []CardRequest, allocations []ContainerAllocati
 		}
 	}
 
-	addChanges, err := getContainerAdditions(additions, allocations)
-	if err != nil {
-		return nil, err
-	}
-
-	return addChanges, nil
-}
-
-func getContainerAdditions(additions []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
 	if len(additions) == 0 {
 		return []ContainerChanges{}, nil
 	}
@@ -43,7 +34,7 @@ func getContainerAdditions(additions []CardRequest, allocations []ContainerAlloc
 	}
 
 	if len(fitAllAdds) > 0 {
-		targetContainer := slices.MinFunc(fitAllAdds, compareRemainingAllocations)
+		targetContainer := slices.MinFunc(fitAllAdds, CompareRemaining)
 		fitAllChanges := ContainerChanges{targetContainer.ContainerId, additions}
 		return []ContainerChanges{fitAllChanges}, nil
 	}
@@ -54,17 +45,13 @@ func getContainerAdditions(additions []CardRequest, allocations []ContainerAlloc
 	}
 
 	if totalRemaining < totalAdds {
-		return nil, errors.New("not enough space to fit the new additions")
+		return nil, ErrInsufficientDeposits
 	}
 
 	additionAssignments := findBestFitAssignments(totalAdds, allocations)
 	allChanges := assignContainerChanges(additions, additionAssignments)
 
 	return allChanges, nil
-}
-
-func compareRemainingAllocations(a, b ContainerAllocation) int {
-	return cmp.Compare(a.Remaining(), b.Remaining())
 }
 
 func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) []ContainerAllocation {

@@ -85,7 +85,7 @@ type collectionBatchResult struct {
 
 func toCard(card scryfallCard) Card {
 	images := card.Images
-	if card.CardFaces != nil && len(card.CardFaces) > 0 {
+	if len(card.CardFaces) > 0 {
 		images = card.CardFaces[0].Images
 	}
 	return Card{

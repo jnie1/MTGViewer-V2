@@ -1,6 +1,8 @@
 package containers
 
 import (
+	"cmp"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -49,6 +51,33 @@ type ContainerChanges struct {
 	Requests    []CardRequest
 }
 
+type ContainerWithdrawals map[int][]CardIdentifierAmount
+
+type CardIdentifierAmount struct {
+	Card   CardIdentifier `json:"card"`
+	Amount int            `json:"amount"`
+}
+
+func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
+	var obj struct {
+		Card   map[string]any `json:"card"`
+		Amount int            `json:"amount"`
+	}
+
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return err
+	}
+
+	card, err := FromObj(obj.Card)
+	if err != nil {
+		return err
+	}
+
+	id.Card = card
+	id.Amount = obj.Amount
+	return nil
+}
+
 type ContainerAllocation struct {
 	ContainerId int
 	Used        int
@@ -57,6 +86,60 @@ type ContainerAllocation struct {
 
 func (allocation ContainerAllocation) Remaining() int {
 	return allocation.MaxCapacity - allocation.Used
+}
+
+func CompareRemaining(a, b ContainerAllocation) int {
+	return cmp.Compare(a.Remaining(), b.Remaining())
+}
+
+func mergeCardRequestsChecked(requests []CardRequest) ([]CardRequest, bool) {
+	cardCounter := map[uuid.UUID]int{}
+	for _, request := range requests {
+		cardCounter[request.ScryfallId] = cardCounter[request.ScryfallId] + request.Delta
+	}
+
+	if len(cardCounter) == len(requests) {
+		// no requests were merged, so just use original array
+		return requests, false
+	}
+
+	mergedRequests := make([]CardRequest, len(cardCounter))
+	i := 0
+
+	for cardId, delta := range cardCounter {
+		mergedRequests[i] = CardRequest{cardId, delta}
+		i += 1
+	}
+
+	return mergedRequests, true
+}
+
+func MergeCardRequests(requests []CardRequest) []CardRequest {
+	merged, _ := mergeCardRequestsChecked(requests)
+	return merged
+}
+
+func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
+	requestsById := map[int][]CardRequest{}
+	for _, change := range changes {
+		requestsById[change.ContainerId] = append(requestsById[change.ContainerId], change.Requests...)
+	}
+
+	hasChanges := false
+	mergedChanges := []ContainerChanges{}
+
+	for containerId, requests := range requestsById {
+		mergedRequests, requestsChanged := mergeCardRequestsChecked(requests)
+		if requestsChanged {
+			hasChanges = true
+		}
+		mergedChanges = append(mergedChanges, ContainerChanges{containerId, mergedRequests})
+	}
+
+	if !hasChanges && len(mergedChanges) == len(changes) {
+		return changes
+	}
+	return mergedChanges
 }
 
 func GetCardAmounts(fullCards []cards.Card, deposits []CardDepositPreview) ([]cards.CardAmount, error) {

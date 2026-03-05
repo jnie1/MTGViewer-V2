@@ -69,6 +69,7 @@ func importCards(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+
 	if file.Size >= 5_000_000 {
 		c.AbortWithError(http.StatusBadRequest, multipart.ErrMessageTooLarge)
 		return
@@ -86,7 +87,45 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	changes, err := containers.GetContainerChanges(requests, allocations)
+	changes, err := containers.GetContainerAdditions(requests, allocations)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if err := containers.UpdateDeposits(changes); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := transactions.LogCollectionChanges(changes); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+func withdrawCards(c *gin.Context) {
+	var withdrawals containers.ContainerWithdrawals
+	if err := c.ShouldBind(&withdrawals); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if err := containers.ResolveExtraIdentifiers(withdrawals); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	scryfallIds := containers.FindScryfallIds(withdrawals)
+	deposits, err := containers.SearchCards(scryfallIds)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	changes, err := containers.ValidateCardWithdrawals(withdrawals, deposits)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -111,4 +150,5 @@ func AddCardRoutes(router *gin.Engine) {
 	group.GET("/:card", fetchCard)
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
+	group.POST("/withdraw", withdrawCards)
 }
