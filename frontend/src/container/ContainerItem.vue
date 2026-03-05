@@ -18,7 +18,7 @@ const { cards } = defineProps<ICardProps>();
       <v-icon icon="$left" size="x-large" />
     </template>
     <v-slide-group-item v-for="card in cards" :key="card.scryfallId">
-      <card-image :card="card" />
+      <card-image :card />
     </v-slide-group-item>
   </v-slide-group>
 </template>
