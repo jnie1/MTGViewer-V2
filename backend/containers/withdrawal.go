@@ -20,6 +20,10 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 				return ErrUnknownCardIdentifier
 			}
 
+			if _, ok := target.Card.(ScryfallIdentifier); ok {
+				continue
+			}
+
 			copy := target.Card.Copy()
 
 			var key int
@@ -36,10 +40,7 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 
 			// last one wins, intentional
 			identifierOptions[key] = copy
-
-			if _, ok := copy.(cards.ScryfallIdentifier); !ok {
-				extraIds = append(extraIds, copy)
-			}
+			extraIds = append(extraIds, copy)
 		}
 	}
 
