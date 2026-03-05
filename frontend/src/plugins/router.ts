@@ -4,6 +4,7 @@ import SignupView from '@/views/SignupView.vue';
 import CardView from '@/views/CardView.vue';
 import ChangeView from '@/views/ChangeView.vue';
 import TransactionView from '@/views/TransactionView.vue';
+import ContainerView from '@/views/ContainerView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,11 @@ const router = createRouter({
       path: '/transaction/:groupId',
       name: 'TransactionDetail',
       component: TransactionView,
+    },
+    {
+      path: '/containers/:containerId',
+      name: 'ContainerDetail',
+      component: ContainerView,
     },
   ],
 });

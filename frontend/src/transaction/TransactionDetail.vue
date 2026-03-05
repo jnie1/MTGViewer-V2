@@ -28,8 +28,26 @@ const { changes } = defineProps<ITransactionProps>();
           />
         </v-col>
         <v-col>{{ change.card.name }}</v-col>
-        <v-col>{{ change.fromContainer?.name }}</v-col>
-        <v-col>{{ change.toContainer?.name }}</v-col>
+        <v-col>
+          <router-link
+            v-if="change.fromContainer"
+            :to="{
+              name: 'ContainerDetail',
+              params: { containerId: change.fromContainer.containerId },
+            }"
+            >{{ change.fromContainer.name }}</router-link
+          >
+          <v-col>
+            <router-link
+              v-if="change.toContainer"
+              :to="{
+                name: 'ContainerDetail',
+                params: { containerId: change.toContainer?.containerId },
+              }"
+              >{{ change.toContainer?.name }}</router-link
+            >
+          </v-col>
+        </v-col>
         <v-col>{{ change.quantity }}</v-col>
       </v-row>
     </div>
