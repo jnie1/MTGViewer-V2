@@ -3,9 +3,7 @@ package containers
 import (
 	"cmp"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"math"
 	"slices"
 	"strings"
 
@@ -60,8 +58,6 @@ type CardIdentifierAmount struct {
 	Amount int            `json:"amount"`
 }
 
-var ErrUnknownCardIdentifier = errors.New("unknown card identifier specified")
-
 func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
 	var obj struct {
 		Card   map[string]any `json:"card"`
@@ -72,49 +68,14 @@ func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if str, ok := obj.Card["scryfallId"].(string); ok {
-		scryfallId, err := uuid.Parse(str)
-		if err != nil {
-			return err
-		}
-		if len(obj.Card) == 1 {
-			id.Card = ScryfallIdentifier{scryfallId}
-			id.Amount = obj.Amount
-			return nil
-		}
+	card, err := FromObj(obj.Card)
+	if err != nil {
+		return err
 	}
 
-	if multiverseId, ok := obj.Card["multiverseId"].(float64); ok {
-		if multiverseId == math.Trunc(multiverseId) {
-			if len(obj.Card) == 2 {
-				id.Card = MultiverseIdentifier{int(multiverseId)}
-				id.Amount = obj.Amount
-				return nil
-			}
-		}
-	}
-
-	if collectorNumber, ok := obj.Card["collectorNumber"].(string); ok {
-		if set, ok := obj.Card["set"].(string); ok {
-			if len(obj.Card) == 3 {
-				id.Card = SetCollectorNumber{set, collectorNumber}
-				id.Amount = obj.Amount
-				return nil
-			}
-		}
-	}
-
-	if name, ok := obj.Card["name"].(string); ok {
-		if set, ok := obj.Card["set"].(string); ok {
-			if len(obj.Card) == 3 {
-				id.Card = NameSet{name, set}
-				id.Amount = obj.Amount
-				return nil
-			}
-		}
-	}
-
-	return ErrUnknownCardIdentifier
+	id.Card = card
+	id.Amount = obj.Amount
+	return nil
 }
 
 type ContainerAllocation struct {

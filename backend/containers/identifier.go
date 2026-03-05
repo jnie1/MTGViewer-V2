@@ -1,6 +1,9 @@
 package containers
 
 import (
+	"errors"
+	"math"
+
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
@@ -41,4 +44,44 @@ func (sc SetCollectorNumber) Copy() cards.CardIdentifier {
 
 func (ns NameSet) Copy() cards.CardIdentifier {
 	return cards.NameSet{Name: ns.Name, Set: ns.Set}
+}
+
+var ErrUnknownCardIdentifier = errors.New("unknown card identifier specified")
+
+func FromObj(obj map[string]any) (CardIdentifier, error) {
+	if str, ok := obj["scryfallId"].(string); ok {
+		scryfallId, err := uuid.Parse(str)
+		if err != nil {
+			return nil, err
+		}
+		if len(obj) == 1 {
+			return ScryfallIdentifier{scryfallId}, nil
+		}
+	}
+
+	if multiverseId, ok := obj["multiverseId"].(float64); ok {
+		if multiverseId == math.Trunc(multiverseId) {
+			if len(obj) == 1 {
+				return MultiverseIdentifier{int(multiverseId)}, nil
+			}
+		}
+	}
+
+	if collectorNumber, ok := obj["collectorNumber"].(string); ok {
+		if set, ok := obj["set"].(string); ok {
+			if len(obj) == 2 {
+				return SetCollectorNumber{set, collectorNumber}, nil
+			}
+		}
+	}
+
+	if name, ok := obj["name"].(string); ok {
+		if set, ok := obj["set"].(string); ok {
+			if len(obj) == 2 {
+				return NameSet{name, set}, nil
+			}
+		}
+	}
+
+	return nil, ErrUnknownCardIdentifier
 }
