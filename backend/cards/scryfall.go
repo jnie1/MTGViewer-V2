@@ -12,7 +12,10 @@ import (
 	"strings"
 )
 
-var scryfallUrl = "https://api.scryfall.com"
+const (
+	scryfallUrl     string = "https://api.scryfall.com"
+	collectionLimit int    = 75
+)
 
 func SearchCards(query string, page int) (SearchCardPage, error) {
 	query, err := url.QueryUnescape(query)
@@ -111,7 +114,7 @@ func FetchRandomCard() (Card, error) {
 }
 
 func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
-	randomUrl, err := url.JoinPath(scryfallUrl, fmt.Sprintf("/cards/%s", scryfallId.Id))
+	randomUrl, err := url.JoinPath(scryfallUrl, "/cards/", scryfallId.Id.String())
 	if err != nil {
 		return Card{}, err
 	}
@@ -148,15 +151,13 @@ func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
 
 func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	if len(identifiers) == 0 {
-		return []Card{}, nil
+		return nil, nil
 	}
-
-	batchSizeLimit := 75
 
 	results := make(chan collectionBatchResult)
 	workerCount := 0
 
-	for batch := range slices.Chunk(identifiers, batchSizeLimit) {
+	for batch := range slices.Chunk(identifiers, collectionLimit) {
 		workerCount++
 		go func() {
 			cards, err := fetchCollectionBatch(batch)
@@ -169,10 +170,10 @@ func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 
 	for range workerCount {
 		result := <-results
-		if result.Error != nil {
-			errs = append(errs, result.Error)
+		if result.err != nil {
+			errs = append(errs, result.err)
 		} else {
-			cards = append(cards, result.Cards)
+			cards = append(cards, result.cards)
 		}
 	}
 
