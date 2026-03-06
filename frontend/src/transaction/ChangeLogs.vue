@@ -19,7 +19,7 @@ const { logs } = defineProps<ILogsProps>();
       <v-row>
         <v-col>
           <router-link
-            :to="{ name: 'TransactionDetail', params: { groupId: log.groupId } }"
+            :to="{ name: 'transaction', params: { groupId: log.groupId } }"
             class="clickable"
           >
             {{ new Date(log.time).toLocaleString() }}

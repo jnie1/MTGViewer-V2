@@ -41,7 +41,7 @@ const { changes } = defineProps<ITransactionProps>();
           <router-link
             v-if="change.fromContainer"
             :to="{
-              name: 'ContainerDetail',
+              name: 'container',
               params: { containerId: change.fromContainer.containerId },
             }"
           >
@@ -52,11 +52,11 @@ const { changes } = defineProps<ITransactionProps>();
           <router-link
             v-if="change.toContainer"
             :to="{
-              name: 'ContainerDetail',
-              params: { containerId: change.toContainer?.containerId },
+              name: 'container',
+              params: { containerId: change.toContainer.containerId },
             }"
           >
-            {{ change.toContainer?.name }}
+            {{ change.toContainer.name }}
           </router-link>
         </v-col>
         <v-col>{{ change.quantity }}</v-col>
