@@ -6,7 +6,8 @@ import { capitalize } from '@/utils';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
-    await loadRouteData('/cards/random', to.meta, next);
+    const { scryfallId } = to.params;
+    await loadRouteData(`/cards/${scryfallId}`, to.meta, next);
   },
 });
 
@@ -15,7 +16,9 @@ const card = useRouteData<ICard>();
 
 <template>
   <main class="card-view">
-    <card-image :card />
+    <div>
+      <card-image :card highlight />
+    </div>
     <v-card width="300" min-height="100" density="comfortable" :loading="!card">
       <v-card-item>
         <v-card-title>{{ card.name }}</v-card-title>
@@ -37,5 +40,6 @@ const card = useRouteData<ICard>();
   align-items: center;
   justify-content: center;
   gap: 40px;
+  padding: 12px 0;
 }
 </style>

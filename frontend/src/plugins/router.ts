@@ -20,7 +20,7 @@ const router = createRouter({
       component: SignupView,
     },
     {
-      path: '/card',
+      path: '/card/:scryfallId',
       name: 'card',
       component: CardView,
     },
