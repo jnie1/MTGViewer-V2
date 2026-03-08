@@ -17,7 +17,7 @@ const { changes } = defineProps<ITransactionProps>();
       <v-col class="header-item">To Container</v-col>
       <v-col class="header-item">Quantity</v-col>
     </v-row>
-    <div v-for="change in changes" :key="change.groupId" class="table">
+    <div v-for="change in changes" class="table">
       <v-row>
         <v-col>
           <img

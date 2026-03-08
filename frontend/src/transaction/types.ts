@@ -12,7 +12,6 @@ export interface IContainer {
 }
 
 export interface ITransactionChange {
-  groupId: string;
   fromContainer?: IContainer;
   toContainer?: IContainer;
   card: ICard;

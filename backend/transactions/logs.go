@@ -42,11 +42,11 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT transaction_id, group_id, from_container_id, fc.container_name, to_container_id, tc.container_name, scryfall_id, amount
-		FROM transactions AS t
+		SELECT fc.container_name, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
+		FROM transactions
 		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
 		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
-		WHERE t.group_id = $1;`, groupId)
+		WHERE group_id = $1;`, groupId)
 
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 		var toMaybeBoxId sql.Null[int]
 		var toMaybeBoxName sql.NullString
 
-		if err := row.Scan(&log.TransactionId, &log.GroupId, &fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &log.ScryfallId, &log.Quantity); err != nil {
+		if err := row.Scan(&fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &log.ScryfallId, &log.Quantity); err != nil {
 			return nil, err
 		}
 
