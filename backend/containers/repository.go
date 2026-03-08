@@ -80,6 +80,33 @@ func GetContainer(containerId int) (Container, error) {
 	return container, err
 }
 
+func FindCardsAboveCount(count int) ([]uuid.UUID, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT cd.scryfall_id 
+		FROM card_deposits cd 
+		GROUP BY cd.scryfall_id 
+		HAVING SUM(cd.amount) > $1;`, count)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	scryfallIds := []uuid.UUID{}
+
+	for row.Next() {
+		scryfallId := uuid.UUID{}
+		if err := row.Scan(&scryfallId); err != nil {
+			return nil, err
+		}
+		scryfallIds = append(scryfallIds, scryfallId)
+	}
+
+	return scryfallIds, nil
+}
+
 func GetDeposits(containerId int) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
