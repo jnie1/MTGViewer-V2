@@ -8,7 +8,7 @@ import (
 )
 
 var ErrNegativeWithdrawal = errors.New("negative withdrawal amount specified")
-var ErrInsufficientDeposits = errors.New("unsufficient cards in containers to fullfill withdrawal")
+var ErrInsufficientDeposits = errors.New("unsufficient cards in containers to fullfill request")
 
 func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 	identifierOptions := map[int]cards.CardIdentifier{}
