@@ -20,7 +20,7 @@ const router = createRouter({
       component: SignupView,
     },
     {
-      path: '/card',
+      path: '/card/:scryfallId',
       name: 'card',
       component: CardView,
     },
@@ -38,13 +38,13 @@ const router = createRouter({
       component: ChangeView,
     },
     {
-      path: '/transaction/:groupId',
-      name: 'TransactionDetail',
+      path: '/logs/:groupId',
+      name: 'transaction',
       component: TransactionView,
     },
     {
       path: '/containers/:containerId',
-      name: 'ContainerDetail',
+      name: 'container',
       component: ContainerView,
     },
   ],

@@ -27,26 +27,37 @@ const { changes } = defineProps<ITransactionProps>();
             class="card-image"
           />
         </v-col>
-        <v-col>{{ change.card.name }}</v-col>
+        <v-col>
+          <router-link
+            :to="{
+              name: 'card',
+              params: { scryfallId: change.card.scryfallId },
+            }"
+          >
+            {{ change.card.name }}
+          </router-link>
+        </v-col>
         <v-col>
           <router-link
             v-if="change.fromContainer"
             :to="{
-              name: 'ContainerDetail',
+              name: 'container',
               params: { containerId: change.fromContainer.containerId },
             }"
-            >{{ change.fromContainer.name }}</router-link
           >
-          <v-col>
-            <router-link
-              v-if="change.toContainer"
-              :to="{
-                name: 'ContainerDetail',
-                params: { containerId: change.toContainer?.containerId },
-              }"
-              >{{ change.toContainer?.name }}</router-link
-            >
-          </v-col>
+            {{ change.fromContainer.name }}
+          </router-link>
+        </v-col>
+        <v-col>
+          <router-link
+            v-if="change.toContainer"
+            :to="{
+              name: 'container',
+              params: { containerId: change.toContainer.containerId },
+            }"
+          >
+            {{ change.toContainer.name }}
+          </router-link>
         </v-col>
         <v-col>{{ change.quantity }}</v-col>
       </v-row>

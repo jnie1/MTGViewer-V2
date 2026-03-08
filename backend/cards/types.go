@@ -79,8 +79,8 @@ type collectionResult struct {
 }
 
 type collectionBatchResult struct {
-	Cards []Card
-	Error error
+	cards []Card
+	err   error
 }
 
 func toCard(card scryfallCard) Card {
