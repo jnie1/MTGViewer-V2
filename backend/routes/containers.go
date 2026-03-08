@@ -109,10 +109,62 @@ func searchCards(c *gin.Context) {
 	c.JSON(http.StatusOK, cardAmounts)
 }
 
+func pruneCheck(c *gin.Context) {
+	size := c.Query("size")
+	maxSize, err := strconv.Atoi(size)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if maxSize <= 0 {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	price := c.Query("price")
+	maxPrice, err := strconv.ParseFloat(price, 64)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if maxPrice <= 0.0 {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	cardIds, err := containers.FindCardsAboveCount(maxSize)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	scryfallIds := make([]cards.ScryfallIdentifier, len(cardIds))
+	for i, id := range cardIds {
+		scryfallIds[i] = cards.ScryfallIdentifier{Id: id}
+	}
+
+	results, err := cards.FetchCollection(scryfallIds)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	matches, err := cards.KeepBelowPrice(results, maxPrice)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, matches)
+}
+
 func AddContainerRoutes(router *gin.Engine) {
 	group := router.Group("/containers")
 	group.GET("", fetchContainerPreviews)
 	group.GET("/:container", fetchContainer)
 	group.GET("/:container/cards", fetchContainerCards)
 	group.GET("/cards", searchCards)
+	group.GET("/prune", pruneCheck)
 }
