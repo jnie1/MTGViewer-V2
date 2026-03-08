@@ -8,23 +8,23 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 
 	for _, log := range logs {
 		if log.FromContainer != nil {
-			cardId := logs.ScryfallId
+			cardId := log.ScryfallId
 			removals[cardId] = append(removals[cardId], &log)
 		}
 		if log.ToContainer != nil {
-			cardId := logs.ScryfallId
+			cardId := log.ScryfallId
 			additions[cardId] = append(additions[cardId], &log)
 		}
 	}
 
 	logUpdates := map[int]int{}
-    for cardId, adds := range additions {
-        removes := removals[cardId]
-        i, j := 0, 0
-        for i < len(adds) && j < len(removes) {
-            // TODO add some log updates based on joins
-        }
-    }
+	for cardId, adds := range additions {
+		removes := removals[cardId]
+		i, j := 0, 0
+		for i < len(adds) && j < len(removes) {
+			// TODO add some log updates based on joins
+		}
+	}
 
 	if len(logUpdates) == 0 {
 		return logs
@@ -37,11 +37,11 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 			continue
 		}
 		updatedLogs = append(updatedLogs, TransactionLogs{
-			logs.TransactionId,
-			logs.GroupId,
-			logs.FromContainer,
-			logs.ToContainer,
-			logs.ScryfallId,
+			log.TransactionId,
+			log.GroupId,
+			log.FromContainer,
+			log.ToContainer,
+			log.ScryfallId,
 			updatedAmount,
 		})
 	}
