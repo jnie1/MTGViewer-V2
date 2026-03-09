@@ -136,6 +136,42 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 
 			updatedLogs = append(updatedLogs, newLog)
 		}
+
+		if currentDelete.delta < 0 {
+			updatedLogs = append(updatedLogs, TransactionLogs{
+				ScryfallId:    cardId,
+				FromContainer: containersById[currentDelete.containerId],
+				Quantity:      -currentDelete.delta,
+			})
+		}
+
+		if j < len(deletes) {
+			for _, extra := range deletes[j:] {
+				updatedLogs = append(updatedLogs, TransactionLogs{
+					ScryfallId:    cardId,
+					FromContainer: containersById[extra.containerId],
+					Quantity:      -extra.delta,
+				})
+			}
+		}
+
+		if currentAdd.delta > 0 {
+			updatedLogs = append(updatedLogs, TransactionLogs{
+				ScryfallId:  cardId,
+				ToContainer: containersById[currentAdd.containerId],
+				Quantity:    currentAdd.delta,
+			})
+		}
+
+		if i < len(adds) {
+			for _, extra := range adds[i:] {
+				updatedLogs = append(updatedLogs, TransactionLogs{
+					ScryfallId:  cardId,
+					ToContainer: containersById[extra.containerId],
+					Quantity:    extra.delta,
+				})
+			}
+		}
 	}
 
 	return updatedLogs
