@@ -37,15 +37,15 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 
 func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*TransactionContainer) []TransactionLogs {
 	updatedLogs := make([]TransactionLogs, len(deltas))
-	containerChanges := map[uuid.UUID][]containerChange{}
+	changesByCard := map[uuid.UUID][]containerChange{}
 
 	for key, delta := range deltas {
 		newChange := containerChange{key.containerId, delta}
 		cardId := key.scryfallId
-		containerChanges[cardId] = append(containerChanges[cardId], newChange)
+		changesByCard[cardId] = append(changesByCard[cardId], newChange)
 	}
 
-	for cardId, changes := range containerChanges {
+	for cardId, changes := range changesByCard {
 		adds := []containerChange{}
 		deletes := []containerChange{}
 
@@ -57,11 +57,13 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			}
 		}
 
+		// sort for largest adds first
 		slices.SortFunc(adds, func(a, b containerChange) int {
-			return cmp.Compare(a.delta, b.delta)
-		})
-		slices.SortFunc(deletes, func(a, b containerChange) int {
 			return -cmp.Compare(a.delta, b.delta)
+		})
+		// sort for largest deletes first
+		slices.SortFunc(deletes, func(a, b containerChange) int {
+			return cmp.Compare(a.delta, b.delta)
 		})
 
 		var currentAdd, currentDelete containerChange
