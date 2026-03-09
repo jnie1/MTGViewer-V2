@@ -10,6 +10,11 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
+type LogRange struct {
+	start time.Time
+	end   time.Time
+}
+
 type UpdateLogs struct {
 	GroupId uuid.UUID `json:"groupId"`
 	Time    time.Time `json:"time"`

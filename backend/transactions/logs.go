@@ -11,6 +11,20 @@ import (
 	"github.com/jnie1/MTGViewer-V2/database"
 )
 
+func FetchLogRange(group1, group2 uuid.UUID) (LogRange, error) {
+	db := database.Instance()
+
+	row := db.QueryRow(`
+		SELECT MIN(time) AS start, MAX(time) AS end
+		FROM transactions
+		WHERE group_id = $1 OR group_id = $2`, group1, group2)
+
+	logRange := LogRange{}
+	err := row.Scan(&logRange.start, &logRange.end)
+
+	return logRange, err
+}
+
 func FetchUpdateLogs() ([]UpdateLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
@@ -81,6 +95,10 @@ func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 
 	return listOfLogs, nil
 }
+
+// TODO: get min/max time range from 2 transaction groups
+// and then get all logs that are within that min/max time range
+// all of those logs are then merged and returned as a response
 
 func LogCollectionChanges(changes []containers.ContainerChanges) error {
 	groupId, err := uuid.NewRandom()
