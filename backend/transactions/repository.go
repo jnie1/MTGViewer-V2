@@ -67,6 +67,27 @@ func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 	}
 
 	defer row.Close()
+	return fetchLogsFromQuery(row)
+}
+
+func FetchLogsFromRange(logRange LogRange) ([]TransactionLogs, error) {
+	db := database.Instance()
+	row, err := db.Query(`
+		SELECT fc.container_name, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
+		FROM transactions
+		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
+		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
+		WHERE time >= $1 AND time <= $2;`, logRange.start, logRange.end)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	return fetchLogsFromQuery(row)
+}
+
+func fetchLogsFromQuery(row *sql.Rows) ([]TransactionLogs, error) {
 	listOfLogs := []TransactionLogs{}
 
 	for row.Next() {
@@ -95,10 +116,6 @@ func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 
 	return listOfLogs, nil
 }
-
-// TODO: get min/max time range from 2 transaction groups
-// and then get all logs that are within that min/max time range
-// all of those logs are then merged and returned as a response
 
 func LogCollectionChanges(changes []containers.ContainerChanges) error {
 	groupId, err := uuid.NewRandom()
