@@ -1,137 +1,141 @@
 package transactions
 
-import "github.com/google/uuid"
+import (
+	"cmp"
+	"slices"
 
-type changeKey struct {
-	scryfallId  uuid.UUID
+	"github.com/google/uuid"
+)
+
+type containerCard struct {
 	containerId int
+	scryfallId  uuid.UUID
 }
 
-type transactionDelta struct {
-	transactionId int
-	delta         int
+type containerChange struct {
+	containerId int
+	delta       int
 }
 
 func MergeLogs(logs []TransactionLogs) []TransactionLogs {
-	changes := map[changeKey]transactionDelta{}
+	combinedDeltas := map[containerCard]int{}
+	containersById := map[int]*TransactionContainer{}
 
 	for _, log := range logs {
 		if log.FromContainer != nil {
-			key := changeKey{log.ScryfallId, log.FromContainer.ContainerId}
+			containerId := log.FromContainer.ContainerId
+			key := containerCard{containerId, log.ScryfallId}
 
-			if delta, ok := changes[key]; ok {
-				changes[key] = transactionDelta{
-					transactionId: delta.transactionId,
-					delta:         delta.delta + log.Quantity,
-				}
-			} else {
-				changes[key] = transactionDelta{
-					transactionId: log.TransactionId,
-					delta:         log.Quantity,
-				}
-			}
+			combinedDeltas[key] = combinedDeltas[key] - log.Quantity
+			containersById[containerId] = log.FromContainer
 		}
 		if log.ToContainer != nil {
-			key := changeKey{log.ScryfallId, log.ToContainer.ContainerId}
+			containerId := log.ToContainer.ContainerId
+			key := containerCard{containerId, log.ScryfallId}
 
-			if delta, ok := changes[key]; ok {
-				changes[key] = transactionDelta{
-					transactionId: delta.transactionId,
-					delta:         delta.delta - log.Quantity,
-				}
-			} else {
-				changes[key] = transactionDelta{
-					transactionId: log.TransactionId,
-					delta:         -log.Quantity,
-				}
-			}
+			combinedDeltas[key] = combinedDeltas[key] + log.Quantity
+			containersById[containerId] = log.ToContainer
 		}
 	}
 
-	logsById := make(map[int]*TransactionLogs, len(logs))
-	for _, log := range logs {
-		logsById[log.TransactionId] = &log
-	}
-
-	updatedLogs := make([]TransactionLogs, len(changes))
-	for _, delta := range changes {
-		log, ok := logsById[delta.transactionId]
-		if !ok {
-			return logs
-		}
-		if log == nil {
-			return logs
-		}
-
-		var newLog TransactionLogs
-		if delta.delta > 0 {
-			newLog = TransactionLogs{}
-		} else {
-			newLog = TransactionLogs{
-				TransactionId: delta.transactionId,
-			}
-		}
-
-	}
-
-	additions := map[uuid.UUID][]*TransactionLogs{}
-	removals := map[uuid.UUID][]*TransactionLogs{}
-
-	for _, log := range logs {
-		if log.FromContainer != nil {
-			cardId := log.ScryfallId
-			removals[cardId] = append(removals[cardId], &log)
-		}
-		if log.ToContainer != nil {
-			cardId := log.ScryfallId
-			additions[cardId] = append(additions[cardId], &log)
-		}
-	}
-
-	logUpdates := map[int]int{}
-	for cardId, adds := range additions {
-		removes := removals[cardId]
-		i, j := 0, 0
-		for i < len(adds) && j < len(removes) {
-			add := adds[i]
-			if add == nil {
-				i += 1
-				continue
-			}
-
-			remove := removes[j]
-			if remove == nil {
-				j += 1
-				continue
-			}
-
-			if add.Quantity < remove.Quantity {
-				logUpdates[add.TransactionId] = logUpdates[add.TransactionId]
-			} else if add.Quantity > remove.Quantity {
-			} else {
-			}
-			// TODO add some log updates based on joins
-		}
-	}
-
-	if len(logUpdates) == 0 {
+	if len(combinedDeltas) == len(logs) {
 		return logs
 	}
 
-	updatedLogs := make([]TransactionLogs, len(logs))
-	for _, log := range logs {
-		updatedAmount := log.Quantity + logUpdates[log.TransactionId]
-		if updatedAmount < 0 {
-			continue
+	changesPerCard := map[uuid.UUID][]containerChange{}
+
+	for key, delta := range combinedDeltas {
+		newChange := containerChange{key.containerId, delta}
+		cardId := key.scryfallId
+		changesPerCard[cardId] = append(changesPerCard[cardId], newChange)
+	}
+
+	updatedLogs := make([]TransactionLogs, len(combinedDeltas))
+
+	for cardId, changes := range changesPerCard {
+		adds := []containerChange{}
+		deletes := []containerChange{}
+
+		for _, change := range changes {
+			if change.delta > 0 {
+				adds = append(adds, change)
+			} else if change.delta < 0 {
+				deletes = append(deletes, change)
+			}
 		}
-		updatedLogs = append(updatedLogs, TransactionLogs{
-			log.TransactionId,
-			log.GroupId,
-			log.FromContainer,
-			log.ToContainer,
-			log.ScryfallId,
-			updatedAmount,
+
+		slices.SortFunc(adds, func(a, b containerChange) int {
+			return cmp.Compare(a.delta, b.delta)
 		})
+		slices.SortFunc(deletes, func(a, b containerChange) int {
+			return -cmp.Compare(a.delta, b.delta)
+		})
+
+		var currentAdd, currentDelete containerChange
+		if len(adds) > 0 {
+			currentAdd = adds[0]
+		}
+		if len(deletes) > 0 {
+			currentDelete = deletes[0]
+		}
+
+		i, j := 0, 0
+		for currentAdd.delta > 0 && currentDelete.delta < 0 {
+			add, delete := currentAdd.delta, -currentDelete.delta
+			newLog := TransactionLogs{
+				ScryfallId:    cardId,
+				FromContainer: containersById[currentDelete.containerId],
+				ToContainer:   containersById[currentAdd.containerId],
+			}
+
+			if add < delete {
+				newLog.Quantity = add
+
+				i += 1
+				if i < len(adds) {
+					currentAdd = adds[i]
+				} else {
+					currentAdd = containerChange{}
+				}
+
+				currentDelete = containerChange{
+					containerId: currentDelete.containerId,
+					delta:       currentDelete.delta + add,
+				}
+			} else if add > delete {
+				newLog.Quantity = delete
+
+				j += 1
+				if j < len(deletes) {
+					currentDelete = deletes[j]
+				} else {
+					currentDelete = containerChange{}
+				}
+
+				currentAdd = containerChange{
+					containerId: currentAdd.containerId,
+					delta:       currentAdd.delta - delete,
+				}
+			} else {
+				newLog.Quantity = add
+
+				i += 1
+				if i < len(adds) {
+					currentAdd = adds[i]
+				} else {
+					currentAdd = containerChange{}
+				}
+
+				j += 1
+				if j < len(deletes) {
+					currentDelete = deletes[j]
+				} else {
+					currentDelete = containerChange{}
+				}
+			}
+
+			updatedLogs = append(updatedLogs, newLog)
+		}
 	}
 
 	return updatedLogs
