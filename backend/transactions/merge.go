@@ -7,18 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type containerCard struct {
-	containerId int
-	scryfallId  uuid.UUID
-}
-
-type containerChange struct {
-	containerId int
-	delta       int
-}
-
 func MergeLogs(logs []TransactionLogs) []TransactionLogs {
-	combinedDeltas := map[containerCard]int{}
+	containerDeltas := map[containerCard]int{}
 	containersById := map[int]*TransactionContainer{}
 
 	for _, log := range logs {
@@ -26,33 +16,36 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 			containerId := log.FromContainer.ContainerId
 			key := containerCard{containerId, log.ScryfallId}
 
-			combinedDeltas[key] = combinedDeltas[key] - log.Quantity
+			containerDeltas[key] = containerDeltas[key] - log.Quantity
 			containersById[containerId] = log.FromContainer
 		}
 		if log.ToContainer != nil {
 			containerId := log.ToContainer.ContainerId
 			key := containerCard{containerId, log.ScryfallId}
 
-			combinedDeltas[key] = combinedDeltas[key] + log.Quantity
+			containerDeltas[key] = containerDeltas[key] + log.Quantity
 			containersById[containerId] = log.ToContainer
 		}
 	}
 
-	if len(combinedDeltas) == len(logs) {
+	if len(containerDeltas) == len(logs) {
 		return logs
 	}
 
-	changesPerCard := map[uuid.UUID][]containerChange{}
+	return combineContainerDeltas(containerDeltas, containersById)
+}
 
-	for key, delta := range combinedDeltas {
+func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*TransactionContainer) []TransactionLogs {
+	updatedLogs := make([]TransactionLogs, len(deltas))
+	containerChanges := map[uuid.UUID][]containerChange{}
+
+	for key, delta := range deltas {
 		newChange := containerChange{key.containerId, delta}
 		cardId := key.scryfallId
-		changesPerCard[cardId] = append(changesPerCard[cardId], newChange)
+		containerChanges[cardId] = append(containerChanges[cardId], newChange)
 	}
 
-	updatedLogs := make([]TransactionLogs, len(combinedDeltas))
-
-	for cardId, changes := range changesPerCard {
+	for cardId, changes := range containerChanges {
 		adds := []containerChange{}
 		deletes := []containerChange{}
 
@@ -84,8 +77,8 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 			add, delete := currentAdd.delta, -currentDelete.delta
 			newLog := TransactionLogs{
 				ScryfallId:    cardId,
-				FromContainer: containersById[currentDelete.containerId],
-				ToContainer:   containersById[currentAdd.containerId],
+				FromContainer: containers[currentDelete.containerId],
+				ToContainer:   containers[currentAdd.containerId],
 			}
 
 			if add < delete {
@@ -140,7 +133,7 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 		if currentDelete.delta < 0 {
 			updatedLogs = append(updatedLogs, TransactionLogs{
 				ScryfallId:    cardId,
-				FromContainer: containersById[currentDelete.containerId],
+				FromContainer: containers[currentDelete.containerId],
 				Quantity:      -currentDelete.delta,
 			})
 		}
@@ -149,7 +142,7 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 			for _, extra := range deletes[j:] {
 				updatedLogs = append(updatedLogs, TransactionLogs{
 					ScryfallId:    cardId,
-					FromContainer: containersById[extra.containerId],
+					FromContainer: containers[extra.containerId],
 					Quantity:      -extra.delta,
 				})
 			}
@@ -158,7 +151,7 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 		if currentAdd.delta > 0 {
 			updatedLogs = append(updatedLogs, TransactionLogs{
 				ScryfallId:  cardId,
-				ToContainer: containersById[currentAdd.containerId],
+				ToContainer: containers[currentAdd.containerId],
 				Quantity:    currentAdd.delta,
 			})
 		}
@@ -167,7 +160,7 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 			for _, extra := range adds[i:] {
 				updatedLogs = append(updatedLogs, TransactionLogs{
 					ScryfallId:  cardId,
-					ToContainer: containersById[extra.containerId],
+					ToContainer: containers[extra.containerId],
 					Quantity:    extra.delta,
 				})
 			}

@@ -35,6 +35,16 @@ func (container *TransactionContainer) Container() TransactionContainer {
 	return *container
 }
 
+type containerCard struct {
+	containerId int
+	scryfallId  uuid.UUID
+}
+
+type containerChange struct {
+	containerId int
+	delta       int
+}
+
 type ReportCard struct {
 	Card          cards.Card            `json:"card"`
 	FromContainer *TransactionContainer `json:"fromContainer"`
