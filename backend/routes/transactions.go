@@ -19,22 +19,32 @@ func fetchUpdateLogs(c *gin.Context) {
 	c.JSON(http.StatusOK, listOfLogs)
 }
 
-func fetchTransactionLogs(c *gin.Context) {
+func fetchReportCards(c *gin.Context) {
 	group := c.Param("group")
+	group1, err := uuid.Parse(group)
 
-	groupId, err := uuid.Parse(group)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	listOfLogs, err := transactions.FetchLogs(groupId)
+	group2 := uuid.Nil
+	if end, ok := c.GetQuery("end"); ok {
+		id, err := uuid.Parse(end)
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		group2 = id
+	}
+
+	logs, err := fetchTransactionLogs(group1, group2)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	scryfallIds := transactions.GetScryfallIds(listOfLogs)
+	scryfallIds := transactions.GetScryfallIds(logs)
 	cards, err := cards.FetchCollection(scryfallIds)
 
 	if err != nil {
@@ -42,63 +52,39 @@ func fetchTransactionLogs(c *gin.Context) {
 		return
 	}
 
-	listOfReportCards, err := transactions.JoinReportCards(cards, listOfLogs)
+	reportCards, err := transactions.JoinReportCards(cards, logs)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, listOfReportCards)
+	c.JSON(http.StatusOK, reportCards)
 }
 
-func fetchTransactionRange(c *gin.Context) {
-	g1 := c.Param("group1")
-	g2 := c.Param("group2")
-
-	group1, err := uuid.Parse(g1)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	group2, err := uuid.Parse(g2)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
+func fetchTransactionLogs(group1 uuid.UUID, group2 uuid.UUID) ([]transactions.TransactionLogs, error) {
+	if group2 == uuid.Nil {
+		logs, err := transactions.FetchLogs(group1)
+		if err != nil {
+			return nil, err
+		}
+		return logs, nil
 	}
 
 	logRange, err := transactions.FetchLogRange(group1, group2)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
+		return nil, err
 	}
 
-	listOfLogs, err := transactions.FetchLogsFromRange(logRange)
+	logs, err := transactions.FetchLogsFromRange(logRange)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
+		return nil, err
 	}
 
-	scryfallIds := transactions.GetScryfallIds(listOfLogs)
-	cards, err := cards.FetchCollection(scryfallIds)
-
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	listOfReportCards, err := transactions.JoinReportCards(cards, listOfLogs)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, listOfReportCards)
+	return logs, nil
 }
 
 func AddTransactionRoutes(router *gin.Engine) {
 	group := router.Group("/logs")
 	group.GET("", fetchUpdateLogs)
-	group.GET("/:group", fetchTransactionLogs)
-	group.GET("/:group1/:group2", fetchTransactionRange)
+	group.GET("/:group", fetchReportCards)
 }
