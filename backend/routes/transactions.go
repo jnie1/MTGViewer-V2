@@ -29,13 +29,13 @@ func fetchReportCards(c *gin.Context) {
 	}
 
 	group2 := uuid.Nil
-	if end, ok := c.GetQuery("end"); ok {
-		id, err := uuid.Parse(end)
+	if e, ok := c.GetQuery("e"); ok {
+		end, err := uuid.Parse(e)
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
-		group2 = id
+		group2 = end
 	}
 
 	logs, err := fetchTransactionLogs(group1, group2)
