@@ -56,7 +56,7 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT fc.container_name, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
+		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
 		FROM transactions
 		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
 		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
@@ -73,7 +73,7 @@ func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 func FetchLogsFromRange(logRange LogRange) ([]TransactionLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT fc.container_name, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
+		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
 		FROM transactions
 		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
 		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
