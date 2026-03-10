@@ -17,7 +17,7 @@ func FetchLogRange(group1, group2 uuid.UUID) (LogRange, error) {
 	row := db.QueryRow(`
 		SELECT MIN(time) AS start, MAX(time) AS end
 		FROM transactions
-		WHERE group_id = $1 OR group_id = $2`, group1, group2)
+		WHERE group_id = $1 OR group_id = $2;`, group1, group2)
 
 	logRange := LogRange{}
 	err := row.Scan(&logRange.start, &logRange.end)
