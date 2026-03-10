@@ -10,13 +10,13 @@ import (
 )
 
 func fetchUpdateLogs(c *gin.Context) {
-	listOfLogs, err := transactions.FetchUpdateLogs()
+	logs, err := transactions.FetchUpdateLogs()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, listOfLogs)
+	c.JSON(http.StatusOK, logs)
 }
 
 func fetchReportCards(c *gin.Context) {
@@ -30,12 +30,12 @@ func fetchReportCards(c *gin.Context) {
 
 	group2 := uuid.Nil
 	if e, ok := c.GetQuery("e"); ok {
-		end, err := uuid.Parse(e)
-		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-		group2 = end
+		group2, err = uuid.Parse(e)
+	}
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	logs, err := fetchTransactionLogs(group1, group2)
@@ -63,24 +63,13 @@ func fetchReportCards(c *gin.Context) {
 
 func fetchTransactionLogs(group1 uuid.UUID, group2 uuid.UUID) ([]transactions.TransactionLogs, error) {
 	if group2 == uuid.Nil {
-		logs, err := transactions.FetchLogs(group1)
-		if err != nil {
-			return nil, err
-		}
-		return logs, nil
+		return transactions.FetchLogs(group1)
 	}
-
 	logRange, err := transactions.FetchLogRange(group1, group2)
 	if err != nil {
 		return nil, err
 	}
-
-	logs, err := transactions.FetchLogsFromRange(logRange)
-	if err != nil {
-		return nil, err
-	}
-
-	return logs, nil
+	return transactions.FetchLogsFromRange(logRange)
 }
 
 func AddTransactionRoutes(router *gin.Engine) {
