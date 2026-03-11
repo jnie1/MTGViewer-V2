@@ -31,11 +31,10 @@ func fetchReportCards(c *gin.Context) {
 	group2 := uuid.Nil
 	if e, ok := c.GetQuery("e"); ok {
 		group2, err = uuid.Parse(e)
-	}
-
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
 	}
 
 	logs, err := fetchTransactionLogs(group1, group2)
