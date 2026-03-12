@@ -78,9 +78,9 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 		for currentAdd.delta > 0 && currentDelete.delta < 0 {
 			add, delete := currentAdd.delta, -currentDelete.delta
 			newLog := TransactionLogs{
-				ScryfallId:    cardId,
 				FromContainer: containers[currentDelete.containerId],
 				ToContainer:   containers[currentAdd.containerId],
+				ScryfallId:    cardId,
 			}
 
 			if add < delete {
@@ -134,8 +134,8 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 
 		if currentDelete.delta < 0 {
 			updatedLogs = append(updatedLogs, TransactionLogs{
-				ScryfallId:    cardId,
 				FromContainer: containers[currentDelete.containerId],
+				ScryfallId:    cardId,
 				Quantity:      -currentDelete.delta,
 			})
 		}
@@ -143,8 +143,8 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 		if j < len(deletes) {
 			for _, extra := range deletes[j:] {
 				updatedLogs = append(updatedLogs, TransactionLogs{
-					ScryfallId:    cardId,
 					FromContainer: containers[extra.containerId],
+					ScryfallId:    cardId,
 					Quantity:      -extra.delta,
 				})
 			}
@@ -152,8 +152,8 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 
 		if currentAdd.delta > 0 {
 			updatedLogs = append(updatedLogs, TransactionLogs{
-				ScryfallId:  cardId,
 				ToContainer: containers[currentAdd.containerId],
+				ScryfallId:  cardId,
 				Quantity:    currentAdd.delta,
 			})
 		}
@@ -161,8 +161,8 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 		if i < len(adds) {
 			for _, extra := range adds[i:] {
 				updatedLogs = append(updatedLogs, TransactionLogs{
-					ScryfallId:  cardId,
 					ToContainer: containers[extra.containerId],
+					ScryfallId:  cardId,
 					Quantity:    extra.delta,
 				})
 			}
