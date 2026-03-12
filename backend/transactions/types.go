@@ -22,9 +22,9 @@ type UpdateLogs struct {
 }
 
 type TransactionLogs struct {
-	ScryfallId    uuid.UUID             `json:"scryfallId"`
 	FromContainer *TransactionContainer `json:"fromContainer"`
 	ToContainer   *TransactionContainer `json:"toContainer"`
+	ScryfallId    uuid.UUID             `json:"scryfallId"`
 	Quantity      int                   `json:"quantity"`
 }
 
@@ -51,9 +51,9 @@ type containerChange struct {
 }
 
 type ReportCard struct {
-	Card          cards.Card            `json:"card"`
 	FromContainer *TransactionContainer `json:"fromContainer"`
 	ToContainer   *TransactionContainer `json:"toContainer"`
+	Card          cards.Card            `json:"card"`
 	Quantity      int                   `json:"quantity"`
 }
 
@@ -89,9 +89,9 @@ func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) ([]Report
 			return nil, fmt.Errorf("cannot resolve card id %s", log.ScryfallId)
 		}
 		reportCards[i] = ReportCard{
-			Card:          reportedCard,
 			FromContainer: log.FromContainer,
 			ToContainer:   log.ToContainer,
+			Card:          reportedCard,
 			Quantity:      log.Quantity,
 		}
 	}

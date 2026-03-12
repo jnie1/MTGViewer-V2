@@ -38,7 +38,7 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 	}
 
 	defer row.Close()
-	listOfLogs := []UpdateLogs{}
+	logs := []UpdateLogs{}
 
 	for row.Next() {
 		log := UpdateLogs{}
@@ -47,10 +47,10 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 			return nil, err
 		}
 
-		listOfLogs = append(listOfLogs, log)
+		logs = append(logs, log)
 	}
 
-	return listOfLogs, nil
+	return logs, nil
 }
 
 func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
@@ -88,7 +88,7 @@ func FetchLogsFromRange(logRange LogRange) ([]TransactionLogs, error) {
 }
 
 func fetchLogsFromQuery(row *sql.Rows) ([]TransactionLogs, error) {
-	listOfLogs := []TransactionLogs{}
+	logs := []TransactionLogs{}
 
 	for row.Next() {
 		log := TransactionLogs{}
@@ -111,10 +111,10 @@ func fetchLogsFromQuery(row *sql.Rows) ([]TransactionLogs, error) {
 			log.ToContainer = &TransactionContainer{toMaybeBoxId.V, toMaybeBoxName.String}
 		}
 
-		listOfLogs = append(listOfLogs, log)
+		logs = append(logs, log)
 	}
 
-	return listOfLogs, nil
+	return logs, nil
 }
 
 func LogCollectionChanges(changes []containers.ContainerChanges) error {
