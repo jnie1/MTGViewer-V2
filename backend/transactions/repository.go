@@ -11,6 +11,20 @@ import (
 	"github.com/jnie1/MTGViewer-V2/database"
 )
 
+func FetchLogRange(group1, group2 uuid.UUID) (LogRange, error) {
+	db := database.Instance()
+
+	row := db.QueryRow(`
+		SELECT MIN(time) AS start, MAX(time) AS end
+		FROM transactions
+		WHERE group_id = $1 OR group_id = $2;`, group1, group2)
+
+	logRange := LogRange{}
+	err := row.Scan(&logRange.start, &logRange.end)
+
+	return logRange, err
+}
+
 func FetchUpdateLogs() ([]UpdateLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
@@ -24,7 +38,7 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 	}
 
 	defer row.Close()
-	listOfLogs := []UpdateLogs{}
+	logs := []UpdateLogs{}
 
 	for row.Next() {
 		log := UpdateLogs{}
@@ -33,27 +47,48 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 			return nil, err
 		}
 
-		listOfLogs = append(listOfLogs, log)
+		logs = append(logs, log)
 	}
 
-	return listOfLogs, nil
+	return logs, nil
 }
 
 func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT transaction_id, group_id, from_container_id, fc.container_name, to_container_id, tc.container_name, scryfall_id, amount
-		FROM transactions AS t
+		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
+		FROM transactions
 		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
 		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
-		WHERE t.group_id = $1;`, groupId)
+		WHERE group_id = $1;`, groupId)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-	listOfLogs := []TransactionLogs{}
+	return fetchLogsFromQuery(row)
+}
+
+func FetchLogsFromRange(logRange LogRange) ([]TransactionLogs, error) {
+	db := database.Instance()
+	row, err := db.Query(`
+		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
+		FROM transactions
+		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
+		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
+		WHERE time >= $1 AND time <= $2;`, logRange.start, logRange.end)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	return fetchLogsFromQuery(row)
+}
+
+func fetchLogsFromQuery(row *sql.Rows) ([]TransactionLogs, error) {
+	logs := []TransactionLogs{}
 
 	for row.Next() {
 		log := TransactionLogs{}
@@ -64,7 +99,7 @@ func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 		var toMaybeBoxId sql.Null[int]
 		var toMaybeBoxName sql.NullString
 
-		if err := row.Scan(&log.TransactionId, &log.GroupId, &fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &log.ScryfallId, &log.Quantity); err != nil {
+		if err := row.Scan(&fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &log.ScryfallId, &log.Quantity); err != nil {
 			return nil, err
 		}
 
@@ -76,10 +111,10 @@ func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 			log.ToContainer = &TransactionContainer{toMaybeBoxId.V, toMaybeBoxName.String}
 		}
 
-		listOfLogs = append(listOfLogs, log)
+		logs = append(logs, log)
 	}
 
-	return listOfLogs, nil
+	return logs, nil
 }
 
 func LogCollectionChanges(changes []containers.ContainerChanges) error {

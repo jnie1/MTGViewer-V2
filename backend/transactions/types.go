@@ -10,6 +10,11 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
+type LogRange struct {
+	start time.Time
+	end   time.Time
+}
+
 type UpdateLogs struct {
 	GroupId uuid.UUID `json:"groupId"`
 	Time    time.Time `json:"time"`
@@ -17,8 +22,6 @@ type UpdateLogs struct {
 }
 
 type TransactionLogs struct {
-	TransactionId int                   `json:"transactionId"`
-	GroupId       uuid.UUID             `json:"groupId"`
 	FromContainer *TransactionContainer `json:"fromContainer"`
 	ToContainer   *TransactionContainer `json:"toContainer"`
 	ScryfallId    uuid.UUID             `json:"scryfallId"`
@@ -37,8 +40,17 @@ func (container *TransactionContainer) Container() TransactionContainer {
 	return *container
 }
 
+type containerCard struct {
+	containerId int
+	scryfallId  uuid.UUID
+}
+
+type containerChange struct {
+	containerId int
+	delta       int
+}
+
 type ReportCard struct {
-	GroupId       uuid.UUID             `json:"groupId"`
 	FromContainer *TransactionContainer `json:"fromContainer"`
 	ToContainer   *TransactionContainer `json:"toContainer"`
 	Card          cards.Card            `json:"card"`
@@ -77,7 +89,6 @@ func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) ([]Report
 			return nil, fmt.Errorf("cannot resolve card id %s", log.ScryfallId)
 		}
 		reportCards[i] = ReportCard{
-			GroupId:       log.GroupId,
 			FromContainer: log.FromContainer,
 			ToContainer:   log.ToContainer,
 			Card:          reportedCard,
