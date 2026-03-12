@@ -40,8 +40,8 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 	changesByCard := map[uuid.UUID][]containerChange{}
 
 	for key, delta := range deltas {
-		newChange := containerChange{key.containerId, delta}
 		cardId := key.scryfallId
+		newChange := containerChange{key.containerId, delta}
 		changesByCard[cardId] = append(changesByCard[cardId], newChange)
 	}
 
@@ -57,24 +57,25 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			}
 		}
 
-		// sort for largest adds first
 		slices.SortFunc(adds, func(a, b containerChange) int {
+			// sort largest adds first, the most positive number desc
 			return -cmp.Compare(a.delta, b.delta)
 		})
-		// sort for largest deletes first
 		slices.SortFunc(deletes, func(a, b containerChange) int {
+			// sort largest deletes first, most negative number asc
 			return cmp.Compare(a.delta, b.delta)
 		})
 
 		var currentAdd, currentDelete containerChange
-		if len(adds) > 0 {
-			currentAdd = adds[0]
+		i, j := 0, 0
+
+		if i < len(adds) {
+			currentAdd = adds[i]
 		}
-		if len(deletes) > 0 {
-			currentDelete = deletes[0]
+		if j < len(deletes) {
+			currentDelete = deletes[j]
 		}
 
-		i, j := 0, 0
 		for currentAdd.delta > 0 && currentDelete.delta < 0 {
 			add, delete := currentAdd.delta, -currentDelete.delta
 			newLog := TransactionLogs{
