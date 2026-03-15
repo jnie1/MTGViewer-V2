@@ -133,41 +133,39 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			updatedLogs = append(updatedLogs, newLog)
 		}
 
-		if currentDelete.delta < 0 {
-			updatedLogs = append(updatedLogs, TransactionLogs{
-				FromContainer: containers[currentDelete.containerId],
-				ScryfallId:    cardId,
-				Quantity:      -currentDelete.delta,
-			})
-		}
-
-		deleteIndex += 1
-		if deleteIndex < len(deletes) {
-			for _, extra := range deletes[deleteIndex:] {
-				updatedLogs = append(updatedLogs, TransactionLogs{
-					FromContainer: containers[extra.containerId],
-					ScryfallId:    cardId,
-					Quantity:      -extra.delta,
-				})
-			}
-		}
-
 		if currentAdd.delta > 0 {
 			updatedLogs = append(updatedLogs, TransactionLogs{
 				ToContainer: containers[currentAdd.containerId],
 				ScryfallId:  cardId,
 				Quantity:    currentAdd.delta,
 			})
+
+			if addIndex+1 < len(adds) {
+				for _, extra := range adds[addIndex+1:] {
+					updatedLogs = append(updatedLogs, TransactionLogs{
+						ToContainer: containers[extra.containerId],
+						ScryfallId:  cardId,
+						Quantity:    extra.delta,
+					})
+				}
+			}
 		}
 
-		addIndex += 1
-		if addIndex < len(adds) {
-			for _, extra := range adds[addIndex:] {
-				updatedLogs = append(updatedLogs, TransactionLogs{
-					ToContainer: containers[extra.containerId],
-					ScryfallId:  cardId,
-					Quantity:    extra.delta,
-				})
+		if currentDelete.delta < 0 {
+			updatedLogs = append(updatedLogs, TransactionLogs{
+				FromContainer: containers[currentDelete.containerId],
+				ScryfallId:    cardId,
+				Quantity:      -currentDelete.delta,
+			})
+
+			if deleteIndex+1 < len(deletes) {
+				for _, extra := range deletes[deleteIndex+1:] {
+					updatedLogs = append(updatedLogs, TransactionLogs{
+						FromContainer: containers[extra.containerId],
+						ScryfallId:    cardId,
+						Quantity:      -extra.delta,
+					})
+				}
 			}
 		}
 	}
