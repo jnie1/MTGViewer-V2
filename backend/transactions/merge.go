@@ -67,13 +67,13 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 		})
 
 		var currentAdd, currentDelete containerChange
-		i, j := 0, 0
+		addIndex, deleteIndex := 0, 0
 
-		if i < len(adds) {
-			currentAdd = adds[i]
+		if addIndex < len(adds) {
+			currentAdd = adds[addIndex]
 		}
-		if j < len(deletes) {
-			currentDelete = deletes[j]
+		if deleteIndex < len(deletes) {
+			currentDelete = deletes[deleteIndex]
 		}
 
 		for currentAdd.delta > 0 && currentDelete.delta < 0 {
@@ -87,9 +87,9 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			if add < delete {
 				newLog.Quantity = add
 
-				i += 1
-				if i < len(adds) {
-					currentAdd = adds[i]
+				addIndex += 1
+				if addIndex < len(adds) {
+					currentAdd = adds[addIndex]
 				} else {
 					currentAdd = containerChange{}
 				}
@@ -101,9 +101,9 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			} else if add > delete {
 				newLog.Quantity = delete
 
-				j += 1
-				if j < len(deletes) {
-					currentDelete = deletes[j]
+				deleteIndex += 1
+				if deleteIndex < len(deletes) {
+					currentDelete = deletes[deleteIndex]
 				} else {
 					currentDelete = containerChange{}
 				}
@@ -115,16 +115,16 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			} else {
 				newLog.Quantity = add
 
-				i += 1
-				if i < len(adds) {
-					currentAdd = adds[i]
+				addIndex += 1
+				if addIndex < len(adds) {
+					currentAdd = adds[addIndex]
 				} else {
 					currentAdd = containerChange{}
 				}
 
-				j += 1
-				if j < len(deletes) {
-					currentDelete = deletes[j]
+				deleteIndex += 1
+				if deleteIndex < len(deletes) {
+					currentDelete = deletes[deleteIndex]
 				} else {
 					currentDelete = containerChange{}
 				}
@@ -141,8 +141,8 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			})
 		}
 
-		if j < len(deletes) {
-			for _, extra := range deletes[j:] {
+		if deleteIndex < len(deletes) {
+			for _, extra := range deletes[deleteIndex:] {
 				updatedLogs = append(updatedLogs, TransactionLogs{
 					FromContainer: containers[extra.containerId],
 					ScryfallId:    cardId,
@@ -159,8 +159,8 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			})
 		}
 
-		if i < len(adds) {
-			for _, extra := range adds[i:] {
+		if addIndex < len(adds) {
+			for _, extra := range adds[addIndex:] {
 				updatedLogs = append(updatedLogs, TransactionLogs{
 					ToContainer: containers[extra.containerId],
 					ScryfallId:  cardId,
