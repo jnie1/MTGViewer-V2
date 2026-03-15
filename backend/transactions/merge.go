@@ -141,6 +141,7 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			})
 		}
 
+		deleteIndex += 1
 		if deleteIndex < len(deletes) {
 			for _, extra := range deletes[deleteIndex:] {
 				updatedLogs = append(updatedLogs, TransactionLogs{
@@ -159,6 +160,7 @@ func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*Tr
 			})
 		}
 
+		addIndex += 1
 		if addIndex < len(adds) {
 			for _, extra := range adds[addIndex:] {
 				updatedLogs = append(updatedLogs, TransactionLogs{
