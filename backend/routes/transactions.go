@@ -37,12 +37,13 @@ func fetchReportCards(c *gin.Context) {
 		}
 	}
 
-	logs, err := fetchTransactionLogs(group1, group2)
+	allLogs, err := fetchTransactionLogs(group1, group2)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
+	logs := transactions.MergeLogs(allLogs)
 	scryfallIds := transactions.GetScryfallIds(logs)
 	cards, err := cards.FetchCollection(scryfallIds)
 
@@ -60,7 +61,7 @@ func fetchReportCards(c *gin.Context) {
 	c.JSON(http.StatusOK, reportCards)
 }
 
-func fetchTransactionLogs(group1 uuid.UUID, group2 uuid.UUID) ([]transactions.TransactionLogs, error) {
+func fetchTransactionLogs(group1, group2 uuid.UUID) ([]transactions.TransactionLogs, error) {
 	if group2 == uuid.Nil {
 		return transactions.FetchLogs(group1)
 	}
