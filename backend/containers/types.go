@@ -167,7 +167,7 @@ func GetCardAmounts(fullCards []cards.Card, deposits []cards.CardAmountPreview) 
 	return amounts, nil
 }
 
-func GetCardDepositAmounts(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {
+func GetCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {
 	depositAmounts := make([]CardDeposit, len(deposits))
 	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
 

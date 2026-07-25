@@ -100,7 +100,7 @@ func searchCards(c *gin.Context) {
 		return
 	}
 
-	cardAmounts, err := containers.GetCardDepositAmounts(cardPage.Cards, deposits)
+	cardAmounts, err := containers.GetCardDeposits(cardPage.Cards, deposits)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
