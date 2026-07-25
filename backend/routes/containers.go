@@ -85,7 +85,7 @@ func searchCards(c *gin.Context) {
 	}
 
 	if len(cardPage.Cards) == 0 {
-		c.JSON(http.StatusOK, []containers.CardDepositAmount{})
+		c.JSON(http.StatusOK, []containers.CardDeposit{})
 		return
 	}
 
@@ -134,15 +134,15 @@ func pruneCheck(c *gin.Context) {
 		return
 	}
 
-	cardIds, err := containers.FindCardsAboveCount(maxSize)
+	matches, err := containers.FindCardsAboveCount(maxSize)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	scryfallIds := make([]cards.ScryfallIdentifier, len(cardIds))
-	for i, id := range cardIds {
-		scryfallIds[i] = cards.ScryfallIdentifier{Id: id}
+	scryfallIds := make([]cards.ScryfallIdentifier, len(matches))
+	for i, match := range matches {
+		scryfallIds[i] = cards.ScryfallIdentifier{Id: match.ScryfallId}
 	}
 
 	results, err := cards.FetchCollection(scryfallIds)
@@ -151,13 +151,13 @@ func pruneCheck(c *gin.Context) {
 		return
 	}
 
-	matches, err := cards.KeepBelowPrice(results, maxPrice)
+	pruningCards, err := cards.KeepBelowPrice(results, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, matches)
+	c.JSON(http.StatusOK, pruningCards)
 }
 
 func AddContainerRoutes(router *gin.Engine) {

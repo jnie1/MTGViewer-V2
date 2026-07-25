@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/database"
 	"github.com/lib/pq"
+
+	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
 func GetAllocations() ([]ContainerAllocation, error) {
@@ -80,7 +82,7 @@ func GetContainer(containerId int) (Container, error) {
 	return container, err
 }
 
-func FindCardsAboveCount(count int) ([]uuid.UUID, error) {
+func FindCardsAboveCount(count int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
@@ -94,20 +96,21 @@ func FindCardsAboveCount(count int) ([]uuid.UUID, error) {
 	}
 
 	defer row.Close()
-	scryfallIds := []uuid.UUID{}
+	deposits := []cards.CardAmountPreview{}
 
 	for row.Next() {
-		scryfallId := uuid.UUID{}
-		if err := row.Scan(&scryfallId); err != nil {
+		deposit := cards.CardAmountPreview{}
+		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
 			return nil, err
 		}
-		scryfallIds = append(scryfallIds, scryfallId)
+
+		deposits = append(deposits, deposit)
 	}
 
-	return scryfallIds, nil
+	return deposits, nil
 }
 
-func GetDeposits(containerId int) ([]CardDepositPreview, error) {
+func GetDeposits(containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
@@ -120,11 +123,10 @@ func GetDeposits(containerId int) ([]CardDepositPreview, error) {
 	}
 
 	defer row.Close()
-
-	deposits := []CardDepositPreview{}
+	deposits := []cards.CardAmountPreview{}
 
 	for row.Next() {
-		deposit := CardDepositPreview{}
+		deposit := cards.CardAmountPreview{}
 		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
 			return nil, err
 		}
@@ -135,7 +137,7 @@ func GetDeposits(containerId int) ([]CardDepositPreview, error) {
 	return deposits, nil
 }
 
-func SearchCards(scryfallIds uuid.UUIDs) ([]CardDeposit, error) {
+func SearchCards(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
@@ -150,10 +152,10 @@ func SearchCards(scryfallIds uuid.UUIDs) ([]CardDeposit, error) {
 
 	defer row.Close()
 
-	deposits := []CardDeposit{}
+	deposits := []CardDepositPreview{}
 
 	for row.Next() {
-		deposit := CardDeposit{}
+		deposit := CardDepositPreview{}
 		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.Amount); err != nil {
 			return nil, err
 		}

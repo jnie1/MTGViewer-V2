@@ -33,6 +33,11 @@ type CardAmount struct {
 	Amount int `json:"amount"`
 }
 
+type CardAmountPreview struct {
+	ScryfallId uuid.UUID
+	Amount     int
+}
+
 type SearchCardPage struct {
 	TotalCards int
 	Cards      []Card
