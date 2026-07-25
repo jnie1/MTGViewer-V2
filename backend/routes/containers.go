@@ -151,7 +151,7 @@ func pruneCheck(c *gin.Context) {
 		return
 	}
 
-	pruningCards, err := cards.KeepBelowPrice(results, maxPrice)
+	pruningCards, err := cards.KeepBelowPrice(results, matches, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return

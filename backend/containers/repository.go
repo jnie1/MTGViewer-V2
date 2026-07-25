@@ -86,7 +86,7 @@ func FindCardsAboveCount(count int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT cd.scryfall_id 
+		SELECT cd.scryfall_id, SUM(cd.amount)
 		FROM card_deposits cd 
 		GROUP BY cd.scryfall_id 
 		HAVING SUM(cd.amount) > $1;`, count)
