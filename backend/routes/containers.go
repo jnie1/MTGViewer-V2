@@ -85,7 +85,7 @@ func searchCards(c *gin.Context) {
 	}
 
 	if len(cardPage.Cards) == 0 {
-		c.JSON(http.StatusOK, []containers.CardDepositAmount{})
+		c.JSON(http.StatusOK, []containers.CardDeposit{})
 		return
 	}
 
