@@ -28,24 +28,21 @@ func MergeLogs(logs []TransactionLogs) []TransactionLogs {
 		}
 	}
 
-	if len(containerDeltas) == len(logs) {
-		return logs
-	}
-
-	return combineContainerDeltas(containerDeltas, containersById)
-}
-
-func combineContainerDeltas(deltas map[containerCard]int, containers map[int]*TransactionContainer) []TransactionLogs {
-	updatedLogs := make([]TransactionLogs, len(deltas))
 	changesByCard := map[uuid.UUID][]containerChange{}
 
-	for key, delta := range deltas {
+	for key, delta := range containerDeltas {
 		cardId := key.scryfallId
 		newChange := containerChange{key.containerId, delta}
 		changesByCard[cardId] = append(changesByCard[cardId], newChange)
 	}
 
-	for cardId, changes := range changesByCard {
+	return combineCardDeltas(changesByCard, containersById)
+}
+
+func combineCardDeltas(deltas map[uuid.UUID][]containerChange, containers map[int]*TransactionContainer) []TransactionLogs {
+	updatedLogs := []TransactionLogs{}
+
+	for cardId, changes := range deltas {
 		adds := []containerChange{}
 		deletes := []containerChange{}
 
