@@ -21,12 +21,12 @@ func TranslatePrune(matches []CardDepositPreview, targetCopies int) []ContainerC
 	changesByContainer := map[int][]CardRequest{}
 
 	for _, deposits := range depositsByCard {
+		remainingCopies := targetCopies
+
 		slices.SortFunc(deposits, func(a, b CardDepositPreview) int {
 			// negative to sort in desc order
 			return -cmp.Compare(a.Amount, b.Amount)
 		})
-
-		remainingCopies := targetCopies
 
 		for _, deposit := range deposits {
 			keepAmount := min(deposit.Amount, remainingCopies)
