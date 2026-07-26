@@ -209,10 +209,7 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	changes, err := containers.TranslatePrune(matches, maxCopies)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-	}
+	changes := containers.TranslatePrune(matches, maxCopies)
 
 	if err := containers.UpdateDeposits(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
