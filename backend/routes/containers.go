@@ -47,32 +47,32 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
-	deposits, err := containers.GetDeposits(containerId)
+	previews, err := containers.GetAmountPreviews(containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if len(deposits) == 0 {
+	if len(previews) == 0 {
 		c.JSON(http.StatusOK, []cards.CardAmount{})
 		return
 	}
 
-	scryfallIds := containers.GetScryfallIds(deposits)
-	cards, err := cards.FetchCollection(scryfallIds)
+	scryfallIds := cards.GetScryfallIds(previews)
+	matches, err := cards.FetchCollection(scryfallIds)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	cardAmounts, err := containers.GetCardAmounts(cards, deposits)
+	amounts, err := cards.GetCardAmounts(matches, previews)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, cardAmounts)
+	c.JSON(http.StatusOK, amounts)
 }
 
 func searchCards(c *gin.Context) {
@@ -109,7 +109,7 @@ func searchCards(c *gin.Context) {
 	c.JSON(http.StatusOK, cardAmounts)
 }
 
-func pruneCheck(c *gin.Context) {
+func checkPrune(c *gin.Context) {
 	size := c.Query("size")
 	maxSize, err := strconv.Atoi(size)
 	if err != nil {
@@ -140,11 +140,7 @@ func pruneCheck(c *gin.Context) {
 		return
 	}
 
-	scryfallIds := make([]cards.ScryfallIdentifier, len(matches))
-	for i, match := range matches {
-		scryfallIds[i] = cards.ScryfallIdentifier{Id: match.ScryfallId}
-	}
-
+	scryfallIds := cards.GetScryfallIds(matches)
 	results, err := cards.FetchCollection(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
@@ -166,5 +162,5 @@ func AddContainerRoutes(router *gin.Engine) {
 	group.GET("/:container", fetchContainer)
 	group.GET("/:container/cards", fetchContainerCards)
 	group.GET("/cards", searchCards)
-	group.GET("/prune", pruneCheck)
+	group.GET("/prune", checkPrune)
 }

@@ -137,36 +137,6 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 	return mergedChanges
 }
 
-func GetCardAmounts(fullCards []cards.Card, deposits []cards.CardAmountPreview) ([]cards.CardAmount, error) {
-	amounts := make([]cards.CardAmount, len(deposits))
-	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
-
-	for _, card := range fullCards {
-		cardMap[card.ScryfallId] = card
-	}
-
-	for i, deposit := range deposits {
-		card, ok := cardMap[deposit.ScryfallId]
-		if !ok {
-			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
-		}
-		amounts[i] = cards.CardAmount{
-			Card:   card,
-			Amount: deposit.Amount,
-		}
-	}
-
-	slices.SortFunc(amounts, func(a, b cards.CardAmount) int {
-		nameCompare := strings.Compare(a.Name, b.Name)
-		if nameCompare == 0 {
-			return strings.Compare(a.Set, b.Set)
-		}
-		return nameCompare
-	})
-
-	return amounts, nil
-}
-
 func GetCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {
 	depositAmounts := make([]CardDeposit, len(deposits))
 	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
@@ -193,24 +163,6 @@ func GetCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]C
 	})
 
 	return depositAmounts, nil
-}
-
-func GetScryfallIds(deposits []cards.CardAmountPreview) []cards.ScryfallIdentifier {
-	uniqIds := map[uuid.UUID]any{}
-
-	for _, deposit := range deposits {
-		uniqIds[deposit.ScryfallId] = nil
-	}
-
-	allIds := make([]cards.ScryfallIdentifier, len(uniqIds))
-	i := 0
-
-	for id := range uniqIds {
-		allIds[i] = cards.ScryfallIdentifier{Id: id}
-		i += 1
-	}
-
-	return allIds
 }
 
 type csvHeaderPositions struct {

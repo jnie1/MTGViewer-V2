@@ -1,6 +1,8 @@
 package cards
 
 import (
+	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -122,4 +124,52 @@ func toCards(cards []scryfallCard) []Card {
 		result[i] = toCard(card)
 	}
 	return result
+}
+
+func GetCardAmounts(cards []Card, previews []CardAmountPreview) ([]CardAmount, error) {
+	amounts := make([]CardAmount, len(previews))
+	cardMap := make(map[uuid.UUID]Card, len(cards))
+
+	for _, card := range cards {
+		cardMap[card.ScryfallId] = card
+	}
+
+	for i, deposit := range previews {
+		card, ok := cardMap[deposit.ScryfallId]
+		if !ok {
+			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
+		}
+		amounts[i] = CardAmount{
+			Card:   card,
+			Amount: deposit.Amount,
+		}
+	}
+
+	slices.SortFunc(amounts, func(a, b CardAmount) int {
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare == 0 {
+			return strings.Compare(a.Set, b.Set)
+		}
+		return nameCompare
+	})
+
+	return amounts, nil
+}
+
+func GetScryfallIds(amounts []CardAmountPreview) []ScryfallIdentifier {
+	uniqIds := map[uuid.UUID]any{}
+
+	for _, deposit := range amounts {
+		uniqIds[deposit.ScryfallId] = nil
+	}
+
+	allIds := make([]ScryfallIdentifier, len(uniqIds))
+	i := 0
+
+	for id := range uniqIds {
+		allIds[i] = ScryfallIdentifier{Id: id}
+		i += 1
+	}
+
+	return allIds
 }

@@ -110,7 +110,7 @@ func FindCardsAboveCount(count int) ([]cards.CardAmountPreview, error) {
 	return deposits, nil
 }
 
-func GetDeposits(containerId int) ([]cards.CardAmountPreview, error) {
+func GetAmountPreviews(containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
