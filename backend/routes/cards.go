@@ -119,7 +119,7 @@ func withdrawCards(c *gin.Context) {
 	}
 
 	scryfallIds := containers.FindScryfallIds(withdrawals)
-	deposits, err := containers.SearchCards(scryfallIds)
+	deposits, err := containers.SearchDeposits(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

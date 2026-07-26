@@ -82,7 +82,7 @@ func GetContainer(containerId int) (Container, error) {
 	return container, err
 }
 
-func GetAmountPreviews(containerId int) ([]cards.CardAmountPreview, error) {
+func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
@@ -109,7 +109,7 @@ func GetAmountPreviews(containerId int) ([]cards.CardAmountPreview, error) {
 	return deposits, nil
 }
 
-func SearchCards(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
+func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`

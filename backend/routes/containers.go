@@ -47,32 +47,31 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
-	previews, err := containers.GetAmountPreviews(containerId)
+	amounts, err := containers.GetAmounts(containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if len(previews) == 0 {
+	if len(amounts) == 0 {
 		c.JSON(http.StatusOK, []cards.CardAmount{})
 		return
 	}
 
-	scryfallIds := cards.GetScryfallIds(previews)
+	scryfallIds := cards.ToScryfallIds(amounts)
 	matches, err := cards.FetchCollection(scryfallIds)
-
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	amounts, err := cards.GetCardAmounts(matches, previews)
+	result, err := cards.JoinCardAmounts(matches, amounts)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, amounts)
+	c.JSON(http.StatusOK, result)
 }
 
 func searchCards(c *gin.Context) {
@@ -94,19 +93,19 @@ func searchCards(c *gin.Context) {
 		cardIds[i] = card.ScryfallId
 	}
 
-	deposits, err := containers.SearchCards(cardIds)
+	deposits, err := containers.SearchDeposits(cardIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	cardAmounts, err := containers.GetCardDeposits(cardPage.Cards, deposits)
+	result, err := containers.JoinCardDeposits(cardPage.Cards, deposits)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, cardAmounts)
+	c.JSON(http.StatusOK, result)
 }
 
 func AddContainerRoutes(router *gin.Engine) {
