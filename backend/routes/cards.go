@@ -25,13 +25,13 @@ func fetchCollection(c *gin.Context) {
 		return
 	}
 
-	cards, err := cards.FetchCollection(scryfallIds)
+	result, err := cards.FetchCollection(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, cards)
+	c.JSON(http.StatusOK, result)
 }
 
 func fetchCard(c *gin.Context) {
@@ -43,24 +43,24 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	card, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
+	result, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, card)
+	c.JSON(http.StatusOK, result)
 }
 
 func fetchRandomCard(c *gin.Context) {
-	card, err := cards.FetchRandomCard()
+	result, err := cards.FetchRandomCard()
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, card)
+	c.JSON(http.StatusOK, result)
 }
 
 func importCards(c *gin.Context) {

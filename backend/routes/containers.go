@@ -11,37 +11,35 @@ import (
 )
 
 func fetchContainerPreviews(c *gin.Context) {
-	containers, err := containers.GetContainers()
+	result, err := containers.GetContainers()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, containers)
+	c.JSON(http.StatusOK, result)
 }
 
 func fetchContainer(c *gin.Context) {
 	id := c.Param("container")
 	containerId, err := strconv.Atoi(id)
-
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	container, err := containers.GetContainer(containerId)
+	result, err := containers.GetContainer(containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, container)
+	c.JSON(http.StatusOK, result)
 }
 
 func fetchContainerCards(c *gin.Context) {
 	id := c.Param("container")
 	containerId, err := strconv.Atoi(id)
-
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
