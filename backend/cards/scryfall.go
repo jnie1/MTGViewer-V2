@@ -55,6 +55,10 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return SearchCardPage{}, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
+	}
+
 	contentType := resp.Header.Get("Content-Type")
 	if !strings.Contains(contentType, "application/json") {
 		return SearchCardPage{}, fmt.Errorf("unexpected response content %s", contentType)
@@ -98,6 +102,10 @@ func FetchRandomCard() (Card, error) {
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return Card{}, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
+	}
+
 	contentType := resp.Header.Get("Content-Type")
 	if !strings.Contains(contentType, "application/json") {
 		return Card{}, fmt.Errorf("unexpected response content %s", contentType)
@@ -133,6 +141,10 @@ func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return Card{}, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
+	}
 
 	contentType := resp.Header.Get("Content-Type")
 	if !strings.Contains(contentType, "application/json") {
@@ -212,6 +224,10 @@ func fetchCollectionBatch[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
+	}
 
 	contentType := resp.Header.Get("Content-Type")
 	if !strings.Contains(contentType, "application/json") {
