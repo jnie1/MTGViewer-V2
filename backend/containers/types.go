@@ -11,6 +11,19 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
+type Container struct {
+	Name      string `json:"name"`
+	Used      int    `json:"used"`
+	Capacity  int    `json:"capacity"`
+	IsDeleted bool   `json:"isDeleted"`
+}
+
+type ContainerPreview struct {
+	ContainerId int    `json:"containerId"`
+	Name        string `json:"name"`
+	Capacity    int    `json:"capacity"`
+}
+
 type ContainerName struct {
 	ContainerId int    `json:"containerId"`
 	Name        string `json:"name"`
@@ -23,17 +36,9 @@ func (container *ContainerName) Container() ContainerName {
 	return *container
 }
 
-type ContainerPreview struct {
-	ContainerId int    `json:"containerId"`
-	Name        string `json:"name"`
-	Capacity    int    `json:"capacity"`
-}
-
-type Container struct {
-	Name      string `json:"name"`
-	Used      int    `json:"used"`
-	Capacity  int    `json:"capacity"`
-	IsDeleted bool   `json:"isDeleted"`
+type ContainerDelta struct {
+	ContainerId int
+	Delta       int
 }
 
 type CardDeposit struct {
