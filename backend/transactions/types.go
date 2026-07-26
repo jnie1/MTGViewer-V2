@@ -36,13 +36,6 @@ type CardLog struct {
 	Amount        int                       `json:"amount"`
 }
 
-type containerChange struct {
-	containerId int
-	delta       int
-}
-
-type containerMappings map[int]*containers.ContainerName
-
 func ToScryfallIds(transactionLogs []CardLogPreview) []cards.ScryfallIdentifier {
 	uniqIds := map[uuid.UUID]any{}
 

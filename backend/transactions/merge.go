@@ -9,106 +9,101 @@ import (
 )
 
 func MergeLogs(logs []CardLogPreview) []CardLogPreview {
-	containerDeltas := map[containers.ContainerCard]int{}
-	containersById := containerMappings{}
+	changesByContainer := map[containers.ContainerCard]int{}
+	containersById := map[int]*containers.ContainerName{}
 
 	for _, log := range logs {
 		if log.FromContainer != nil {
 			containerId := log.FromContainer.ContainerId
 			key := containers.ContainerCard{ContainerId: containerId, ScryfallId: log.ScryfallId}
 
-			containerDeltas[key] = containerDeltas[key] - log.Amount
+			changesByContainer[key] = changesByContainer[key] - log.Amount
 			containersById[containerId] = log.FromContainer
 		}
 		if log.ToContainer != nil {
 			containerId := log.ToContainer.ContainerId
 			key := containers.ContainerCard{ContainerId: containerId, ScryfallId: log.ScryfallId}
 
-			containerDeltas[key] = containerDeltas[key] + log.Amount
+			changesByContainer[key] = changesByContainer[key] + log.Amount
 			containersById[containerId] = log.ToContainer
 		}
 	}
 
-	changesByCard := map[uuid.UUID][]containerChange{}
-
-	for key, delta := range containerDeltas {
-		cardId := key.ScryfallId
-		newChange := containerChange{key.ContainerId, delta}
+	changesByCard := map[uuid.UUID][]containers.ContainerDelta{}
+	for cardKey, delta := range changesByContainer {
+		cardId := cardKey.ScryfallId
+		newChange := containers.ContainerDelta{ContainerId: cardKey.ContainerId, Delta: delta}
 		changesByCard[cardId] = append(changesByCard[cardId], newChange)
 	}
 
-	return combineCardDeltas(changesByCard, containersById)
-}
-
-func combineCardDeltas(deltas map[uuid.UUID][]containerChange, containers containerMappings) []CardLogPreview {
 	updatedLogs := []CardLogPreview{}
 
-	for cardId, changes := range deltas {
-		adds := []containerChange{}
-		deletes := []containerChange{}
+	for cardId, changes := range changesByCard {
+		adds := []containers.ContainerDelta{}
+		dels := []containers.ContainerDelta{}
 
 		for _, change := range changes {
-			if change.delta > 0 {
+			if change.Delta > 0 {
 				adds = append(adds, change)
-			} else if change.delta < 0 {
-				deletes = append(deletes, change)
+			} else if change.Delta < 0 {
+				dels = append(dels, change)
 			}
 		}
 
-		slices.SortFunc(adds, func(a, b containerChange) int {
+		slices.SortFunc(adds, func(a, b containers.ContainerDelta) int {
 			// sort largest adds first, the most positive number desc
-			return -cmp.Compare(a.delta, b.delta)
+			return -cmp.Compare(a.Delta, b.Delta)
 		})
-		slices.SortFunc(deletes, func(a, b containerChange) int {
+		slices.SortFunc(dels, func(a, b containers.ContainerDelta) int {
 			// sort largest deletes first, most negative number asc
-			return cmp.Compare(a.delta, b.delta)
+			return cmp.Compare(a.Delta, b.Delta)
 		})
 
-		var currentAdd, currentDelete containerChange
+		var currentAdd, currentDelete containers.ContainerDelta
 		addIndex, deleteIndex := 0, 0
 
 		if addIndex < len(adds) {
 			currentAdd = adds[addIndex]
 		}
-		if deleteIndex < len(deletes) {
-			currentDelete = deletes[deleteIndex]
+		if deleteIndex < len(dels) {
+			currentDelete = dels[deleteIndex]
 		}
 
-		for currentAdd.delta > 0 && currentDelete.delta < 0 {
-			add, delete := currentAdd.delta, -currentDelete.delta
+		for currentAdd.Delta > 0 && currentDelete.Delta < 0 {
+			add, del := currentAdd.Delta, -currentDelete.Delta
 			newLog := CardLogPreview{
-				FromContainer: containers[currentDelete.containerId],
-				ToContainer:   containers[currentAdd.containerId],
+				FromContainer: containersById[currentDelete.ContainerId],
+				ToContainer:   containersById[currentAdd.ContainerId],
 				ScryfallId:    cardId,
 			}
 
-			if add < delete {
+			if add < del {
 				newLog.Amount = add
 
 				addIndex += 1
 				if addIndex < len(adds) {
 					currentAdd = adds[addIndex]
 				} else {
-					currentAdd = containerChange{}
+					currentAdd = containers.ContainerDelta{}
 				}
 
-				currentDelete = containerChange{
-					containerId: currentDelete.containerId,
-					delta:       currentDelete.delta + add,
+				currentDelete = containers.ContainerDelta{
+					ContainerId: currentDelete.ContainerId,
+					Delta:       currentDelete.Delta + add,
 				}
-			} else if add > delete {
-				newLog.Amount = delete
+			} else if add > del {
+				newLog.Amount = del
 
 				deleteIndex += 1
-				if deleteIndex < len(deletes) {
-					currentDelete = deletes[deleteIndex]
+				if deleteIndex < len(dels) {
+					currentDelete = dels[deleteIndex]
 				} else {
-					currentDelete = containerChange{}
+					currentDelete = containers.ContainerDelta{}
 				}
 
-				currentAdd = containerChange{
-					containerId: currentAdd.containerId,
-					delta:       currentAdd.delta - delete,
+				currentAdd = containers.ContainerDelta{
+					ContainerId: currentAdd.ContainerId,
+					Delta:       currentAdd.Delta - del,
 				}
 			} else {
 				newLog.Amount = add
@@ -117,51 +112,51 @@ func combineCardDeltas(deltas map[uuid.UUID][]containerChange, containers contai
 				if addIndex < len(adds) {
 					currentAdd = adds[addIndex]
 				} else {
-					currentAdd = containerChange{}
+					currentAdd = containers.ContainerDelta{}
 				}
 
 				deleteIndex += 1
-				if deleteIndex < len(deletes) {
-					currentDelete = deletes[deleteIndex]
+				if deleteIndex < len(dels) {
+					currentDelete = dels[deleteIndex]
 				} else {
-					currentDelete = containerChange{}
+					currentDelete = containers.ContainerDelta{}
 				}
 			}
 
 			updatedLogs = append(updatedLogs, newLog)
 		}
 
-		if currentAdd.delta > 0 {
+		if currentAdd.Delta > 0 {
 			updatedLogs = append(updatedLogs, CardLogPreview{
-				ToContainer: containers[currentAdd.containerId],
+				ToContainer: containersById[currentAdd.ContainerId],
 				ScryfallId:  cardId,
-				Amount:      currentAdd.delta,
+				Amount:      currentAdd.Delta,
 			})
 
 			if addIndex+1 < len(adds) {
 				for _, extra := range adds[addIndex+1:] {
 					updatedLogs = append(updatedLogs, CardLogPreview{
-						ToContainer: containers[extra.containerId],
+						ToContainer: containersById[extra.ContainerId],
 						ScryfallId:  cardId,
-						Amount:      extra.delta,
+						Amount:      extra.Delta,
 					})
 				}
 			}
 		}
 
-		if currentDelete.delta < 0 {
+		if currentDelete.Delta < 0 {
 			updatedLogs = append(updatedLogs, CardLogPreview{
-				FromContainer: containers[currentDelete.containerId],
+				FromContainer: containersById[currentDelete.ContainerId],
 				ScryfallId:    cardId,
-				Amount:        -currentDelete.delta,
+				Amount:        -currentDelete.Delta,
 			})
 
-			if deleteIndex+1 < len(deletes) {
-				for _, extra := range deletes[deleteIndex+1:] {
+			if deleteIndex+1 < len(dels) {
+				for _, extra := range dels[deleteIndex+1:] {
 					updatedLogs = append(updatedLogs, CardLogPreview{
-						FromContainer: containers[extra.containerId],
+						FromContainer: containersById[extra.ContainerId],
 						ScryfallId:    cardId,
-						Amount:        -extra.delta,
+						Amount:        -extra.Delta,
 					})
 				}
 			}
