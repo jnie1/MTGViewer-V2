@@ -11,7 +11,7 @@ import (
 	"github.com/jnie1/MTGViewer-V2/database"
 )
 
-func FetchLogRange(group1, group2 uuid.UUID) (LogRange, error) {
+func GetTimeRange(group1, group2 uuid.UUID) (LogRange, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
@@ -20,15 +20,15 @@ func FetchLogRange(group1, group2 uuid.UUID) (LogRange, error) {
 		WHERE group_id = $1 OR group_id = $2;`, group1, group2)
 
 	logRange := LogRange{}
-	err := row.Scan(&logRange.start, &logRange.end)
+	err := row.Scan(&logRange.Start, &logRange.End)
 
 	return logRange, err
 }
 
-func FetchUpdateLogs() ([]UpdateLogs, error) {
+func GetTransactions() ([]CardTransaction, error) {
 	db := database.Instance()
 	row, err := db.Query(`
-		SELECT group_id, time, SUM(amount) AS amount
+		SELECT group_id, time, SUM(amount) AS total
 		FROM transactions
 		GROUP BY group_id, time
 		ORDER BY time DESC;`)
@@ -38,22 +38,22 @@ func FetchUpdateLogs() ([]UpdateLogs, error) {
 	}
 
 	defer row.Close()
-	logs := []UpdateLogs{}
+	transactions := []CardTransaction{}
 
 	for row.Next() {
-		log := UpdateLogs{}
+		transaction := CardTransaction{}
 
-		if err := row.Scan(&log.GroupId, &log.Time, &log.Amount); err != nil {
+		if err := row.Scan(&transaction.GroupId, &transaction.Time, &transaction.Total); err != nil {
 			return nil, err
 		}
 
-		logs = append(logs, log)
+		transactions = append(transactions, transaction)
 	}
 
-	return logs, nil
+	return transactions, nil
 }
 
-func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
+func GetLogs(groupId uuid.UUID) ([]CardLogPreview, error) {
 	db := database.Instance()
 	row, err := db.Query(`
 		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
@@ -67,31 +67,31 @@ func FetchLogs(groupId uuid.UUID) ([]TransactionLogs, error) {
 	}
 
 	defer row.Close()
-	return fetchLogsFromQuery(row)
+	return getLogsFromQuery(row)
 }
 
-func FetchLogsFromRange(logRange LogRange) ([]TransactionLogs, error) {
+func GetLogsFromRange(logRange LogRange) ([]CardLogPreview, error) {
 	db := database.Instance()
 	row, err := db.Query(`
 		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
 		FROM transactions
 		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
 		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
-		WHERE time >= $1 AND time <= $2;`, logRange.start, logRange.end)
+		WHERE time >= $1 AND time <= $2;`, logRange.Start, logRange.End)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-	return fetchLogsFromQuery(row)
+	return getLogsFromQuery(row)
 }
 
-func fetchLogsFromQuery(row *sql.Rows) ([]TransactionLogs, error) {
-	logs := []TransactionLogs{}
+func getLogsFromQuery(row *sql.Rows) ([]CardLogPreview, error) {
+	logs := []CardLogPreview{}
 
 	for row.Next() {
-		log := TransactionLogs{}
+		log := CardLogPreview{}
 
 		var fromMaybeBoxId sql.Null[int]
 		var fromMaybeBoxName sql.NullString
@@ -99,16 +99,16 @@ func fetchLogsFromQuery(row *sql.Rows) ([]TransactionLogs, error) {
 		var toMaybeBoxId sql.Null[int]
 		var toMaybeBoxName sql.NullString
 
-		if err := row.Scan(&fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &log.ScryfallId, &log.Quantity); err != nil {
+		if err := row.Scan(&fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &log.ScryfallId, &log.Amount); err != nil {
 			return nil, err
 		}
 
 		if fromMaybeBoxId.Valid && fromMaybeBoxName.Valid {
-			log.FromContainer = &TransactionContainer{fromMaybeBoxId.V, fromMaybeBoxName.String}
+			log.FromContainer = &containers.ContainerName{ContainerId: fromMaybeBoxId.V, Name: fromMaybeBoxName.String}
 		}
 
 		if toMaybeBoxId.Valid && toMaybeBoxName.Valid {
-			log.ToContainer = &TransactionContainer{toMaybeBoxId.V, toMaybeBoxName.String}
+			log.ToContainer = &containers.ContainerName{ContainerId: toMaybeBoxId.V, Name: toMaybeBoxName.String}
 		}
 
 		logs = append(logs, log)
