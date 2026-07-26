@@ -11,12 +11,6 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-type ContainerPreview struct {
-	ContainerId int    `json:"containerId"`
-	Name        string `json:"name"`
-	Capacity    int    `json:"capacity"`
-}
-
 type Container struct {
 	Name      string `json:"name"`
 	Used      int    `json:"used"`
@@ -24,26 +18,49 @@ type Container struct {
 	IsDeleted bool   `json:"isDeleted"`
 }
 
-type CardDepositAmount struct {
+type ContainerPreview struct {
+	ContainerId int    `json:"containerId"`
+	Name        string `json:"name"`
+	Capacity    int    `json:"capacity"`
+}
+
+type ContainerName struct {
+	ContainerId int    `json:"containerId"`
+	Name        string `json:"name"`
+}
+
+func (container *ContainerName) Container() ContainerName {
+	if container == nil {
+		return ContainerName{}
+	}
+	return *container
+}
+
+type ContainerDelta struct {
+	ContainerId int
+	Delta       int
+}
+
+type CardDeposit struct {
 	ContainerId   int    `json:"containerId"`
 	ContainerName string `json:"containerName"`
 	cards.CardAmount
 }
 
 type CardDepositPreview struct {
-	ScryfallId uuid.UUID
-	Amount     int
-}
-
-type CardDeposit struct {
 	ContainerId   int
 	ContainerName string
-	CardDepositPreview
+	cards.CardAmountPreview
 }
 
 type CardRequest struct {
 	ScryfallId uuid.UUID
 	Delta      int
+}
+
+type ContainerCard struct {
+	ContainerId int
+	ScryfallId  uuid.UUID
 }
 
 type ContainerChanges struct {
@@ -142,38 +159,8 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 	return mergedChanges
 }
 
-func GetCardAmounts(fullCards []cards.Card, deposits []CardDepositPreview) ([]cards.CardAmount, error) {
-	amounts := make([]cards.CardAmount, len(deposits))
-	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
-
-	for _, card := range fullCards {
-		cardMap[card.ScryfallId] = card
-	}
-
-	for i, deposit := range deposits {
-		card, ok := cardMap[deposit.ScryfallId]
-		if !ok {
-			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
-		}
-		amounts[i] = cards.CardAmount{
-			Card:   card,
-			Amount: deposit.Amount,
-		}
-	}
-
-	slices.SortFunc(amounts, func(a, b cards.CardAmount) int {
-		nameCompare := strings.Compare(a.Name, b.Name)
-		if nameCompare == 0 {
-			return strings.Compare(a.Set, b.Set)
-		}
-		return nameCompare
-	})
-
-	return amounts, nil
-}
-
-func GetCardDepositAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]CardDepositAmount, error) {
-	depositAmounts := make([]CardDepositAmount, len(deposits))
+func JoinCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {
+	depositAmounts := make([]CardDeposit, len(deposits))
 	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
 
 	for _, card := range fullCards {
@@ -186,10 +173,10 @@ func GetCardDepositAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]Ca
 			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
 		}
 		amount := cards.CardAmount{Card: card, Amount: deposit.Amount}
-		depositAmounts[i] = CardDepositAmount{CardAmount: amount, ContainerId: deposit.ContainerId, ContainerName: deposit.ContainerName}
+		depositAmounts[i] = CardDeposit{CardAmount: amount, ContainerId: deposit.ContainerId, ContainerName: deposit.ContainerName}
 	}
 
-	slices.SortFunc(depositAmounts, func(a, b CardDepositAmount) int {
+	slices.SortFunc(depositAmounts, func(a, b CardDeposit) int {
 		nameCompare := strings.Compare(a.Name, b.Name)
 		if nameCompare == 0 {
 			return strings.Compare(a.Set, b.Set)
@@ -198,24 +185,6 @@ func GetCardDepositAmounts(fullCards []cards.Card, deposits []CardDeposit) ([]Ca
 	})
 
 	return depositAmounts, nil
-}
-
-func GetScryfallIds(deposits []CardDepositPreview) []cards.ScryfallIdentifier {
-	uniqIds := map[uuid.UUID]any{}
-
-	for _, deposit := range deposits {
-		uniqIds[deposit.ScryfallId] = nil
-	}
-
-	allIds := make([]cards.ScryfallIdentifier, len(uniqIds))
-	i := 0
-
-	for id := range uniqIds {
-		allIds[i] = cards.ScryfallIdentifier{Id: id}
-		i += 1
-	}
-
-	return allIds
 }
 
 type csvHeaderPositions struct {

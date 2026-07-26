@@ -88,7 +88,7 @@ type depositKey struct {
 	ScryfallId  uuid.UUID
 }
 
-func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDeposit) ([]ContainerChanges, error) {
+func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDepositPreview) ([]ContainerChanges, error) {
 	changes := []ContainerChanges{}
 	amountsByContainers := map[depositKey]int{}
 

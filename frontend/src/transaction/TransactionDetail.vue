@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { ITransactionChange } from './types';
+import type { ICardLog } from './types';
 
 interface ITransactionProps {
-  changes: ITransactionChange[];
+  changes: ICardLog[];
 }
 
 const { changes } = defineProps<ITransactionProps>();
@@ -59,7 +59,7 @@ const { changes } = defineProps<ITransactionProps>();
             {{ change.toContainer.name }}
           </router-link>
         </v-col>
-        <v-col>{{ change.quantity }}</v-col>
+        <v-col>{{ change.amount }}</v-col>
       </v-row>
     </div>
   </div>

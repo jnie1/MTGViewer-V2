@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/database"
 	"github.com/lib/pq"
+
+	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
 func GetAllocations() ([]ContainerAllocation, error) {
@@ -80,7 +82,7 @@ func GetContainer(containerId int) (Container, error) {
 	return container, err
 }
 
-func GetDeposits(containerId int) ([]CardDepositPreview, error) {
+func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
@@ -93,22 +95,21 @@ func GetDeposits(containerId int) ([]CardDepositPreview, error) {
 	}
 
 	defer row.Close()
-
-	deposits := []CardDepositPreview{}
+	amounts := []cards.CardAmountPreview{}
 
 	for row.Next() {
-		deposit := CardDepositPreview{}
-		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
+		amount := cards.CardAmountPreview{}
+		if err := row.Scan(&amount.ScryfallId, &amount.Amount); err != nil {
 			return nil, err
 		}
 
-		deposits = append(deposits, deposit)
+		amounts = append(amounts, amount)
 	}
 
-	return deposits, nil
+	return amounts, nil
 }
 
-func SearchCards(scryfallIds uuid.UUIDs) ([]CardDeposit, error) {
+func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
@@ -123,10 +124,10 @@ func SearchCards(scryfallIds uuid.UUIDs) ([]CardDeposit, error) {
 
 	defer row.Close()
 
-	deposits := []CardDeposit{}
+	deposits := []CardDepositPreview{}
 
 	for row.Next() {
-		deposit := CardDeposit{}
+		deposit := CardDepositPreview{}
 		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.Amount); err != nil {
 			return nil, err
 		}

@@ -8,75 +8,54 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
+	"github.com/jnie1/MTGViewer-V2/containers"
 )
 
 type LogRange struct {
-	start time.Time
-	end   time.Time
+	Start time.Time
+	End   time.Time
 }
 
-type UpdateLogs struct {
+type CardTransaction struct {
 	GroupId uuid.UUID `json:"groupId"`
 	Time    time.Time `json:"time"`
-	Amount  int       `json:"amount"`
+	Total   int       `json:"total"`
 }
 
-type TransactionLogs struct {
-	FromContainer *TransactionContainer `json:"fromContainer"`
-	ToContainer   *TransactionContainer `json:"toContainer"`
-	ScryfallId    uuid.UUID             `json:"scryfallId"`
-	Quantity      int                   `json:"quantity"`
+type CardLogPreview struct {
+	FromContainer *containers.ContainerName
+	ToContainer   *containers.ContainerName
+	ScryfallId    uuid.UUID
+	Amount        int
 }
 
-type TransactionContainer struct {
-	ContainerId int    `json:"containerId"`
-	Name        string `json:"name"`
+type CardLog struct {
+	FromContainer *containers.ContainerName `json:"fromContainer"`
+	ToContainer   *containers.ContainerName `json:"toContainer"`
+	Card          cards.Card                `json:"card"`
+	Amount        int                       `json:"amount"`
 }
 
-func (container *TransactionContainer) Container() TransactionContainer {
-	if container == nil {
-		return TransactionContainer{}
-	}
-	return *container
-}
-
-type containerCard struct {
-	containerId int
-	scryfallId  uuid.UUID
-}
-
-type containerChange struct {
-	containerId int
-	delta       int
-}
-
-type ReportCard struct {
-	FromContainer *TransactionContainer `json:"fromContainer"`
-	ToContainer   *TransactionContainer `json:"toContainer"`
-	Card          cards.Card            `json:"card"`
-	Quantity      int                   `json:"quantity"`
-}
-
-func GetScryfallIds(transactionLogs []TransactionLogs) []cards.ScryfallIdentifier {
+func ToScryfallIds(transactionLogs []CardLogPreview) []cards.ScryfallIdentifier {
 	uniqIds := map[uuid.UUID]any{}
 
 	for _, log := range transactionLogs {
 		uniqIds[log.ScryfallId] = nil
 	}
 
-	allIds := make([]cards.ScryfallIdentifier, len(uniqIds))
+	ids := make([]cards.ScryfallIdentifier, len(uniqIds))
 	i := 0
 
 	for id := range uniqIds {
-		allIds[i] = cards.ScryfallIdentifier{Id: id}
+		ids[i] = cards.ScryfallIdentifier{Id: id}
 		i += 1
 	}
 
-	return allIds
+	return ids
 }
 
-func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) ([]ReportCard, error) {
-	reportCards := make([]ReportCard, len(logs))
+func JoinCardLogs(loggedCards []cards.Card, logs []CardLogPreview) ([]CardLog, error) {
+	cardChanges := make([]CardLog, len(logs))
 	cardMap := make(map[uuid.UUID]cards.Card, len(loggedCards))
 
 	for _, loggedCard := range loggedCards {
@@ -88,19 +67,19 @@ func JoinReportCards(loggedCards []cards.Card, logs []TransactionLogs) ([]Report
 		if !ok {
 			return nil, fmt.Errorf("cannot resolve card id %s", log.ScryfallId)
 		}
-		reportCards[i] = ReportCard{
+		cardChanges[i] = CardLog{
 			FromContainer: log.FromContainer,
 			ToContainer:   log.ToContainer,
 			Card:          reportedCard,
-			Quantity:      log.Quantity,
+			Amount:        log.Amount,
 		}
 	}
 
-	slices.SortFunc(reportCards, compareReportCards)
-	return reportCards, nil
+	slices.SortFunc(cardChanges, compareCardChange)
+	return cardChanges, nil
 }
 
-func compareReportCards(a, b ReportCard) int {
+func compareCardChange(a, b CardLog) int {
 	if c := cmp.Compare(a.FromContainer.Container().Name, b.FromContainer.Container().Name); c != 0 {
 		return c
 	}

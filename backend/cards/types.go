@@ -1,6 +1,8 @@
 package cards
 
 import (
+	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -30,6 +32,11 @@ type Card struct {
 type CardAmount struct {
 	Card
 	Amount int `json:"amount"`
+}
+
+type CardAmountPreview struct {
+	ScryfallId uuid.UUID
+	Amount     int
 }
 
 type SearchCardPage struct {
@@ -114,4 +121,52 @@ func toCards(cards []scryfallCard) []Card {
 		result[i] = toCard(card)
 	}
 	return result
+}
+
+func ToScryfallIds(amounts []CardAmountPreview) []ScryfallIdentifier {
+	uniqIds := map[uuid.UUID]any{}
+
+	for _, deposit := range amounts {
+		uniqIds[deposit.ScryfallId] = nil
+	}
+
+	ids := make([]ScryfallIdentifier, len(uniqIds))
+	i := 0
+
+	for id := range uniqIds {
+		ids[i] = ScryfallIdentifier{Id: id}
+		i += 1
+	}
+
+	return ids
+}
+
+func JoinCardAmounts(cards []Card, previews []CardAmountPreview) ([]CardAmount, error) {
+	amounts := make([]CardAmount, len(previews))
+	cardMap := make(map[uuid.UUID]Card, len(cards))
+
+	for _, card := range cards {
+		cardMap[card.ScryfallId] = card
+	}
+
+	for i, deposit := range previews {
+		card, ok := cardMap[deposit.ScryfallId]
+		if !ok {
+			return nil, fmt.Errorf("cannot resolve card id %s", deposit.ScryfallId)
+		}
+		amounts[i] = CardAmount{
+			Card:   card,
+			Amount: deposit.Amount,
+		}
+	}
+
+	slices.SortFunc(amounts, func(a, b CardAmount) int {
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare == 0 {
+			return strings.Compare(a.Set, b.Set)
+		}
+		return nameCompare
+	})
+
+	return amounts, nil
 }
