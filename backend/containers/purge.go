@@ -18,7 +18,8 @@ func TranslatePrune(matches []CardDepositPreview, targetCopies int) []ContainerC
 		depositsByCard[scryfallId] = append(depositsByCard[scryfallId], deposit)
 	}
 
-	changesByCard := map[uuid.UUID][]ContainerDelta{}
+	changesByContainer := map[int][]CardRequest{}
+
 	for _, deposits := range depositsByCard {
 		slices.SortFunc(deposits, func(a, b CardDepositPreview) int {
 			// negative to sort in desc order
@@ -32,28 +33,19 @@ func TranslatePrune(matches []CardDepositPreview, targetCopies int) []ContainerC
 			pruneAmount := deposit.Amount - keepAmount
 
 			if pruneAmount > 0 {
-				scryfallId := deposit.ScryfallId
-				delta := ContainerDelta{deposit.ContainerId, -pruneAmount}
-				changesByCard[scryfallId] = append(changesByCard[scryfallId], delta)
+				containerId := deposit.ContainerId
+				request := CardRequest{deposit.ScryfallId, -pruneAmount}
+				changesByContainer[containerId] = append(changesByContainer[containerId], request)
 			}
 
 			remainingCopies -= keepAmount
 		}
 	}
 
-	changesByContainer := map[int][]CardRequest{}
-	for cardId, changes := range changesByCard {
-		for _, change := range changes {
-			containerId := change.ContainerId
-			request := CardRequest{cardId, change.Delta}
-			changesByContainer[containerId] = append(changesByContainer[containerId], request)
-		}
-	}
-
 	changes := make([]ContainerChanges, len(changesByContainer))
 	i := 0
 	for containerId, requests := range changesByContainer {
-		changes[i] = ContainerChanges{containerId, requests}
+		changes[i] = ContainerChanges{containerId, MergeCardRequests(requests)}
 		i += 1
 	}
 
