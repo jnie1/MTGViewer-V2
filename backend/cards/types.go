@@ -130,15 +130,15 @@ func ToScryfallIds(amounts []CardAmountPreview) []ScryfallIdentifier {
 		uniqIds[deposit.ScryfallId] = nil
 	}
 
-	allIds := make([]ScryfallIdentifier, len(uniqIds))
+	ids := make([]ScryfallIdentifier, len(uniqIds))
 	i := 0
 
 	for id := range uniqIds {
-		allIds[i] = ScryfallIdentifier{Id: id}
+		ids[i] = ScryfallIdentifier{Id: id}
 		i += 1
 	}
 
-	return allIds
+	return ids
 }
 
 func JoinCardAmounts(cards []Card, previews []CardAmountPreview) ([]CardAmount, error) {
