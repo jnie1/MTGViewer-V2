@@ -7,7 +7,7 @@ interface ICardProps {
   cards: ICard[];
 }
 const { cards } = defineProps<ICardProps>();
-const searchQuery = ref('')
+const searchQuery = ref('');
 const filteredItems = computed(() => {
   if (!searchQuery.value) return cards[0]?.scryfallId;
   for (const card of cards) {
@@ -16,12 +16,16 @@ const filteredItems = computed(() => {
     }
   }
   return cards[0]?.scryfallId;
-})
+});
 </script>
 
 <template>
   <v-container>
-    <v-text-field v-model="searchQuery" label="Search items..." prepend-inner-icon="mdi-magnify" variant="outlined"
+    <v-text-field
+      v-model="searchQuery"
+      label="Search items..."
+      prepend-inner-icon="mdi-magnify"
+      variant="outlined"
       clearable>
     </v-text-field>
     <v-slide-group v-model="filteredItems" class="slide-content" show-arrows>
@@ -32,7 +36,7 @@ const filteredItems = computed(() => {
         <v-icon icon="$left" size="x-large" />
       </template>
       <v-slide-group-item v-for="card in cards" :key="card.scryfallId" :value="card.scryfallId">
-        <v-card class=" mx-2" max-width="350">
+        <v-card class="mx-2" max-width="350">
           <router-link :to="{ name: 'card', params: { scryfallId: card.scryfallId } }">
             <card-image :card />
           </router-link>
