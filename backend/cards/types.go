@@ -126,7 +126,25 @@ func toCards(cards []scryfallCard) []Card {
 	return result
 }
 
-func GetCardAmounts(cards []Card, previews []CardAmountPreview) ([]CardAmount, error) {
+func ToScryfallIds(amounts []CardAmountPreview) []ScryfallIdentifier {
+	uniqIds := map[uuid.UUID]any{}
+
+	for _, deposit := range amounts {
+		uniqIds[deposit.ScryfallId] = nil
+	}
+
+	allIds := make([]ScryfallIdentifier, len(uniqIds))
+	i := 0
+
+	for id := range uniqIds {
+		allIds[i] = ScryfallIdentifier{Id: id}
+		i += 1
+	}
+
+	return allIds
+}
+
+func JoinCardAmounts(cards []Card, previews []CardAmountPreview) ([]CardAmount, error) {
 	amounts := make([]CardAmount, len(previews))
 	cardMap := make(map[uuid.UUID]Card, len(cards))
 
@@ -154,22 +172,4 @@ func GetCardAmounts(cards []Card, previews []CardAmountPreview) ([]CardAmount, e
 	})
 
 	return amounts, nil
-}
-
-func GetScryfallIds(amounts []CardAmountPreview) []ScryfallIdentifier {
-	uniqIds := map[uuid.UUID]any{}
-
-	for _, deposit := range amounts {
-		uniqIds[deposit.ScryfallId] = nil
-	}
-
-	allIds := make([]ScryfallIdentifier, len(uniqIds))
-	i := 0
-
-	for id := range uniqIds {
-		allIds[i] = ScryfallIdentifier{Id: id}
-		i += 1
-	}
-
-	return allIds
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func KeepBelowPrice(allCards []Card, amounts []CardAmountPreview, price float64) ([]CardAmount, error) {
+func FindCheapCards(cards []Card, amounts []CardAmountPreview, price float64) ([]CardAmount, error) {
 	belowPrice := []CardAmount{}
 	amountsById := map[uuid.UUID]int{}
 
@@ -15,7 +15,7 @@ func KeepBelowPrice(allCards []Card, amounts []CardAmountPreview, price float64)
 		amountsById[amt.ScryfallId] = amt.Amount
 	}
 
-	for _, card := range allCards {
+	for _, card := range cards {
 		cardPrice, err := strconv.ParseFloat(card.Prices["usd"], 64)
 		if err != nil {
 			return nil, err

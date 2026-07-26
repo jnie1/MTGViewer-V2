@@ -82,7 +82,34 @@ func GetContainer(containerId int) (Container, error) {
 	return container, err
 }
 
-func FindCardsAboveCount(count int) ([]cards.CardAmountPreview, error) {
+func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT scryfall_id, amount
+		FROM card_deposits
+		WHERE container_id = $1`, containerId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	deposits := []cards.CardAmountPreview{}
+
+	for row.Next() {
+		deposit := cards.CardAmountPreview{}
+		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
+			return nil, err
+		}
+
+		deposits = append(deposits, deposit)
+	}
+
+	return deposits, nil
+}
+
+func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
@@ -110,34 +137,7 @@ func FindCardsAboveCount(count int) ([]cards.CardAmountPreview, error) {
 	return deposits, nil
 }
 
-func GetAmountPreviews(containerId int) ([]cards.CardAmountPreview, error) {
-	db := database.Instance()
-
-	row, err := db.Query(`
-		SELECT scryfall_id, amount
-		FROM card_deposits
-		WHERE container_id = $1`, containerId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer row.Close()
-	deposits := []cards.CardAmountPreview{}
-
-	for row.Next() {
-		deposit := cards.CardAmountPreview{}
-		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
-			return nil, err
-		}
-
-		deposits = append(deposits, deposit)
-	}
-
-	return deposits, nil
-}
-
-func SearchCards(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
+func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`

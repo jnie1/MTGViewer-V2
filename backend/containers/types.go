@@ -137,7 +137,7 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 	return mergedChanges
 }
 
-func GetCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {
+func JoinCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {
 	depositAmounts := make([]CardDeposit, len(deposits))
 	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))
 

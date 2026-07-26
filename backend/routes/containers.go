@@ -48,32 +48,31 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
-	previews, err := containers.GetAmountPreviews(containerId)
+	amounts, err := containers.GetAmounts(containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if len(previews) == 0 {
+	if len(amounts) == 0 {
 		c.JSON(http.StatusOK, []cards.CardAmount{})
 		return
 	}
 
-	scryfallIds := cards.GetScryfallIds(previews)
+	scryfallIds := cards.ToScryfallIds(amounts)
 	matches, err := cards.FetchCollection(scryfallIds)
-
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	amounts, err := cards.GetCardAmounts(matches, previews)
+	result, err := cards.JoinCardAmounts(matches, amounts)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, amounts)
+	c.JSON(http.StatusOK, result)
 }
 
 func searchCards(c *gin.Context) {
@@ -95,19 +94,19 @@ func searchCards(c *gin.Context) {
 		cardIds[i] = card.ScryfallId
 	}
 
-	previews, err := containers.SearchCards(cardIds)
+	deposits, err := containers.SearchDeposits(cardIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	amounts, err := containers.GetCardDeposits(cardPage.Cards, previews)
+	result, err := containers.JoinCardDeposits(cardPage.Cards, deposits)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, amounts)
+	c.JSON(http.StatusOK, result)
 }
 
 func checkPrune(c *gin.Context) {
@@ -135,26 +134,26 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
-	previews, err := containers.FindCardsAboveCount(maxCopies)
+	amounts, err := containers.FindExcessAmounts(maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	scryfallIds := cards.GetScryfallIds(previews)
-	results, err := cards.FetchCollection(scryfallIds)
+	scryfallIds := cards.ToScryfallIds(amounts)
+	matches, err := cards.FetchCollection(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pruningCards, err := cards.KeepBelowPrice(results, previews, maxPrice)
+	result, err := cards.FindCheapCards(matches, amounts, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, pruningCards)
+	c.JSON(http.StatusOK, result)
 }
 
 func applyPrune(c *gin.Context) {
@@ -182,31 +181,31 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	previews, err := containers.FindCardsAboveCount(maxCopies)
+	amounts, err := containers.FindExcessAmounts(maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	scryfallIds := cards.GetScryfallIds(previews)
+	scryfallIds := cards.ToScryfallIds(amounts)
 	results, err := cards.FetchCollection(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pruningCards, err := cards.KeepBelowPrice(results, previews, maxPrice)
+	cheapCards, err := cards.FindCheapCards(results, amounts, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pruningIds := make(uuid.UUIDs, len(pruningCards))
-	for i, card := range pruningCards {
-		pruningIds[i] = card.ScryfallId
+	cheapIds := make(uuid.UUIDs, len(cheapCards))
+	for i, card := range cheapCards {
+		cheapIds[i] = card.ScryfallId
 	}
 
-	matches, err := containers.SearchCards(pruningIds)
+	matches, err := containers.SearchDeposits(cheapIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
