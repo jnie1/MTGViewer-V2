@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
+	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
 func fetchContainerPreviews(c *gin.Context) {
@@ -94,30 +95,30 @@ func searchCards(c *gin.Context) {
 		cardIds[i] = card.ScryfallId
 	}
 
-	deposits, err := containers.SearchCards(cardIds)
+	previews, err := containers.SearchCards(cardIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	cardAmounts, err := containers.GetCardDeposits(cardPage.Cards, deposits)
+	amounts, err := containers.GetCardDeposits(cardPage.Cards, previews)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, cardAmounts)
+	c.JSON(http.StatusOK, amounts)
 }
 
 func checkPrune(c *gin.Context) {
 	size := c.Query("size")
-	maxSize, err := strconv.Atoi(size)
+	maxCopies, err := strconv.Atoi(size)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if maxSize <= 0 {
+	if maxCopies <= 0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -134,26 +135,99 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
-	matches, err := containers.FindCardsAboveCount(maxSize)
+	previews, err := containers.FindCardsAboveCount(maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	scryfallIds := cards.GetScryfallIds(matches)
+	scryfallIds := cards.GetScryfallIds(previews)
 	results, err := cards.FetchCollection(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pruningCards, err := cards.KeepBelowPrice(results, matches, maxPrice)
+	pruningCards, err := cards.KeepBelowPrice(results, previews, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, pruningCards)
+}
+
+func applyPrune(c *gin.Context) {
+	size := c.Query("size")
+	maxCopies, err := strconv.Atoi(size)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if maxCopies <= 0 {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	price := c.Query("price")
+	maxPrice, err := strconv.ParseFloat(price, 64)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if maxPrice <= 0.0 {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	previews, err := containers.FindCardsAboveCount(maxCopies)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	scryfallIds := cards.GetScryfallIds(previews)
+	results, err := cards.FetchCollection(scryfallIds)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	pruningCards, err := cards.KeepBelowPrice(results, previews, maxPrice)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	pruningIds := make(uuid.UUIDs, len(pruningCards))
+	for i, card := range pruningCards {
+		pruningIds[i] = card.ScryfallId
+	}
+
+	matches, err := containers.SearchCards(pruningIds)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	changes, err := containers.TranslatePrune(matches, maxCopies)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+	}
+
+	if err := containers.UpdateDeposits(changes); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := transactions.LogCollectionChanges(changes); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 func AddContainerRoutes(router *gin.Engine) {
@@ -163,4 +237,5 @@ func AddContainerRoutes(router *gin.Engine) {
 	group.GET("/:container/cards", fetchContainerCards)
 	group.GET("/cards", searchCards)
 	group.GET("/prune", checkPrune)
+	group.POST("/prune", applyPrune)
 }
