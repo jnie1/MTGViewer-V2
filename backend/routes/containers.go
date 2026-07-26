@@ -47,32 +47,32 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
-	deposits, err := containers.GetDeposits(containerId)
+	previews, err := containers.GetAmountPreviews(containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if len(deposits) == 0 {
+	if len(previews) == 0 {
 		c.JSON(http.StatusOK, []cards.CardAmount{})
 		return
 	}
 
-	scryfallIds := containers.GetScryfallIds(deposits)
-	cards, err := cards.FetchCollection(scryfallIds)
+	scryfallIds := cards.GetScryfallIds(previews)
+	matches, err := cards.FetchCollection(scryfallIds)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	cardAmounts, err := containers.GetCardAmounts(cards, deposits)
+	amounts, err := cards.GetCardAmounts(matches, previews)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, cardAmounts)
+	c.JSON(http.StatusOK, amounts)
 }
 
 func searchCards(c *gin.Context) {

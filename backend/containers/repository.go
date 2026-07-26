@@ -82,7 +82,7 @@ func GetContainer(containerId int) (Container, error) {
 	return container, err
 }
 
-func GetDeposits(containerId int) ([]cards.CardAmountPreview, error) {
+func GetAmountPreviews(containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
