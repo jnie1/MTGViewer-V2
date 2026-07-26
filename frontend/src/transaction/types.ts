@@ -1,19 +1,15 @@
 import { type ICard } from '@/cards/types';
+import type { IContainer } from '@/container/types';
 
-export interface ILogs {
+export interface ICardTransaction {
   groupId: string;
   time: string;
-  amount: number;
+  total: number;
 }
 
-export interface IContainer {
-  containerId: number;
-  name: string;
-}
-
-export interface ITransactionChange {
+export interface ICardLog {
   fromContainer?: IContainer;
   toContainer?: IContainer;
   card: ICard;
-  quantity: number;
+  amount: number;
 }

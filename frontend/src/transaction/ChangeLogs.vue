@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { ILogs } from './types';
+import type { ICardTransaction } from './types';
 
 interface ILogsProps {
-  logs: ILogs[];
+  logs: ICardTransaction[];
 }
 
 //assuming i get the right transaction
@@ -26,7 +26,7 @@ const { logs } = defineProps<ILogsProps>();
           </router-link>
         </v-col>
         <v-col>
-          {{ log.amount }}
+          {{ log.total }}
         </v-col>
       </v-row>
     </div>
