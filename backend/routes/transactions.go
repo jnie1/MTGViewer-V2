@@ -9,17 +9,17 @@ import (
 	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
-func fetchUpdateLogs(c *gin.Context) {
-	logs, err := transactions.FetchUpdateLogs()
+func fetchCardTransactions(c *gin.Context) {
+	result, err := transactions.GetTransactions()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, logs)
+	c.JSON(http.StatusOK, result)
 }
 
-func fetchReportCards(c *gin.Context) {
+func fetchCardLogs(c *gin.Context) {
 	group := c.Param("group")
 	group1, err := uuid.Parse(group)
 
@@ -37,43 +37,43 @@ func fetchReportCards(c *gin.Context) {
 		}
 	}
 
-	allLogs, err := fetchTransactionLogs(group1, group2)
+	allLogs, err := getLogs(group1, group2)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	logs := transactions.MergeLogs(allLogs)
-	scryfallIds := transactions.GetScryfallIds(logs)
-	cards, err := cards.FetchCollection(scryfallIds)
+	scryfallIds := transactions.ToScryfallIds(logs)
+	matches, err := cards.FetchCollection(scryfallIds)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	reportCards, err := transactions.JoinReportCards(cards, logs)
+	result, err := transactions.JoinCardLogs(matches, logs)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, reportCards)
+	c.JSON(http.StatusOK, result)
 }
 
-func fetchTransactionLogs(group1, group2 uuid.UUID) ([]transactions.TransactionLogs, error) {
+func getLogs(group1, group2 uuid.UUID) ([]transactions.CardLogPreview, error) {
 	if group2 == uuid.Nil {
-		return transactions.FetchLogs(group1)
+		return transactions.GetLogs(group1)
 	}
-	logRange, err := transactions.FetchLogRange(group1, group2)
+	logRange, err := transactions.GetTimeRange(group1, group2)
 	if err != nil {
 		return nil, err
 	}
-	return transactions.FetchLogsFromRange(logRange)
+	return transactions.GetLogsFromRange(logRange)
 }
 
 func AddTransactionRoutes(router *gin.Engine) {
 	group := router.Group("/logs")
-	group.GET("", fetchUpdateLogs)
-	group.GET("/:group", fetchReportCards)
+	group.GET("", fetchCardTransactions)
+	group.GET("/:group", fetchCardLogs)
 }
