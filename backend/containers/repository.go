@@ -95,18 +95,18 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	}
 
 	defer row.Close()
-	deposits := []cards.CardAmountPreview{}
+	amounts := []cards.CardAmountPreview{}
 
 	for row.Next() {
-		deposit := cards.CardAmountPreview{}
-		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
+		amount := cards.CardAmountPreview{}
+		if err := row.Scan(&amount.ScryfallId, &amount.Amount); err != nil {
 			return nil, err
 		}
 
-		deposits = append(deposits, deposit)
+		amounts = append(amounts, amount)
 	}
 
-	return deposits, nil
+	return amounts, nil
 }
 
 func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
