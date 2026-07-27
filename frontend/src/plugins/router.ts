@@ -5,6 +5,7 @@ import CardView from '@/views/CardView.vue';
 import ChangeView from '@/views/ChangeView.vue';
 import TransactionView from '@/views/TransactionView.vue';
 import ContainerView from '@/views/ContainerView.vue';
+import CollectionView from '@/views/CollectionView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -47,6 +48,11 @@ const router = createRouter({
       name: 'container',
       component: ContainerView,
     },
+    {
+      path: '/collection',
+      name: 'collection',
+      component: CollectionView
+    }
   ],
 });
 

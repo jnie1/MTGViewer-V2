@@ -17,6 +17,9 @@ import { RouterLink } from 'vue-router';
       <li>
         <router-link to="/signup">Sign Up</router-link>
       </li>
+      <li>
+        <router-link to="/collection">Collection</router-link>
+      </li>
     </ul>
   </nav>
 </template>

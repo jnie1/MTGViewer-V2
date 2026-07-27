@@ -1,5 +1,5 @@
 import { type ICard } from '@/cards/types';
-import type { IContainer } from '@/container/types';
+import type { IContainer } from '@/collection/types';
 
 export interface ICardTransaction {
   groupId: string;
