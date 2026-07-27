@@ -19,9 +19,8 @@ type ContainerEntry struct {
 }
 
 type Container struct {
-	ContainerId int    `json:"containerId"`
-	Name        string `json:"name"`
-	Capacity    int    `json:"capacity"`
+	ContainerAllocation
+	Name string `json:"name"`
 }
 
 type ContainerPreview struct {
@@ -96,13 +95,13 @@ func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
 }
 
 type ContainerAllocation struct {
-	ContainerId int
-	Used        int
-	MaxCapacity int
+	ContainerId int `json:"containerId"`
+	Used        int `json:"used"`
+	Capacity    int `json:"capacity"`
 }
 
 func (allocation ContainerAllocation) Remaining() int {
-	return allocation.MaxCapacity - allocation.Used
+	return allocation.Capacity - allocation.Used
 }
 
 func CompareRemaining(a, b ContainerAllocation) int {

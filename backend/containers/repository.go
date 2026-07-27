@@ -29,7 +29,7 @@ func GetAllocations() ([]ContainerAllocation, error) {
 
 	for row.Next() {
 		allocation := ContainerAllocation{}
-		if err := row.Scan(&allocation.ContainerId, &allocation.Used, &allocation.MaxCapacity); err != nil {
+		if err := row.Scan(&allocation.ContainerId, &allocation.Used, &allocation.Capacity); err != nil {
 			return nil, err
 		}
 
@@ -43,8 +43,10 @@ func GetContainers() ([]Container, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT container_id, container_name, capacity
-		FROM containers
+		SELECT c.container_id, c.container_name,  COALESCE(SUM(cd.amount), 0) AS used, c.capacity
+		FROM containers c
+		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
+		GROUP BY c.container_id
 		ORDER BY container_name;`)
 
 	if err != nil {
@@ -56,7 +58,7 @@ func GetContainers() ([]Container, error) {
 
 	for row.Next() {
 		container := Container{}
-		if err := row.Scan(&container.ContainerId, &container.Name, &container.Capacity); err != nil {
+		if err := row.Scan(&container.ContainerId, &container.Name, &container.Used, &container.Capacity); err != nil {
 			return nil, err
 		}
 		containers = append(containers, container)
