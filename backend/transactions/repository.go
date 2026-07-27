@@ -104,11 +104,11 @@ func getLogsFromQuery(row *sql.Rows) ([]CardLogPreview, error) {
 		}
 
 		if fromMaybeBoxId.Valid && fromMaybeBoxName.Valid {
-			log.FromContainer = &containers.ContainerName{ContainerId: fromMaybeBoxId.V, Name: fromMaybeBoxName.String}
+			log.FromContainer = &containers.ContainerPreview{ContainerId: fromMaybeBoxId.V, Name: fromMaybeBoxName.String}
 		}
 
 		if toMaybeBoxId.Valid && toMaybeBoxName.Valid {
-			log.ToContainer = &containers.ContainerName{ContainerId: toMaybeBoxId.V, Name: toMaybeBoxName.String}
+			log.ToContainer = &containers.ContainerPreview{ContainerId: toMaybeBoxId.V, Name: toMaybeBoxName.String}
 		}
 
 		logs = append(logs, log)
