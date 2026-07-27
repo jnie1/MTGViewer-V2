@@ -9,13 +9,13 @@ interface ICardProps {
 const { cards } = defineProps<ICardProps>();
 const searchQuery = ref('');
 const filteredItems = computed(() => {
-  if (!searchQuery.value) return cards[0]?.scryfallId;
+  if (!searchQuery.value) return '';
   for (const card of cards) {
     if (card.name.toLowerCase().includes(searchQuery.value.toLowerCase())) {
       return card.scryfallId;
     }
   }
-  return cards[0]?.scryfallId;
+  return '';
 });
 </script>
 
