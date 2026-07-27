@@ -109,6 +109,34 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	return amounts, nil
 }
 
+func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT cd.scryfall_id, SUM(cd.amount)
+		FROM card_deposits cd 
+		GROUP BY cd.scryfall_id 
+		HAVING SUM(cd.amount) > $1;`, count)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	deposits := []cards.CardAmountPreview{}
+
+	for row.Next() {
+		deposit := cards.CardAmountPreview{}
+		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
+			return nil, err
+		}
+
+		deposits = append(deposits, deposit)
+	}
+
+	return deposits, nil
+}
+
 func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
