@@ -15,18 +15,19 @@ type CardImageUrls struct {
 }
 
 type Card struct {
-	ScryfallId      uuid.UUID     `json:"scryfallId"`
-	Name            string        `json:"name"`
-	ManaCost        string        `json:"manaCost,omitempty"`
-	Set             string        `json:"set"`
-	SetCode         string        `json:"set_code"`
-	CollectorNumber string        `json:"collector_number"`
-	MultiverseIds   []int         `json:"multiverse_ids,omitempty"`
-	Type            string        `json:"type"`
-	Rarity          string        `json:"rarity"`
-	Power           string        `json:"power,omitempty"`
-	Toughness       string        `json:"toughness,omitempty"`
-	Images          CardImageUrls `json:"imageUrls"`
+	ScryfallId      uuid.UUID         `json:"scryfallId"`
+	Name            string            `json:"name"`
+	ManaCost        string            `json:"manaCost,omitempty"`
+	Set             string            `json:"set"`
+	SetCode         string            `json:"set_code"`
+	CollectorNumber string            `json:"collector_number"`
+	MultiverseIds   []int             `json:"multiverse_ids,omitempty"`
+	Type            string            `json:"type"`
+	Rarity          string            `json:"rarity"`
+	Power           string            `json:"power,omitempty"`
+	Toughness       string            `json:"toughness,omitempty"`
+	Images          CardImageUrls     `json:"imageUrls"`
+	Prices          map[string]string `json:"prices"`
 }
 
 type CardAmount struct {
@@ -73,6 +74,7 @@ type scryfallCard struct {
 	CardFaces       []scryfallCardFace `json:"card_faces,omitempty"`
 	Type            string             `json:"type_line"`
 	Rarity          string             `json:"rarity"`
+	Prices          map[string]string  `json:"prices"`
 }
 
 type searchResult struct {
@@ -112,6 +114,7 @@ func toCard(card scryfallCard) Card {
 			images.Normal,
 			images.Large,
 		},
+		card.Prices,
 	}
 }
 
