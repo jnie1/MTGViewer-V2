@@ -14,5 +14,10 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	RegisterRouter()
+	r := CreateRouter()
+
+	// // Start the server on port 8080
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal(err)
+	}
 }

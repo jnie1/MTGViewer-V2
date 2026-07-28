@@ -10,7 +10,7 @@ import (
 	"github.com/jnie1/MTGViewer-V2/routes"
 )
 
-func RegisterRouter() {
+func CreateRouter() *gin.Engine {
 	if err := database.Open(); err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
@@ -33,6 +33,5 @@ func RegisterRouter() {
 		c.JSON(http.StatusAccepted, gin.H{"secret": "some secret"})
 	})
 
-	// Start the server on port 8080
-	r.Run(":8080")
+	return r
 }
