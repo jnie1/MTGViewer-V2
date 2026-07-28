@@ -1,1 +1,0 @@
-import{d as s,l as n,u as r,c,a as o,t as u,b as i,o as l}from"./index-DFQOuXuZ.js";const _={class:"about"},p=s({async beforeRouteEnter(a,e,t){await n("/cards/random",a.meta,t)},__name:"AboutView",setup(a){const e=r();return(t,d)=>(l(),c("main",null,[o("div",_,[o("h1",null,"This is an about page "+u(i(e).name),1)])]))}});export{p as default};
