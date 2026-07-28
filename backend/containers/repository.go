@@ -29,7 +29,7 @@ func GetAllocations() ([]ContainerAllocation, error) {
 
 	for row.Next() {
 		allocation := ContainerAllocation{}
-		if err := row.Scan(&allocation.ContainerId, &allocation.Used, &allocation.MaxCapacity); err != nil {
+		if err := row.Scan(&allocation.ContainerId, &allocation.Used, &allocation.Capacity); err != nil {
 			return nil, err
 		}
 
@@ -39,12 +39,14 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	return allocations, nil
 }
 
-func GetContainers() ([]ContainerPreview, error) {
+func GetContainers() ([]Container, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT container_id, container_name, capacity
-		FROM containers
+		SELECT c.container_id, c.container_name,  COALESCE(SUM(cd.amount), 0) AS used, c.capacity
+		FROM containers c
+		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
+		GROUP BY c.container_id
 		ORDER BY container_name;`)
 
 	if err != nil {
@@ -52,11 +54,11 @@ func GetContainers() ([]ContainerPreview, error) {
 	}
 
 	defer row.Close()
-	containers := []ContainerPreview{}
+	containers := []Container{}
 
 	for row.Next() {
-		container := ContainerPreview{}
-		if err := row.Scan(&container.ContainerId, &container.Name, &container.Capacity); err != nil {
+		container := Container{}
+		if err := row.Scan(&container.ContainerId, &container.Name, &container.Used, &container.Capacity); err != nil {
 			return nil, err
 		}
 		containers = append(containers, container)
@@ -65,7 +67,7 @@ func GetContainers() ([]ContainerPreview, error) {
 	return containers, nil
 }
 
-func GetContainer(containerId int) (Container, error) {
+func GetContainer(containerId int) (ContainerEntry, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
@@ -76,7 +78,7 @@ func GetContainer(containerId int) (Container, error) {
 		GROUP BY c.container_id
 		LIMIT 1;`, containerId)
 
-	container := Container{}
+	container := ContainerEntry{}
 	err := row.Scan(&container.Name, &container.Used, &container.Capacity, &container.IsDeleted)
 
 	return container, err
@@ -166,7 +168,7 @@ func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	return deposits, nil
 }
 
-func AddContainer(container Container) error {
+func AddContainer(container ContainerEntry) error {
 	db := database.Instance()
 
 	_, err := db.Exec(`
@@ -176,7 +178,7 @@ func AddContainer(container Container) error {
 	return err
 }
 
-func UpdateContainer(containerId int, container Container) error {
+func UpdateContainer(containerId int, container ContainerEntry) error {
 	db := database.Instance()
 
 	_, err := db.Exec(`

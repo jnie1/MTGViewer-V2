@@ -10,7 +10,7 @@ import (
 
 func MergeLogs(logs []CardLogPreview) []CardLogPreview {
 	changesByContainer := map[containers.ContainerCard]int{}
-	containersById := map[int]*containers.ContainerName{}
+	containersById := map[int]*containers.ContainerPreview{}
 
 	for _, log := range logs {
 		if log.FromContainer != nil {

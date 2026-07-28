@@ -206,7 +206,7 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 			currentAssignment = ContainerAllocation{
 				currentAssignment.ContainerId,
 				currentAssignmentUsed,
-				currentAssignment.MaxCapacity,
+				currentAssignment.Capacity,
 			}
 		} else if currentRequest.Delta > assignmentRemaining {
 			remainingRequest := CardRequest{currentRequest.ScryfallId, assignmentRemaining}

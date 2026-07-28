@@ -12,10 +12,10 @@ import { RouterLink } from 'vue-router';
         <router-link to="/about">About</router-link>
       </li>
       <li>
-        <router-link to="/logs">Logs</router-link>
+        <router-link to="/collection">Collection</router-link>
       </li>
       <li>
-        <router-link to="/collection">Collection</router-link>
+        <router-link to="/logs">Logs</router-link>
       </li>
     </ul>
   </nav>

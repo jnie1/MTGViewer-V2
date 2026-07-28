@@ -1,5 +1,5 @@
 import { type ICard } from '@/cards/types';
-import type { IContainer } from '@/collection/types';
+import type { IContainerPreview } from '@/collection/types';
 
 export interface ICardTransaction {
   groupId: string;
@@ -8,8 +8,8 @@ export interface ICardTransaction {
 }
 
 export interface ICardLog {
-  fromContainer?: IContainer;
-  toContainer?: IContainer;
+  fromContainer?: IContainerPreview;
+  toContainer?: IContainerPreview;
   card: ICard;
   amount: number;
 }
