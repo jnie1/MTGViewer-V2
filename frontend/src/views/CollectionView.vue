@@ -11,6 +11,6 @@ const containers = useRouteData<IContainer[]>();
 </script>
 <template>
   <main>
-    <collection-container :containers="containers" />
+    <collection-container :containers />
   </main>
 </template>

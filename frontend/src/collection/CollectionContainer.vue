@@ -6,24 +6,25 @@ interface IContainerProps {
 }
 
 const { containers } = defineProps<IContainerProps>();
-const sortedContainers = containers.sort((a, b) => a.containerId - b.containerId);
-
 </script>
 
 <template>
-  <div v-if="sortedContainers && sortedContainers.length > 0">
-    <v-row class="table-header">
-      <v-col>Container Name</v-col>
+  <div v-if="containers && containers.length > 0">
+    <v-row class="header">
+      <v-col class="header-item">Container Name</v-col>
+      <v-col class="header-item"> Usage</v-col>
     </v-row>
     <v-divider />
-    <v-row v-for="(container, index) in sortedContainers" :key="index" class="table">
-      <v-col>
-        <router-link :to="{ name: 'container', params: { containerId: container.containerId } }">
-          {{ container.name }}
-        </router-link>
-      </v-col>
-      <v-col>{{ container.capacity }}</v-col>
-    </v-row>
+    <div v-for="(container, index) in containers" :key="index" class="table">
+      <v-row>
+        <v-col>
+          <router-link :to="{ name: 'container', params: { containerId: container.containerId } }">
+            {{ container.name }}
+          </router-link>
+        </v-col>
+        <v-col>{{ container.used }} / {{ container.capacity }}</v-col>
+      </v-row>
+    </div>
   </div>
 </template>
 
