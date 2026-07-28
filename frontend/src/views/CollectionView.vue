@@ -4,7 +4,7 @@ import CollectionContainer from '@/collection/CollectionContainer.vue';
 import type { IContainer } from '@/collection/types';
 defineOptions({
   async beforeRouteEnter(to, _, next) {
-    await loadRouteData(`containers`, to.meta, next);
+    await loadRouteData('containers', to.meta, next);
   },
 });
 const containers = useRouteData<IContainer[]>();
