@@ -47,7 +47,7 @@ func GetContainers() ([]Container, error) {
 		FROM containers c
 		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
 		GROUP BY c.container_id
-		ORDER BY container_name;`)
+		ORDER BY sort_order`)
 
 	if err != nil {
 		return nil, err
