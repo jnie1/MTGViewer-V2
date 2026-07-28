@@ -1,0 +1,24 @@
+# Go
+bin/
+*.exe
+*.test
+*.out
+*.coverage
+*.prof
+*.log
+*.so
+*.a
+*.cgo
+
+# Go vendor folder
+vendor/
+
+# Go module cache
+.golangci.yml
+.golangci-lint-cache/
+
+# PostgreSQL
+*.db
+*.sqlite
+*.dump
+pgdata/

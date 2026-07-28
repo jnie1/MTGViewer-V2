@@ -1,0 +1,19 @@
+# Environment files
+.env
+.env.local
+.env.*
+.env.*.local
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+.DS_Store
+
+# OS-specific files
+Thumbs.db
+desktop.ini
+
+*.jpg
+*.png
