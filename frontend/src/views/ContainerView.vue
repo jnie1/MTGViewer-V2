@@ -8,9 +8,9 @@ defineOptions({
     await loadRouteData(`containers/${containerId}/cards`, to.meta, next);
   },
 });
-
 const cards = useRouteData<ICard[]>();
 </script>
+
 <template>
   <main>
     <container-item :cards />
