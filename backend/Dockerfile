@@ -18,6 +18,7 @@ FROM debian:bookworm-slim
 
 #Grab certificates
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN update-ca-certificates
 
 WORKDIR /mtgviewer-v2
 
