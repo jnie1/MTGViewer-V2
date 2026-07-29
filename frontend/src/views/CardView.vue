@@ -3,14 +3,12 @@ import CardImage from '@/cards/CardImage.vue';
 import type { ICard } from '@/cards/types';
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import { capitalize } from '@/utils';
-
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     const { scryfallId } = to.params;
     await loadRouteData(`/cards/${scryfallId}`, to.meta, next);
   },
 });
-
 const card = useRouteData<ICard>();
 </script>
 
