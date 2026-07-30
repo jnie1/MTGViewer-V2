@@ -20,9 +20,9 @@ func RegisterRouter() {
 	r := gin.Default()
 	r.Use(auth.CorsMiddleware())
 
-	r.StaticFile("/", "./dist/index.html")
-	r.StaticFile("/index.html", "./dist/index.html")
-	r.Static("/assets", "./dist/assets")
+	if err := routes.AddStaticPaths(r); err != nil {
+		log.Fatal("Error adding static files: ", err)
+	}
 
 	api := r.Group("/api")
 	routes.AddUserRoutes(api)
