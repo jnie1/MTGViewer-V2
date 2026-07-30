@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -12,11 +11,8 @@ import (
 
 func CorsMiddleware() gin.HandlerFunc {
 	originsEnv := os.Getenv("CLIENT_ORIGINS")
-	if originsEnv == "" {
-		log.Fatal("CLIENT_ORIGINS environment variable is not set")
-	}
-
 	allowedOrigins := []string{}
+
 	for origin := range strings.SplitSeq(originsEnv, ",") {
 		trimmedOrigin := strings.TrimSpace(origin)
 		if trimmedOrigin != "" {
