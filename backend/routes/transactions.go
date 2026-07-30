@@ -72,7 +72,7 @@ func getLogs(group1, group2 uuid.UUID) ([]transactions.CardLogPreview, error) {
 	return transactions.GetLogsFromRange(logRange)
 }
 
-func AddTransactionRoutes(router *gin.Engine) {
+func AddTransactionRoutes(router gin.IRouter) {
 	group := router.Group("/logs")
 	group.GET("", fetchCardTransactions)
 	group.GET("/:group", fetchCardLogs)

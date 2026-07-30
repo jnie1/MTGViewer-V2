@@ -1,8 +1,8 @@
 import ResponseError from './ResponseError';
 
 async function fetchApi<T = unknown>(path: string, init?: RequestInit): Promise<T> {
-  const basePath = import.meta.env.VITE_API_URL;
-  const fullPath = new URL(path, basePath);
+  const fullPath = new URL(path, import.meta.env.VITE_API_URL);
+  fullPath.pathname = '/api' + fullPath.pathname;
 
   const headers: HeadersInit = { ...init?.headers, ['Accept']: 'application/json' };
   const fullInit: RequestInit = { ...init, headers, credentials: 'omit' };

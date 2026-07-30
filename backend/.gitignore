@@ -22,3 +22,6 @@ vendor/
 *.sqlite
 *.dump
 pgdata/
+
+# Built frontend
+dist/

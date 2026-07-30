@@ -6,34 +6,35 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jnie1/MTGViewer-V2/auth"
-	"github.com/jnie1/MTGViewer-V2/config"
 	"github.com/jnie1/MTGViewer-V2/database"
 	"github.com/jnie1/MTGViewer-V2/routes"
 )
 
-func RegisterRouter(cfg config.Config) {
+func RegisterRouter() {
 	if err := database.Open(); err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
 
 	defer database.Close()
 
-	// Initialize a Gin router
 	r := gin.Default()
-	r.Use(auth.CorsMiddleware(cfg.ClientOrigins))
+	r.Use(auth.CorsMiddleware())
 
-	// Define routes and associate them with handlers
-	routes.AddUserRoutes(r)
-	routes.AddCardRoutes(r)
-	routes.AddContainerRoutes(r)
-	routes.AddTransactionRoutes(r)
+	if err := routes.AddStaticPaths(r); err != nil {
+		log.Fatal("Error adding static files: ", err)
+	}
 
-	authorized := r.Group("", auth.IsAuthorized)
+	api := r.Group("/api")
+	routes.AddUserRoutes(api)
+	routes.AddCardRoutes(api)
+	routes.AddContainerRoutes(api)
+	routes.AddTransactionRoutes(api)
+
+	authorized := api.Group("", auth.IsAuthorized)
 
 	authorized.GET("/secret", func(c *gin.Context) {
 		c.JSON(http.StatusAccepted, gin.H{"secret": "some secret"})
 	})
 
-	// Start the server on port 8080
 	r.Run(":8080")
 }
