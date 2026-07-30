@@ -8,7 +8,6 @@ import vuetify from 'vite-plugin-vuetify';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/MTGViewer-V2/',
   plugins: [vue(), vueJsx(), vueDevTools(), vuetify()],
   resolve: {
     alias: {
