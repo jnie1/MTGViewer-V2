@@ -1,13 +1,29 @@
 package auth
 
 import (
+	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func CorsMiddleware(allowedOrigins []string) gin.HandlerFunc {
+func CorsMiddleware() gin.HandlerFunc {
+	originsEnv := os.Getenv("CLIENT_ORIGINS")
+	if originsEnv == "" {
+		log.Fatal("CLIENT_ORIGINS environment variable is not set")
+	}
+
+	allowedOrigins := []string{}
+	for origin := range strings.SplitSeq(originsEnv, ",") {
+		trimmedOrigin := strings.TrimSpace(origin)
+		if trimmedOrigin != "" {
+			allowedOrigins = append(allowedOrigins, trimmedOrigin)
+		}
+	}
+
 	return cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},

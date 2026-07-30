@@ -6,12 +6,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jnie1/MTGViewer-V2/auth"
-	"github.com/jnie1/MTGViewer-V2/config"
 	"github.com/jnie1/MTGViewer-V2/database"
 	"github.com/jnie1/MTGViewer-V2/routes"
 )
 
-func RegisterRouter(cfg config.Config) {
+func RegisterRouter() {
 	if err := database.Open(); err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
@@ -20,7 +19,7 @@ func RegisterRouter(cfg config.Config) {
 
 	// Initialize a Gin router
 	r := gin.Default()
-	r.Use(auth.CorsMiddleware(cfg.ClientOrigins))
+	r.Use(auth.CorsMiddleware())
 
 	// Define routes and associate them with handlers
 	routes.AddUserRoutes(r)
