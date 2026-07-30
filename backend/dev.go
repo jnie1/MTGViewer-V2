@@ -5,6 +5,7 @@ package main
 import (
 	"log"
 
+	"github.com/jnie1/MTGViewer-V2/config"
 	"github.com/joho/godotenv"
 )
 
@@ -14,5 +15,6 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	RegisterRouter()
+	cfg := config.Load()
+	RegisterRouter(cfg)
 }

@@ -2,6 +2,9 @@
 
 package main
 
+import "github.com/jnie1/MTGViewer-V2/config"
+
 func main() {
-	RegisterRouter()
+	cfg := config.Load()
+	RegisterRouter(cfg)
 }
