@@ -144,7 +144,7 @@ func withdrawCards(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func AddCardRoutes(router *gin.Engine) {
+func AddCardRoutes(router gin.IRouter) {
 	group := router.Group("/cards")
 	group.GET("/", fetchCollection)
 	group.GET("/:card", fetchCard)

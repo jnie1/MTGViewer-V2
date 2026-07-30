@@ -93,7 +93,7 @@ func logout(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func AddUserRoutes(router *gin.Engine) {
+func AddUserRoutes(router gin.IRouter) {
 	router.POST("/signup", signup)
 	router.POST("/login", login)
 	router.POST("/logout", logout)

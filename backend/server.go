@@ -17,22 +17,20 @@ func RegisterRouter() {
 
 	defer database.Close()
 
-	// Initialize a Gin router
 	r := gin.Default()
 	r.Use(auth.CorsMiddleware())
 
-	// Define routes and associate them with handlers
-	routes.AddUserRoutes(r)
-	routes.AddCardRoutes(r)
-	routes.AddContainerRoutes(r)
-	routes.AddTransactionRoutes(r)
+	api := r.Group("/api")
+	routes.AddUserRoutes(api)
+	routes.AddCardRoutes(api)
+	routes.AddContainerRoutes(api)
+	routes.AddTransactionRoutes(api)
 
-	authorized := r.Group("", auth.IsAuthorized)
+	authorized := api.Group("", auth.IsAuthorized)
 
 	authorized.GET("/secret", func(c *gin.Context) {
 		c.JSON(http.StatusAccepted, gin.H{"secret": "some secret"})
 	})
 
-	// Start the server on port 8080
 	r.Run(":8080")
 }

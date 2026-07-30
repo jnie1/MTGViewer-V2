@@ -224,7 +224,7 @@ func applyPrune(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func AddContainerRoutes(router *gin.Engine) {
+func AddContainerRoutes(router gin.IRouter) {
 	group := router.Group("/containers")
 	group.GET("", fetchContainerPreviews)
 	group.GET("/:container", fetchContainer)
