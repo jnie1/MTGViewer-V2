@@ -28,7 +28,7 @@ RUN go mod download
 COPY backend ./
 
 # Compile Go binary
-RUN CGO_ENABLED=0 go build -tags=prod -ldflags="-s -w" -o ./app .
+RUN CGO_ENABLED=0 go build -tags=prod -ldflags="-s -w" -o app .
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -39,11 +39,11 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 WORKDIR /mtgviewer-v2
 
 # Copy the backend binary and frontend dist into the runtime image
-COPY --from=backend-builder /backend .
+COPY --from=backend-builder /backend/app .
 COPY --from=frontend-builder /frontend/dist ./dist
 
 # Port this application will be listening
 EXPOSE 8080
 
 # Run executable when container starts
-ENTRYPOINT [ "/backend/app" ]
+ENTRYPOINT [ "./app" ]
