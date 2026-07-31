@@ -39,7 +39,6 @@ WORKDIR /mtgviewer-v2
 # Copy the backend binary and frontend dist into the runtime image
 COPY --from=backend-builder /mtgviewer-v2/mtgviewer-v2-backend .
 COPY --from=backend-builder /mtgviewer-v2/dist ./dist
-COPY backend/.env .
 
 # Port this application will be listening
 EXPOSE 8080
