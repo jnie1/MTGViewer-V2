@@ -1,13 +1,15 @@
 # Frontend build stage (Vue)
 FROM node:20-bookworm AS frontend-builder
 
-WORKDIR /mtgviewer-v2
+WORKDIR /mtgviewer-v2/frontend
 
-# Copy the repo so `file:` dependencies and monorepo references resolve during npm install
-COPY . .
+# Copy frontend package files first to leverage build cache
+COPY frontend/package*.json ./
+RUN npm ci
 
-# Install frontend dependencies and build
-RUN cd frontend && npm ci && npm run build
+# Copy the frontend source and build
+COPY frontend ./
+RUN npm run build
 
 # Backend build stage (Go)
 FROM golang:1.25-bookworm AS backend-builder
@@ -15,11 +17,11 @@ FROM golang:1.25-bookworm AS backend-builder
 WORKDIR /mtgviewer-v2/backend
 
 # Get Go module dependencies
-COPY ./backend/go.mod ./backend/go.sum ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
-# Copy the backend source into the module directory
-COPY ./backend/. ./
+# Copy backend source code
+COPY backend ./
 
 # Compile Go binary
 RUN CGO_ENABLED=0 go build -tags=prod -ldflags="-s -w" -o /mtgviewer-v2/mtgviewer-v2-backend .
