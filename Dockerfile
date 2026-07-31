@@ -1,5 +1,5 @@
 # Frontend build stage (Vue)
-FROM node:20-bullseye AS frontend-builder
+FROM node:20-bookworm AS frontend-builder
 
 WORKDIR /mtgviewer-v2
 
@@ -21,12 +21,10 @@ RUN go mod download
 # Copy the backend source into the module directory
 COPY ./backend/. ./
 
-# Bring built frontend into the backend build context so the backend can serve ./dist
-COPY --from=frontend-builder /mtgviewer-v2/frontend/dist /mtgviewer-v2/dist
-
 # Compile Go binary
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /mtgviewer-v2/mtgviewer-v2-backend .
+RUN CGO_ENABLED=0 go build -tags=prod -ldflags="-s -w" -o /mtgviewer-v2/mtgviewer-v2-backend .
 
+FROM scratch
 # Runtime stage
 FROM debian:bookworm-slim
 
@@ -38,7 +36,7 @@ WORKDIR /mtgviewer-v2
 
 # Copy the backend binary and frontend dist into the runtime image
 COPY --from=backend-builder /mtgviewer-v2/mtgviewer-v2-backend .
-COPY --from=backend-builder /mtgviewer-v2/dist ./dist
+COPY --from=frontend-builder /mtgviewer-v2/frontend/dist ./dist
 
 # Port this application will be listening
 EXPOSE 8080
