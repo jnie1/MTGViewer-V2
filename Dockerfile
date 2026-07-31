@@ -10,22 +10,22 @@ COPY . .
 RUN cd frontend && npm ci && npm run build
 
 # Backend build stage (Go)
-FROM golang:1.23-bookworm AS backend-builder
+FROM golang:1.25-bookworm AS backend-builder
 
 WORKDIR /mtgviewer-v2/backend
 
 # Get Go module dependencies
-COPY backend/go.mod backend/go.sum ./
+COPY ./backend/go.mod ./backend/go.sum ./
 RUN go mod download
 
 # Copy the backend source into the module directory
-COPY backend/. ./
+COPY ./backend/. ./
 
 # Bring built frontend into the backend build context so the backend can serve ./dist
 COPY --from=frontend-builder /mtgviewer-v2/frontend/dist /mtgviewer-v2/dist
 
 # Compile Go binary
-RUN CGO_ENABLED=0 go build -tags=prod -ldflags="-s -w" -o /mtgviewer-v2/mtgviewer-v2-backend .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /mtgviewer-v2/mtgviewer-v2-backend .
 
 # Runtime stage
 FROM debian:bookworm-slim
@@ -39,6 +39,7 @@ WORKDIR /mtgviewer-v2
 # Copy the backend binary and frontend dist into the runtime image
 COPY --from=backend-builder /mtgviewer-v2/mtgviewer-v2-backend .
 COPY --from=backend-builder /mtgviewer-v2/dist ./dist
+COPY backend/.env .
 
 # Port this application will be listening
 EXPOSE 8080
