@@ -30,7 +30,6 @@ COPY backend ./
 # Compile Go binary
 RUN CGO_ENABLED=0 go build -tags=prod -ldflags="-s -w" -o /mtgviewer-v2/mtgviewer-v2-backend .
 
-FROM scratch
 # Runtime stage
 FROM debian:bookworm-slim
 
