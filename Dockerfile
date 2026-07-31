@@ -3,6 +3,10 @@ FROM node:20-bookworm AS frontend-builder
 
 WORKDIR /mtgviewer-v2/frontend
 
+ARG VITE_API_URL=https://localhost:8080
+
+ENV VITE_API_URL=$VITE_API_URL
+
 # Copy frontend package files first to leverage build cache
 COPY frontend/package*.json ./
 RUN npm ci
