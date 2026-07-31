@@ -35,6 +35,8 @@ FROM debian:bookworm-slim
 
 WORKDIR /mtgviewer-v2
 
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
 # Copy the backend binary and frontend dist into the runtime image
 COPY --from=backend-builder /mtgviewer-v2/backend .
 COPY --from=frontend-builder /mtgviewer-v2/frontend/dist ./dist
