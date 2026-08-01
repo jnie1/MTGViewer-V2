@@ -34,8 +34,8 @@ func AddStaticPaths(r *gin.Engine) error {
 		return err
 	}
 
-	r.Static("/", indexPath)
-	r.StaticFile("/assets", assetsPath)
+	r.StaticFile("/", indexPath)
+	r.Static("/assets", assetsPath)
 
 	r.GET("/index", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/")
