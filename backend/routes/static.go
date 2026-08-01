@@ -9,16 +9,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AddStaticPaths(r *gin.Engine) error {
+func AddStaticRoutes(r *gin.Engine, knownRoutes ...string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	indexPath := path.Join(cwd, "dist", "index.html")
-	assetsPath := path.Join(cwd, "dist", "assets")
+	dist := path.Join(cwd, "dist")
+	index := path.Join(dist, "index.html")
+	assets := path.Join(dist, "assets")
 
-	_, err = os.Stat(indexPath)
+	_, err = os.Stat(index)
 	if os.IsNotExist(err) {
 		return nil
 	}
@@ -26,7 +27,7 @@ func AddStaticPaths(r *gin.Engine) error {
 		return err
 	}
 
-	_, err = os.Stat(assetsPath)
+	_, err = os.Stat(assets)
 	if os.IsNotExist(err) {
 		return nil
 	}
@@ -34,8 +35,8 @@ func AddStaticPaths(r *gin.Engine) error {
 		return err
 	}
 
-	r.StaticFile("/", indexPath)
-	r.Static("/assets", assetsPath)
+	r.StaticFile("/", index)
+	r.Static("/assets", assets)
 
 	r.GET("/index", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/")
@@ -45,11 +46,13 @@ func AddStaticPaths(r *gin.Engine) error {
 	})
 
 	r.NoRoute(func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, "/api/") {
-			c.Status(http.StatusNotFound)
-			return
+		for _, rt := range knownRoutes {
+			if strings.HasPrefix(c.Request.URL.Path, rt) {
+				c.Status(http.StatusNotFound)
+				return
+			}
 		}
-		c.File(indexPath)
+		c.File(index)
 	})
 
 	return nil
