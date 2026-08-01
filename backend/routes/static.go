@@ -4,42 +4,55 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AddStaticPaths(r gin.IRouter) error {
+func AddStaticRoutes(r *gin.Engine, knownRoutes ...string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
 
-	routeMap := map[string]string{
-		"/":       path.Join(cwd, "dist/index.html"),
-		"/assets": path.Join(cwd, "dist/assets"),
+	dist := path.Join(cwd, "dist")
+	index := path.Join(dist, "index.html")
+	assets := path.Join(dist, "assets")
+
+	_, err = os.Stat(index)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
 	}
 
-	for route, filepath := range routeMap {
-		stat, err := os.Stat(filepath)
-		if os.IsNotExist(err) {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-		if stat.IsDir() {
-			r.Static(route, filepath)
-		} else {
-			r.StaticFile(route, filepath)
-		}
+	_, err = os.Stat(assets)
+	if os.IsNotExist(err) {
+		return nil
 	}
+	if err != nil {
+		return err
+	}
+
+	r.StaticFile("/", index)
+	r.Static("/assets", assets)
 
 	r.GET("/index", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/")
 	})
-
 	r.GET("/index.html", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/")
+	})
+
+	r.NoRoute(func(c *gin.Context) {
+		for _, rt := range knownRoutes {
+			if strings.HasPrefix(c.Request.URL.Path, rt) {
+				c.Status(http.StatusNotFound)
+				return
+			}
+		}
+		c.File(index)
 	})
 
 	return nil
