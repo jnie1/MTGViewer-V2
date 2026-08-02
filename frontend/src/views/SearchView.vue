@@ -6,6 +6,7 @@ import fetchApi from '@/fetch/api';
 
 const searchQuery = ref('');
 const searchResults = ref<ICard[]>([]);
+const currentPage = ref(1);
 
 const searchCards = async () => {
   if (searchQuery.value.trim() === '') {
@@ -13,10 +14,25 @@ const searchCards = async () => {
     return;
   }
   const response = await fetchApi<ICard[]>(
-    `/containers/cards?q=${encodeURIComponent(searchQuery.value)}`,
+    `/containers/cards?q=${encodeURIComponent(searchQuery.value)},&page=${currentPage.value}`,
   );
+  if (!response || response.length === 0) {
+    searchResults.value = [];
+  }
+  console.log('Search results:', response);
   searchResults.value = response;
 };
+const prev = () => {
+  if (currentPage.value > 0) {
+    currentPage.value--;
+  }
+}
+
+const next = () => {
+    currentPage.value++;
+}
+const isPrevDisabled = computed(() => currentPage.value === 0);
+const isNextDisabled = computed(() => searchResults.value.length === 0);
 </script>
 
 <template>
@@ -31,6 +47,24 @@ const searchCards = async () => {
     >
     </v-text-field>
     <v-btn color="primary" @click="searchCards">Search</v-btn>
+    <v-btn
+      color="primary"
+      :disabled="isPrevDisabled"
+      @click="
+        prev();
+        searchCards();
+      "
+      >Previous</v-btn
+    >
+    <v-btn
+      color="primary"
+      :disabled="isNextDisabled"
+      @click="
+        next();
+        searchCards();
+      "
+      >Next</v-btn
+    >
     <search-item :cards="searchResults" />
   </main>
 </template>
