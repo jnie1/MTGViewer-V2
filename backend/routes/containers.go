@@ -11,6 +11,11 @@ import (
 	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
+type SearchResult struct {
+	HasNextPage bool
+	CardResult  []containers.CardDeposit
+}
+
 func fetchContainerPreviews(c *gin.Context) {
 	result, err := containers.GetContainers()
 	if err != nil {
@@ -108,12 +113,15 @@ func searchCards(c *gin.Context) {
 		return
 	}
 
-	result, err := containers.JoinCardDeposits(cardPage.Cards, deposits)
+	depositResult, err := containers.JoinCardDeposits(cardPage.Cards, deposits)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-
+	result := SearchResult{
+		HasNextPage: cardPage.HasMore,
+		CardResult:  depositResult,
+	}
 	c.JSON(http.StatusOK, result)
 }
 
