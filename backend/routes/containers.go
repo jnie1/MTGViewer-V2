@@ -75,8 +75,18 @@ func fetchContainerCards(c *gin.Context) {
 
 func searchCards(c *gin.Context) {
 	cardQuery := c.Query("q")
+	cardPages := c.Query("page")
+	if cardPages == "" {
+		cardPages = "1"
+	}
+	pageNum, err := strconv.Atoi(cardPages)
 
-	cardPage, err := cards.SearchCards(cardQuery, 1)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	cardPage, err := cards.SearchCards(cardQuery, pageNum)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
