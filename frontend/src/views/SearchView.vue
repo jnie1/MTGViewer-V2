@@ -67,8 +67,24 @@ const isNextDisabled = computed(() => searchResults.value.length === 0);
     >
     </v-text-field>
     <v-btn color="primary" @click="doSearch">Search</v-btn>
-    <v-btn color="primary" :disabled="isPrevDisabled" @click="prev(); doSearch()">Previous</v-btn>
-    <v-btn color="primary" :disabled="isNextDisabled" @click="next(); doSearch()">Next</v-btn>
+    <v-btn
+      color="primary"
+      :disabled="isPrevDisabled"
+      @click="
+        prev();
+        doSearch();
+      "
+      >Previous</v-btn
+    >
+    <v-btn
+      color="primary"
+      :disabled="isNextDisabled"
+      @click="
+        next();
+        doSearch();
+      "
+      >Next</v-btn
+    >
 
     <v-overlay :model-value="loading" absolute>
       <v-sheet class="d-flex align-center justify-center" width="100%" height="100%" elevation="2">
