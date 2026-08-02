@@ -66,7 +66,7 @@ func login(c *gin.Context) {
 	}
 
 	loginDuration := time.Now().Add(2 * time.Hour)
-	token, err := auth.GererateToken(user, loginDuration)
+	token, err := auth.GenerateToken(user, loginDuration)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)

@@ -21,13 +21,11 @@ func getTokenKey(_ *jwt.Token) (any, error) {
 
 func ParseToken(tokenString string) (claims *Claims, err error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, getTokenKey)
-
 	if err != nil {
 		return nil, err
 	}
 
 	claims, ok := token.Claims.(*Claims)
-
 	if !ok {
 		return nil, errors.New("claims failed to parse")
 	}
@@ -35,8 +33,8 @@ func ParseToken(tokenString string) (claims *Claims, err error) {
 	return claims, nil
 }
 
-func GererateToken(user users.UserInfo, expiresAt time.Time) (string, error) {
-	userClaims := Claims{
+func GenerateToken(user users.UserInfo, expiresAt time.Time) (string, error) {
+	claims := Claims{
 		Role: user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
@@ -44,7 +42,7 @@ func GererateToken(user users.UserInfo, expiresAt time.Time) (string, error) {
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, userClaims)
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, &claims)
 	tokenKey, err := getTokenKey(token)
 
 	if err != nil {
@@ -52,4 +50,9 @@ func GererateToken(user users.UserInfo, expiresAt time.Time) (string, error) {
 	}
 
 	return token.SignedString(tokenKey)
+}
+
+func ValidateClaims(claims *Claims) error {
+	validator := jwt.NewValidator()
+	return validator.Validate(claims)
 }
