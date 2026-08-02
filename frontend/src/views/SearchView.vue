@@ -16,7 +16,7 @@ const doSearch = () => {
 
 watch([searchQuery, currentPage], async ([newSearch, newPage], [oldSearch, oldPage]) => {
   if (newSearch !== oldSearch) {
-    currentPage.value = 1;
+    searchResults.value = [];
   }
   if (searchQuery.value.trim() === '') {
     searchResults.value = [];
