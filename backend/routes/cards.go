@@ -1,8 +1,8 @@
 package routes
 
 import (
+	"claimsnclaimset/http"
 	"mime/multipart"
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -165,7 +165,7 @@ func searchCards(c *gin.Context) {
 	}
 
 	if len(cardPage.Cards) == 0 {
-		c.JSON(http.StatusOK, []containers.CardDeposit{})
+		c.JSON(http.StatusOK, cards.SearchCardPage{})
 		return
 	}
 
