@@ -41,10 +41,10 @@ type CardAmountPreview struct {
 }
 
 type SearchCardPage struct {
-	TotalCards int
-	Cards      []Card
-	Page       int
-	HasMore    bool
+	TotalCards int    `json:"totalCards"`
+	Cards      []Card `json:"cards"`
+	Page       int    `json:"page"`
+	HasMore    bool   `json:"hasMore"`
 }
 
 type scryfallImages struct {
@@ -142,6 +142,33 @@ func ToScryfallIds(amounts []CardAmountPreview) []ScryfallIdentifier {
 	}
 
 	return ids
+}
+
+func FilterCards(cards []Card, targetIds uuid.UUIDs) ([]Card, error) {
+	matches := make([]Card, len(targetIds))
+	cardMap := make(map[uuid.UUID]Card, len(cards))
+
+	for _, card := range cards {
+		cardMap[card.ScryfallId] = card
+	}
+
+	for i, id := range targetIds {
+		card, ok := cardMap[id]
+		if !ok {
+			return nil, fmt.Errorf("cannot resolve card id %s", id)
+		}
+		matches[i] = card
+	}
+
+	slices.SortFunc(matches, func(a, b Card) int {
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare == 0 {
+			return strings.Compare(a.Set, b.Set)
+		}
+		return nameCompare
+	})
+
+	return matches, nil
 }
 
 func JoinCardAmounts(cards []Card, previews []CardAmountPreview) ([]CardAmount, error) {

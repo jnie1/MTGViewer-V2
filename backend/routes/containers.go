@@ -11,11 +11,6 @@ import (
 	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
-type SearchResult struct {
-	HasNextPage bool
-	CardResult  []containers.CardDeposit
-}
-
 func fetchContainerPreviews(c *gin.Context) {
 	result, err := containers.GetContainers()
 	if err != nil {
@@ -75,53 +70,6 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
-}
-
-func searchCards(c *gin.Context) {
-	cardQuery := c.Query("q")
-	cardPages := c.Query("page")
-	if cardPages == "" {
-		cardPages = "1"
-	}
-	pageNum, err := strconv.Atoi(cardPages)
-
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	cardPage, err := cards.SearchCards(cardQuery, pageNum)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	if len(cardPage.Cards) == 0 {
-		c.JSON(http.StatusOK, []containers.CardDeposit{})
-		return
-	}
-
-	cardIds := make(uuid.UUIDs, len(cardPage.Cards))
-	for i, card := range cardPage.Cards {
-		cardIds[i] = card.ScryfallId
-	}
-
-	deposits, err := containers.SearchDeposits(cardIds)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	depositResult, err := containers.JoinCardDeposits(cardPage.Cards, deposits)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	result := SearchResult{
-		HasNextPage: cardPage.HasMore,
-		CardResult:  depositResult,
-	}
 	c.JSON(http.StatusOK, result)
 }
 

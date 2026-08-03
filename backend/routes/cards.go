@@ -3,6 +3,7 @@ package routes
 import (
 	"mime/multipart"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -144,10 +145,62 @@ func withdrawCards(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+func searchCards(c *gin.Context) {
+	cardQuery := c.Query("q")
+	cardPages := c.Query("page")
+	if cardPages == "" {
+		cardPages = "1"
+	}
+
+	pageNum, err := strconv.Atoi(cardPages)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	cardPage, err := cards.SearchCards(cardQuery, pageNum)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(cardPage.Cards) == 0 {
+		c.JSON(http.StatusOK, []containers.CardDeposit{})
+		return
+	}
+
+	cardIds := make(uuid.UUIDs, len(cardPage.Cards))
+	for i, card := range cardPage.Cards {
+		cardIds[i] = card.ScryfallId
+	}
+
+	cardMatches, err := containers.MatchCards(cardIds)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	filteredCards, err := cards.FilterCards(cardPage.Cards, cardMatches)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	result := cards.SearchCardPage{
+		TotalCards: cardPage.TotalCards,
+		Page:       cardPage.Page,
+		HasMore:    cardPage.HasMore,
+		Cards:      filteredCards,
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func AddCardRoutes(router gin.IRouter) {
 	group := router.Group("/cards")
 	group.GET("/", fetchCollection)
 	group.GET("/:card", fetchCard)
+	group.GET("/search", searchCards)
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
 	group.POST("/withdraw", withdrawCards)

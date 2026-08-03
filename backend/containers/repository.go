@@ -139,6 +139,33 @@ func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
 	return deposits, nil
 }
 
+func MatchCards(scryfallIds uuid.UUIDs) (uuid.UUIDs, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT DISTINCT cd.scryfall_id
+		FROM card_deposits AS cd
+		WHERE cd.scryfall_id = ANY($1);`, pq.Array(scryfallIds))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	matches := uuid.UUIDs{}
+
+	for row.Next() {
+		var cardId uuid.UUID
+		if err := row.Scan(&cardId); err != nil {
+			return nil, err
+		}
+
+		matches = append(matches, cardId)
+	}
+
+	return matches, nil
+}
+
 func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
