@@ -6,7 +6,7 @@ import fetchApi from '@/fetch/api';
 
 const searchText = ref('');
 const searchQuery = ref('');
-const searchResults = ref<ISearchResult['CardResult']>([]);
+const searchResults = ref<ISearchResult['cards']>([]);
 const currentPage = ref(1);
 const loading = ref(false);
 const hasNextPage = ref(false);
@@ -14,7 +14,7 @@ const doSearch = () => {
   searchQuery.value = searchText.value.trim();
 };
 
-watch([searchQuery, currentPage], async ([newSearch, newPage], [oldSearch, oldPage]) => {
+watch([searchQuery, currentPage], async ([newSearch], [oldSearch]) => {
   if (newSearch !== oldSearch) {
     searchResults.value = [];
   }
@@ -29,12 +29,11 @@ watch([searchQuery, currentPage], async ([newSearch, newPage], [oldSearch, oldPa
       `/containers/cards?q=${encodeURIComponent(searchQuery.value)}&page=${currentPage.value}`,
     );
     console.log('API response:', response);
-    if (!response || response.CardResult.length === 0) {
+    if (!response || response.cards.length === 0) {
       searchResults.value = [];
     } else {
-      searchResults.value = [...searchResults.value, ...response.CardResult];
-      console.log('Search results:', response);
-      hasNextPage.value = response.HasNextPage;
+      searchResults.value = [...searchResults.value, ...response.cards];
+      hasNextPage.value = response.hasMore;
     }
   } catch (err) {
     console.error('Search API error:', err);

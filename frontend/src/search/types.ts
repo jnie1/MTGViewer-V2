@@ -1,6 +1,8 @@
-import { ICard } from "@/cards/types";
+import { type ICard } from '@/cards/types';
 
 export interface ISearchResult {
-  HasNextPage: boolean;
-  CardResult: ICard[];
+  totalCards: boolean;
+  cards: ICard[];
+  page: number;
+  hasMore: boolean;
 }
