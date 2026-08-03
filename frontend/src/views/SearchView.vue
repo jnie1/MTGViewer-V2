@@ -7,11 +7,10 @@ import { isAbortError, wait } from '@/fetch/abort';
 import SearchItem from '@/search/SearchItem.vue';
 
 const searchQuery = ref('');
-const currentPage = ref(1);
-
 const pendingSearches = ref(0);
 const cancel = ref<AbortController>();
 
+const currentPage = ref(1);
 const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
 
@@ -41,7 +40,7 @@ const searchCards = async (search: string, page: number) => {
     await wait(500, signal);
 
     const searchParams = new URLSearchParams({ q: search, page: page.toString() });
-    const results = await fetchApi<ISearchResult>(`/containers/cards?${searchParams}`, { signal });
+    const results = await fetchApi<ISearchResult>(`/cards/search?${searchParams}`, { signal });
 
     searchResults.value = [...searchResults.value, ...results.cards];
     currentPage.value = page;
