@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onWatcherCleanup } from 'vue';
 import type { ISearchResult } from '@/search/types';
 import type { ICard } from '@/cards/types';
 import fetchApi from '@/fetch/api';
@@ -7,51 +7,45 @@ import { isAbortError, wait } from '@/fetch/abort';
 import SearchItem from '@/search/SearchItem.vue';
 
 const searchQuery = ref('');
-const pendingSearches = ref(0);
-const cancel = ref<AbortController>();
-
 const currentPage = ref(1);
+
+const pendingSearches = ref(0);
 const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
 
 const isLoading = computed(() => pendingSearches.value > 0);
 const isNextDisabled = computed(() => !hasNextPage.value);
 
-const handleSearch = async (value: string) => {
-  searchQuery.value = value.trim();
-  searchResults.value = [];
-  currentPage.value = 1;
-  await searchCards(searchQuery.value, currentPage.value);
-};
-
-const handleLoadMore = async () => {
-  await searchCards(searchQuery.value, currentPage.value + 1);
-};
-
-const searchCards = async (search: string, page: number) => {
-  const abortController = new AbortController();
-  cancel.value?.abort();
-  cancel.value = abortController;
-
+watch([searchQuery, currentPage], async ([search, page]) => {
   if (!search) return;
+
+  const abortController = new AbortController();
+  onWatcherCleanup(() => abortController.abort());
+
   try {
     pendingSearches.value++;
-    const signal = abortController.signal;
-    await wait(500, signal);
 
-    const searchParams = new URLSearchParams({ q: search, page: page.toString() });
-    const results = await fetchApi<ISearchResult>(`/cards/search?${searchParams}`, { signal });
+    await wait(500, abortController.signal);
+    const path = `/cards/search?${new URLSearchParams({ q: search, page: page.toString() })}`;
+    const results = await fetchApi<ISearchResult>(path, { signal: abortController.signal });
 
     searchResults.value = [...searchResults.value, ...results.cards];
-    currentPage.value = page;
     hasNextPage.value = results.hasMore;
   } catch (e) {
-    if (!isAbortError(e)) {
-      throw e;
-    }
+    if (!isAbortError(e)) throw e;
   } finally {
     pendingSearches.value--;
   }
+});
+
+const handleSearch = (value: string) => {
+  searchQuery.value = value.trim();
+  searchResults.value = [];
+  currentPage.value = 1;
+};
+
+const handleLoadMore = () => {
+  currentPage.value++;
 };
 </script>
 
