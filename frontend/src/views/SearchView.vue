@@ -1,78 +1,75 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import type { ISearchResult } from '@/search/types';
-import SearchItem from '@/search/SearchItem.vue';
-import { ref, computed, watch } from 'vue';
+import type { ICard } from '@/cards/types';
 import fetchApi from '@/fetch/api';
+import { isAbortError, wait } from '@/fetch/abort';
+import SearchItem from '@/search/SearchItem.vue';
 
-const searchText = ref('');
 const searchQuery = ref('');
-const searchResults = ref<ISearchResult['cards']>([]);
 const currentPage = ref(1);
-const loading = ref(false);
+
+const pendingSearches = ref(0);
+const cancel = ref<AbortController>();
+
+const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
-const doSearch = () => {
-  searchQuery.value = searchText.value.trim();
-};
 
-watch([searchQuery, currentPage], async ([newSearch], [oldSearch]) => {
-  if (newSearch !== oldSearch) {
-    searchResults.value = [];
-  }
-  if (searchQuery.value.trim() === '') {
-    searchResults.value = [];
-    hasNextPage.value = false;
-    return;
-  }
-  loading.value = true;
-  try {
-    const response = await fetchApi<ISearchResult>(
-      `/containers/cards?q=${encodeURIComponent(searchQuery.value)}&page=${currentPage.value}`,
-    );
-    console.log('API response:', response);
-    if (!response || response.cards.length === 0) {
-      searchResults.value = [];
-    } else {
-      searchResults.value = [...searchResults.value, ...response.cards];
-      hasNextPage.value = response.hasMore;
-    }
-  } catch (err) {
-    console.error('Search API error:', err);
-    searchResults.value = [];
-  } finally {
-    loading.value = false;
-  }
-});
-
-const next = () => {
-  currentPage.value++;
-  console.log('currentPage.value', currentPage.value);
-};
+const isLoading = computed(() => pendingSearches.value > 0);
 const isNextDisabled = computed(() => !hasNextPage.value);
+
+const handleSearch = async (value: string) => {
+  searchQuery.value = value.trim();
+  searchResults.value = [];
+  currentPage.value = 1;
+  await searchCards(searchQuery.value, currentPage.value);
+};
+
+const handleLoadMore = async () => {
+  await searchCards(searchQuery.value, currentPage.value + 1);
+};
+
+const searchCards = async (search: string, page: number) => {
+  const abortController = new AbortController();
+  cancel.value?.abort();
+  cancel.value = abortController;
+
+  if (!search) return;
+  try {
+    pendingSearches.value++;
+    const signal = abortController.signal;
+    await wait(500, signal);
+
+    const searchParams = new URLSearchParams({ q: search, page: page.toString() });
+    const results = await fetchApi<ISearchResult>(`/containers/cards?${searchParams}`, { signal });
+
+    searchResults.value = [...searchResults.value, ...results.cards];
+    currentPage.value = page;
+    hasNextPage.value = results.hasMore;
+  } catch (e) {
+    if (!isAbortError(e)) {
+      throw e;
+    }
+  } finally {
+    pendingSearches.value--;
+  }
+};
 </script>
 
 <template>
   <main>
     <v-text-field
-      v-model="searchText"
       label="Search items..."
       prepend-inner-icon="mdi-magnify"
       variant="outlined"
       clearable
-      @keydown.enter.prevent="doSearch"
+      :model-value="searchQuery"
+      @update:model-value="handleSearch"
     >
     </v-text-field>
-    <v-btn color="primary" @click="doSearch">Search</v-btn>
-    <v-btn
-      color="primary"
-      :disabled="isNextDisabled"
-      @click="
-        next();
-        doSearch();
-      "
-      >Show More</v-btn
-    >
+    <v-btn color="primary" :disabled="isNextDisabled" @click="handleLoadMore">Show More</v-btn>
 
-    <v-overlay :model-value="loading" absolute>
+    <v-overlay :model-value="isLoading" absolute>
       <v-sheet class="d-flex align-center justify-center" width="100%" height="100%" elevation="2">
         <v-progress-circular indeterminate size="64" />
       </v-sheet>
