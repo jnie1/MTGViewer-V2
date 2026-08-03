@@ -3,7 +3,7 @@ import { ref, computed, watch, onWatcherCleanup } from 'vue';
 import type { ISearchResult } from '@/search/types';
 import type { ICard } from '@/cards/types';
 import fetchApi from '@/fetch/api';
-import { isAbortError, wait } from '@/fetch/abort';
+import { isAbortError, timeout } from '@/fetch/abort';
 import SearchItem from '@/search/SearchItem.vue';
 
 const searchQuery = ref('');
@@ -25,7 +25,7 @@ watch([searchQuery, currentPage], async ([search, page]) => {
   try {
     pendingSearches.value++;
 
-    await wait(500, abortController.signal);
+    await timeout(500, abortController.signal);
     const path = `/cards/search?${new URLSearchParams({ q: search, page: page.toString() })}`;
     const results = await fetchApi<ISearchResult>(path, { signal: abortController.signal });
 
@@ -51,14 +51,8 @@ const handleLoadMore = () => {
 
 <template>
   <main>
-    <v-text-field
-      label="Search items..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      clearable
-      :model-value="searchQuery"
-      @update:model-value="handleSearch"
-    >
+    <v-text-field label="Search items..." prepend-inner-icon="mdi-magnify" variant="outlined" clearable
+      :model-value="searchQuery" @update:model-value="handleSearch">
     </v-text-field>
     <v-btn color="primary" :disabled="isNextDisabled" @click="handleLoadMore">Show More</v-btn>
 
