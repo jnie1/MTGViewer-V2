@@ -26,7 +26,8 @@ const filteredItems = computed(() => {
       label="Search items..."
       prepend-inner-icon="mdi-magnify"
       variant="outlined"
-      clearable>
+      clearable
+    >
     </v-text-field>
     <v-slide-group v-model="filteredItems" class="slide-content" show-arrows>
       <template #next>
