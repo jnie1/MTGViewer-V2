@@ -10,6 +10,7 @@ const currentPage = ref(1);
 
 const pendingSearches = ref(0);
 const searchResults = ref<ICard[]>([]);
+const uniqueSearchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
 
 const isLoading = computed(() => pendingSearches.value > 0);
@@ -42,6 +43,12 @@ watch([searchQuery, currentPage], async ([search, page]) => {
     const results = await searchCards(search, page, abortController.signal);
 
     searchResults.value = [...searchResults.value, ...results.cards];
+    const seenNames = new Set<string>();
+    uniqueSearchResults.value = searchResults.value.filter((card) => {
+      if (seenNames.has(card.name)) return false;
+      seenNames.add(card.name);
+      return true;
+    });
     hasNextPage.value = results.hasMore;
   } catch (e) {
     if (!isAbortError(e)) throw e;
@@ -70,6 +77,6 @@ watch([searchQuery, currentPage], async ([search, page]) => {
       </v-sheet>
     </v-overlay>
 
-    <search-item :cards="searchResults" />
+    <search-item :cards="uniqueSearchResults" />
   </main>
 </template>
