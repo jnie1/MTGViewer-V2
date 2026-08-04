@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"claimsnclaimset/http"
 	"mime/multipart"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
