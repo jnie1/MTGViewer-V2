@@ -8,8 +8,6 @@ interface ICardProps {
 }
 const { cards } = defineProps<ICardProps>();
 const searchQuery = ref('');
-const selectedCard = ref('');
-const isGridView = ref(false);
 const filteredCards = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
   if (!query) return cards;
@@ -19,36 +17,7 @@ const filteredCards = computed(() => {
 
 <template>
   <main>
-    <v-switch
-      v-model="isGridView"
-      label="Views"
-      true-icon="mdi-check"
-      false-icon="mdi-close"
-    ></v-switch>
-    <v-container v-if="isGridView == false">
-      <v-slide-group v-model="selectedCard" class="slide-content" show-arrows>
-        <template #next>
-          <v-icon icon="$right" size="x-large" />
-        </template>
-        <template #prev>
-          <v-icon icon="$left" size="x-large" />
-        </template>
-        <v-slide-group-item
-          v-for="card in filteredCards"
-          :key="card.scryfallId"
-          :value="card.scryfallId"
-        >
-          <v-card class="mx-2" max-width="350">
-            <router-link :to="{ name: 'card', params: { scryfallId: card.scryfallId } }">
-              <card-image :card />
-            </router-link>
-            <v-card-title>{{ card.name }}</v-card-title>
-          </v-card>
-        </v-slide-group-item>
-      </v-slide-group>
-      <div v-if="filteredCards.length === 0" class="no-results">No cards match your filter.</div>
-    </v-container>
-    <v-container v-if="isGridView == true">
+    <v-container>
       <div class="grid-table">
         <router-link
           v-for="card in filteredCards"
