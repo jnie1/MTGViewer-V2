@@ -55,6 +55,10 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return SearchCardPage{}, nil
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return SearchCardPage{}, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
 	}

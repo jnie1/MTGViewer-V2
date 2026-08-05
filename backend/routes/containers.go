@@ -73,40 +73,6 @@ func fetchContainerCards(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func searchCards(c *gin.Context) {
-	cardQuery := c.Query("q")
-
-	cardPage, err := cards.SearchCards(cardQuery, 1)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	if len(cardPage.Cards) == 0 {
-		c.JSON(http.StatusOK, []containers.CardDeposit{})
-		return
-	}
-
-	cardIds := make(uuid.UUIDs, len(cardPage.Cards))
-	for i, card := range cardPage.Cards {
-		cardIds[i] = card.ScryfallId
-	}
-
-	deposits, err := containers.SearchDeposits(cardIds)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	result, err := containers.JoinCardDeposits(cardPage.Cards, deposits)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
-}
-
 func checkPrune(c *gin.Context) {
 	size := c.Query("size")
 	maxCopies, err := strconv.Atoi(size)
@@ -229,7 +195,6 @@ func AddContainerRoutes(router gin.IRouter) {
 	group.GET("", fetchContainerPreviews)
 	group.GET("/:container", fetchContainer)
 	group.GET("/:container/cards", fetchContainerCards)
-	group.GET("/cards", searchCards)
 	group.GET("/prune", checkPrune)
 	group.POST("/prune", applyPrune)
 }

@@ -17,6 +17,9 @@ import { RouterLink } from 'vue-router';
       <li>
         <router-link to="/logs">Logs</router-link>
       </li>
+      <li>
+        <router-link to="/search">Search</router-link>
+      </li>
     </ul>
   </nav>
 </template>
