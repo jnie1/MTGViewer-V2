@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/jnie1/MTGViewer-V2/auth"
 	"github.com/jnie1/MTGViewer-V2/users"
 )
@@ -56,7 +55,6 @@ func login(c *gin.Context) {
 	}
 
 	user, err := users.GetUser(request.Email)
-
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -68,16 +66,7 @@ func login(c *gin.Context) {
 	}
 
 	loginDuration := time.Now().Add(2 * time.Hour)
-
-	userClaims := auth.Claims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: loginDuration.Unix(),
-			Subject:   user.Email,
-		},
-		Role: user.Role,
-	}
-
-	token, err := auth.GenerateToken(&userClaims)
+	token, err := auth.GenerateToken(user, loginDuration)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
