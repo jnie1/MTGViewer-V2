@@ -84,15 +84,6 @@ func fetchCard(c *gin.Context) {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
-	// sum up the amounts of each container
-	uniqueContainersSum := make(map[int]int)
-	for _, container := range containerResult {
-		uniqueContainersSum[container.ContainerId] += container.Amount
-	}
-	println("Unique containers and their total amounts:")
-	for containerId, totalAmount := range uniqueContainersSum {
-		println("Container ID:", containerId, "Total Amount:", totalAmount)
-	}
 	result := CardContainerMatch{
 		Card:             foundCard,
 		ListOfContainers: containerResult,
