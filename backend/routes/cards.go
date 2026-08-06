@@ -12,6 +12,11 @@ import (
 	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
+type CardContainerMatch struct {
+	Card             cards.Card
+	ListOfContainers []containers.CardDepositPreview
+}
+
 func fetchCollection(c *gin.Context) {
 	ids := c.QueryArray("cards")
 
@@ -44,10 +49,22 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	result, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
+	foundCard, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
+	}
+
+	// find scryfall id in containers
+	containerResult, err := containers.SearchDeposits(uuid.UUIDs{scryfallId})
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	result := CardContainerMatch{
+		Card:             foundCard,
+		ListOfContainers: containerResult,
 	}
 
 	c.JSON(http.StatusOK, result)
