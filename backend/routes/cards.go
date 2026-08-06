@@ -40,6 +40,18 @@ func fetchCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func toUuids(ids []cards.Card) ([]uuid.UUID, error) {
+	result := make([]uuid.UUID, len(ids))
+	for i, id := range ids {
+		uuid, err := uuid.Parse(id.ScryfallId.String())
+		if err != nil {
+			return nil, err
+		}
+		result[i] = uuid
+	}
+	return result, nil
+}
+
 func fetchCard(c *gin.Context) {
 	cardId := c.Param("card")
 
@@ -55,13 +67,32 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	// find scryfall id in containers
-	containerResult, err := containers.SearchDeposits(uuid.UUIDs{scryfallId})
+	allPrints, err := cards.SearchCards(foundCard.Name, 1)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
+	scryfallIds, err := toUuids(allPrints.Cards)
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+	// find scryfall id in containers
+	containerResult, err := containers.SearchDeposits(scryfallIds)
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+	// sum up the amounts of each container
+	uniqueContainersSum := make(map[int]int)
+	for _, container := range containerResult {
+		uniqueContainersSum[container.ContainerId] += container.Amount
+	}
+	println("Unique containers and their total amounts:")
+	for containerId, totalAmount := range uniqueContainersSum {
+		println("Container ID:", containerId, "Total Amount:", totalAmount)
+	}
 	result := CardContainerMatch{
 		Card:             foundCard,
 		ListOfContainers: containerResult,
