@@ -3,6 +3,7 @@ package routes
 import (
 	"mime/multipart"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -67,13 +68,36 @@ func fetchCard(c *gin.Context) {
 	}
 	// find scryfall id in containers
 	containerResult, err := containers.SearchDeposits(scryfallIds)
+
+	mergedBoxAmount := make(map[int]containers.CardDepositPreview, len(containerResult))
+
+	for _, containerResult := range containerResult {
+		if existing, ok := mergedBoxAmount[containerResult.ContainerId]; ok {
+			existing.Amount = existing.Amount + containerResult.Amount
+			mergedBoxAmount[containerResult.ContainerId] = existing
+		} else {
+			mergedBoxAmount[containerResult.ContainerId] = containerResult
+		}
+	}
+
+	mergedResult := make([]containers.CardDepositPreview, 0, len(mergedBoxAmount))
+	for _, containerResult := range mergedBoxAmount {
+		mergedResult = append(mergedResult, containerResult)
+	}
+
+	sort.Slice(mergedResult, func(i, j int) bool {
+		return mergedResult[i].ContainerId < mergedResult[j].ContainerId
+	})
+
+	sortedMergedResult := mergedResult
+
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 	result := containers.CardContainerMatch{
 		Card:       cardFound,
-		Containers: containerResult,
+		Containers: sortedMergedResult,
 	}
 	c.JSON(http.StatusOK, result)
 }
