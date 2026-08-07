@@ -15,8 +15,8 @@ interface ICardContainer {
   Amount: number;
 }
 interface ICardContainerMatch {
-  Card: ICard;
-  ListOfContainers: ICardContainer[];
+  card: ICard;
+  containers: ICardContainer[];
 }
 const matches = useRouteData<ICardContainerMatch>();
 </script>
@@ -24,25 +24,25 @@ const matches = useRouteData<ICardContainerMatch>();
 <template>
   <main class="card-view">
     <div>
-      <card-image :card="matches.Card" highlight />
+      <card-image :card="matches.card" highlight />
     </div>
     <v-card width="300" min-height="100" density="comfortable" :loading="!matches">
       <v-card-item>
-        <v-card-title>{{ matches.Card.name }}</v-card-title>
-        <v-card-subtitle v-if="matches?.Card.manaCost">{{ matches.Card.manaCost }}</v-card-subtitle>
+        <v-card-title>{{ matches.card.name }}</v-card-title>
+        <v-card-subtitle v-if="matches?.card.manaCost">{{ matches.card.manaCost }}</v-card-subtitle>
       </v-card-item>
       <v-card-text>
-        <p>{{ matches.Card.type }}</p>
-        <p>{{ capitalize(matches.Card.rarity) }}</p>
-        <p v-if="matches.Card.power || matches.Card?.toughness">
-          {{ matches.Card.power }} / {{ matches.Card.toughness }}
+        <p>{{ matches.card.type }}</p>
+        <p>{{ capitalize(matches.card.rarity) }}</p>
+        <p v-if="matches.card.power || matches.card?.toughness">
+          {{ matches.card.power }} / {{ matches.card.toughness }}
         </p>
       </v-card-text>
     </v-card>
     <v-container>
       <div class="grid-table">
         <router-link
-          v-for="container in matches.ListOfContainers"
+          v-for="container in matches.containers"
           :key="container.ContainerId"
           :to="{ name: 'container', params: { containerId: container.ContainerId } }"
           class="grid-card-link"
