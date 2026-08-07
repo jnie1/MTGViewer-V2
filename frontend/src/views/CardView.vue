@@ -3,21 +3,13 @@ import CardImage from '@/cards/CardImage.vue';
 import type { ICard } from '@/cards/types';
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import { capitalize } from '@/utils';
+import type { ICardContainerMatch } from '@/container/types';
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     const { scryfallId } = to.params;
     await loadRouteData(`/cards/${scryfallId}`, to.meta, next);
   },
 });
-interface ICardContainer {
-  containerId: string;
-  containerName: string;
-  amount: number;
-}
-interface ICardContainerMatch {
-  card: ICard;
-  containers: ICardContainer[];
-}
 const matches = useRouteData<ICardContainerMatch>();
 </script>
 
