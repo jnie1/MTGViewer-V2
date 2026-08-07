@@ -13,8 +13,8 @@ import (
 )
 
 type CardContainerMatch struct {
-	Card             cards.Card
-	ListOfContainers []containers.CardDepositPreview
+	Card       cards.Card                      `json:"card"`
+	Containers []containers.CardDepositPreview `json:"containers"`
 }
 
 func fetchCollection(c *gin.Context) {
@@ -40,18 +40,6 @@ func fetchCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func toUuids(ids []cards.Card) ([]uuid.UUID, error) {
-	result := make([]uuid.UUID, len(ids))
-	for i, id := range ids {
-		uuid, err := uuid.Parse(id.ScryfallId.String())
-		if err != nil {
-			return nil, err
-		}
-		result[i] = uuid
-	}
-	return result, nil
-}
-
 func fetchCard(c *gin.Context) {
 	cardId := c.Param("card")
 
@@ -61,19 +49,23 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	foundCard, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
+	cardFound, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	allPrints, err := cards.SearchCards(foundCard.Name, 1)
+	allPrints, err := cards.SearchCards(cardFound.Name, 1)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	scryfallIds, err := toUuids(allPrints.Cards)
+	scryfallIds := make([]uuid.UUID, len(allPrints.Cards))
+	for i, card := range allPrints.Cards {
+		scryfallIds[i] = card.ScryfallId
+	}
+
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -85,10 +77,9 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 	result := CardContainerMatch{
-		Card:             foundCard,
-		ListOfContainers: containerResult,
+		Card:       cardFound,
+		Containers: containerResult,
 	}
-
 	c.JSON(http.StatusOK, result)
 }
 
