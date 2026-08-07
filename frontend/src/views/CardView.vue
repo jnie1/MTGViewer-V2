@@ -10,9 +10,9 @@ defineOptions({
   },
 });
 interface ICardContainer {
-  ContainerId: string;
-  ContainerName: string;
-  Amount: number;
+  containerId: string;
+  containerName: string;
+  amount: number;
 }
 interface ICardContainerMatch {
   card: ICard;
@@ -43,14 +43,14 @@ const matches = useRouteData<ICardContainerMatch>();
       <div class="grid-table">
         <router-link
           v-for="container in matches.containers"
-          :key="container.ContainerId"
-          :to="{ name: 'container', params: { containerId: container.ContainerId } }"
+          :key="container.containerId"
+          :to="{ name: 'container', params: { containerId: container.containerId } }"
           class="grid-card-link"
         >
           <v-card class="grid-card" elevation="2">
-            <v-card-title class="grid-card-title">{{ container.ContainerName }}</v-card-title>
+            <v-card-title class="grid-card-title">{{ container.containerName }}</v-card-title>
             <v-card-subtitle class="grid-card-subtitle"
-              >Amount: {{ container.Amount }}</v-card-subtitle
+              >Amount: {{ container.amount }}</v-card-subtitle
             >
           </v-card>
         </router-link>
