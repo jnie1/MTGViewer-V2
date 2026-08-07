@@ -12,11 +12,6 @@ import (
 	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
-type CardContainerMatch struct {
-	Card       cards.Card                      `json:"card"`
-	Containers []containers.CardDepositPreview `json:"containers"`
-}
-
 func fetchCollection(c *gin.Context) {
 	ids := c.QueryArray("cards")
 
@@ -76,7 +71,7 @@ func fetchCard(c *gin.Context) {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
-	result := CardContainerMatch{
+	result := containers.CardContainerMatch{
 		Card:       cardFound,
 		Containers: containerResult,
 	}
