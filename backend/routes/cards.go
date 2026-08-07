@@ -3,6 +3,7 @@ package routes
 import (
 	"mime/multipart"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -44,12 +45,60 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	result, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
+	cardFound, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
+	allPrints, err := cards.SearchCards(cardFound.Name, 1)
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	scryfallIds := make([]uuid.UUID, len(allPrints.Cards))
+	for i, card := range allPrints.Cards {
+		scryfallIds[i] = card.ScryfallId
+	}
+
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+	// find scryfall id in containers
+	containerResult, err := containers.SearchDeposits(scryfallIds)
+
+	mergedBoxAmount := make(map[int]containers.CardDepositPreview, len(containerResult))
+
+	for _, containerResult := range containerResult {
+		if existing, ok := mergedBoxAmount[containerResult.ContainerId]; ok {
+			existing.Amount = existing.Amount + containerResult.Amount
+			mergedBoxAmount[containerResult.ContainerId] = existing
+		} else {
+			mergedBoxAmount[containerResult.ContainerId] = containerResult
+		}
+	}
+
+	mergedResult := make([]containers.CardDepositPreview, 0, len(mergedBoxAmount))
+	for _, containerResult := range mergedBoxAmount {
+		mergedResult = append(mergedResult, containerResult)
+	}
+
+	sort.Slice(mergedResult, func(i, j int) bool {
+		return mergedResult[i].ContainerId < mergedResult[j].ContainerId
+	})
+
+	sortedMergedResult := mergedResult
+
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+	result := containers.CardContainerMatch{
+		Card:       cardFound,
+		Containers: sortedMergedResult,
+	}
 	c.JSON(http.StatusOK, result)
 }
 
