@@ -74,7 +74,7 @@ const matches = useRouteData<ICardContainerMatch>();
   color: inherit;
   gap: 0.75rem;
   min-height: 100%;
-  width: 100%;
+  width: 80%;
   max-width: 336px;
 }
 
@@ -90,5 +90,12 @@ const matches = useRouteData<ICardContainerMatch>();
 .grid-card-title {
   text-align: center;
   font-weight: 300;
+}
+
+.grid-card-subtitle {
+  text-align: center;
+  font-weight: 300;
+  padding-bottom: 0.5rem;
+  font-weight: bold;
 }
 </style>
