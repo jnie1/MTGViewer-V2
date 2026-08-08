@@ -47,9 +47,14 @@ type CardDeposit struct {
 }
 
 type CardDepositPreview struct {
-	ContainerId   int
-	ContainerName string
+	ContainerId   int    `json:"containerId"`
+	ContainerName string `json:"containerName"`
 	cards.CardAmountPreview
+}
+
+type CardContainerMatch struct {
+	Card       cards.Card           `json:"card"`
+	Containers []CardDepositPreview `json:"containers"`
 }
 
 type CardRequest struct {
