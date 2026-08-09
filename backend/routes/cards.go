@@ -249,4 +249,14 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
 	group.POST("/withdraw", withdrawCards)
+	group.GET("/test", func(c *gin.Context) {
+		result, err := cards.TestFiltering()
+
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, result)
+	})
 }

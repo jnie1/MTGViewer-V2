@@ -137,6 +137,14 @@ func fromMtgJson(source mtgJsonCard) Card {
 	return card
 }
 
+func fromMtgJsons(sources []mtgJsonCard) []Card {
+	results := make([]Card, len(sources))
+	for i, s := range sources {
+		results[i] = fromMtgJson(s)
+	}
+	return results
+}
+
 func toCard(card scryfallCard) Card {
 	var multiverseId int
 	if len(card.MultiverseIds) == 1 {
