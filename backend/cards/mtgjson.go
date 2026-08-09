@@ -160,33 +160,7 @@ func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
 
 	sql := db.NewSQLBuilder("cards AS c")
 	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-
-	if len(ids.MultiverseIds) > 0 {
-		vals := make([]any, len(ids.MultiverseIds))
-		for i, id := range ids.MultiverseIds {
-			vals[i] = id
-		}
-		sql.WhereIn("ci.multiverseId", vals)
-	}
-
-	if len(ids.SetNumbers) > 0 {
-		columns := []string{"c.setCode", "c.number"}
-		vals := make([][]any, len(ids.SetNumbers))
-		for i, sn := range ids.SetNumbers {
-			vals[i] = []any{sn.Set, sn.CollectorNumber}
-		}
-		WhereInTuples(sql, columns, vals...)
-	}
-
-	if len(ids.NameSets) > 0 {
-		columns := []string{"c.name", "c.setCode"}
-		vals := make([][]any, len(ids.NameSets))
-		for i, ns := range ids.NameSets {
-			vals[i] = []any{ns.Name, ns.Set}
-		}
-		WhereInTuples(sql, columns, vals...)
-	}
-
+	WhereIds(sql, ids, "ci.multiverseId", "c.name", "c.setCode", "c.number")
 	sql.Select(
 		"ci.scryfallId",
 		"ci.multiverseId",

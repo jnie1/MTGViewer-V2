@@ -41,16 +41,6 @@ func (id CardId) NameSet() NameSet {
 	return NameSet{id.Name, id.SetCode}
 }
 
-type CardIdQuery struct {
-	MultiverseIds []int
-	SetNumbers    []SetCollectorNumber
-	NameSets      []NameSet
-}
-
-func (query CardIdQuery) IsEmpty() bool {
-	return len(query.MultiverseIds) == 0 || len(query.SetNumbers) == 0 || len(query.NameSets) == 0
-}
-
 var ErrUnknownCardIdentifier = errors.New("unknown card identifier specified")
 
 func FromObj(obj map[string]any) (any, error) {
