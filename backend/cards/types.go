@@ -3,6 +3,7 @@ package cards
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -90,6 +91,48 @@ type collectionResult struct {
 type collectionBatchResult struct {
 	cards []Card
 	err   error
+}
+
+type mtgJsonCard struct {
+	MtgJsonId       uuid.UUID `json:"uuid"`
+	ScryfallId      uuid.UUID `json:"scryfallId"`
+	ManaCost        string    `json:"manaCost,omitempty"`
+	Name            string    `json:"name"`
+	SetName         string    `json:"setName"`
+	Set             string    `json:"setCode"`
+	CollectorNumber string    `json:"number"`
+	MultiverseId    *string   `json:"multiverseId"`
+	Power           string    `json:"power,omitempty"`
+	Toughness       string    `json:"toughness,omitempty"`
+	Type            string    `json:"type"`
+	Rarity          string    `json:"rarity"`
+}
+
+func fromMtgJson(source mtgJsonCard) Card {
+	multiverseIds := []int{}
+	if source.MultiverseId != nil {
+		if multiverseId, err := strconv.Atoi(*source.MultiverseId); err != nil {
+			multiverseIds = append(multiverseIds, multiverseId)
+		}
+	}
+
+	images := CardImageUrls{}
+
+	return Card{
+		source.ScryfallId,
+		source.Name,
+		source.ManaCost,
+		source.SetName,
+		source.Set,
+		source.CollectorNumber,
+		multiverseIds,
+		source.Type,
+		source.Rarity,
+		source.Power,
+		source.Toughness,
+		images,
+		map[string]string{},
+	}
 }
 
 func toCard(card scryfallCard) Card {
