@@ -89,44 +89,53 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	return searchPage, nil
 }
 
+var missingCardsErr = errors.New("missing cards")
+
 func FetchRandomCard() (Card, error) {
-	randomUrl, err := url.JoinPath(scryfallUrl, "/cards/random")
+	sdk, err := mtgjson.New()
 	if err != nil {
 		return Card{}, err
 	}
 
-	req, err := http.NewRequest("GET", randomUrl, nil)
-	if err != nil {
+	defer sdk.Close()
+
+	ctx := context.Background()
+	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
 		return Card{}, err
 	}
 
-	req.Header.Set("User-Agent", "mtg-viewer-v2")
-	req.Header.Set("Accept", "application/json")
+	sql := db.NewSQLBuilder("cards AS c")
+	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
+	sql.Join("JOIN sets AS s ON s.code = c.setCode")
+	sql.Select(
+		"c.uuid",
+		"ci.scryfallId",
+		"c.manaCost",
+		"c.name",
+		"s.name AS setName",
+		"c.setCode",
+		"c.number",
+		"ci.multiverseId",
+		"c.power",
+		"c.toughness",
+		"c.type",
+		"c.rarity",
+	)
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
+	query, params := sql.Build()
+	query += " USING SAMPLE 1"
+
+	var results []mtgJsonCard
+	if err := sdk.Connection().ExecuteInto(ctx, &results, query, params...); err != nil {
 		return Card{}, err
 	}
 
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return Card{}, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
+	if len(results) == 0 {
+		return Card{}, missingCardsErr
 	}
 
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.Contains(contentType, "application/json") {
-		return Card{}, fmt.Errorf("unexpected response content %s", contentType)
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-
-	var result scryfallCard
-	if err := decoder.Decode(&result); err != nil {
-		return Card{}, err
-	}
-
-	return toCard(result), nil
+	result := results[0]
+	return fromMtgJson(result), nil
 }
 
 func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
@@ -162,8 +171,8 @@ func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
 	)
 	sql.Limit(1)
 
-	var matches []mtgJsonCard
 	query, params := sql.Build()
+	var matches []mtgJsonCard
 
 	if err := sdk.Connection().ExecuteInto(ctx, &matches, query, params...); err != nil {
 		return Card{}, err
