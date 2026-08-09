@@ -20,9 +20,9 @@ type Card struct {
 	Name            string            `json:"name"`
 	ManaCost        string            `json:"manaCost,omitempty"`
 	Set             string            `json:"set"`
-	SetCode         string            `json:"set_code"`
-	CollectorNumber string            `json:"collector_number"`
-	MultiverseIds   []int             `json:"multiverse_ids,omitempty"`
+	SetCode         string            `json:"setCode"`
+	CollectorNumber string            `json:"collectorNumber"`
+	MultiverseId    int               `json:"multiverseId,omitempty"`
 	Type            string            `json:"type"`
 	Rarity          string            `json:"rarity"`
 	Power           string            `json:"power,omitempty"`
@@ -101,7 +101,7 @@ type mtgJsonCard struct {
 	SetName         string    `json:"setName"`
 	Set             string    `json:"setCode"`
 	CollectorNumber string    `json:"number"`
-	MultiverseId    *string   `json:"multiverseId"`
+	MultiverseId    string    `json:"multiverseId,omitempty"`
 	Power           string    `json:"power,omitempty"`
 	Toughness       string    `json:"toughness,omitempty"`
 	Type            string    `json:"type"`
@@ -109,23 +109,23 @@ type mtgJsonCard struct {
 }
 
 func fromMtgJson(source mtgJsonCard) Card {
-	multiverseIds := []int{}
-	if source.MultiverseId != nil {
-		if multiverseId, err := strconv.Atoi(*source.MultiverseId); err != nil {
-			multiverseIds = append(multiverseIds, multiverseId)
+	var multiverseId int
+	if source.MultiverseId != "" {
+		if id, err := strconv.Atoi(source.MultiverseId); err == nil {
+			multiverseId = id
 		}
 	}
 
 	images := CardImageUrls{}
 
-	return Card{
+	card := Card{
 		source.ScryfallId,
 		source.Name,
 		source.ManaCost,
 		source.SetName,
 		source.Set,
 		source.CollectorNumber,
-		multiverseIds,
+		multiverseId,
 		source.Type,
 		source.Rarity,
 		source.Power,
@@ -133,13 +133,21 @@ func fromMtgJson(source mtgJsonCard) Card {
 		images,
 		map[string]string{},
 	}
+
+	return card
 }
 
 func toCard(card scryfallCard) Card {
+	var multiverseId int
+	if len(card.MultiverseIds) == 1 {
+		multiverseId = card.MultiverseIds[0]
+	}
+
 	images := card.Images
 	if len(card.CardFaces) > 0 && card.CardFaces[0].Images.Small != "" {
 		images = card.CardFaces[0].Images
 	}
+
 	return Card{
 		card.ScryfallId,
 		card.Name,
@@ -147,7 +155,7 @@ func toCard(card scryfallCard) Card {
 		card.SetName,
 		strings.ToUpper(card.Set),
 		card.CollectorNumber,
-		card.MultiverseIds,
+		multiverseId,
 		card.Type,
 		card.Rarity,
 		card.Power,

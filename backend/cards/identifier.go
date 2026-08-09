@@ -33,10 +33,10 @@ func (si ScryfallIdentifier) Convert(card Card) (CardIdentifier, error) {
 }
 
 func (mi MultiverseIdentifier) Convert(card Card) (CardIdentifier, error) {
-	if len(card.MultiverseIds) == 0 {
+	if card.MultiverseId == 0 {
 		return nil, fmt.Errorf("card resolved with no multiverse id: %s, (%s) %s", card.Name, card.SetCode, card.CollectorNumber)
 	}
-	return MultiverseIdentifier{card.MultiverseIds[0]}, nil
+	return MultiverseIdentifier{card.MultiverseId}, nil
 }
 
 func (sc SetCollectorNumber) Convert(card Card) (CardIdentifier, error) {
