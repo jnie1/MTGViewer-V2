@@ -2,7 +2,6 @@ package cards
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,9 +10,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-
-	mtgjson "github.com/mtgjson/mtgjson-sdk-go"
-	"github.com/mtgjson/mtgjson-sdk-go/db"
 )
 
 const (
@@ -87,146 +83,6 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	}
 
 	return searchPage, nil
-}
-
-var missingCardsErr = errors.New("missing cards")
-
-func FetchRandomCard() (Card, error) {
-	sdk, err := mtgjson.New()
-	if err != nil {
-		return Card{}, err
-	}
-
-	defer sdk.Close()
-
-	ctx := context.Background()
-	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
-		return Card{}, err
-	}
-
-	sql := db.NewSQLBuilder("cards AS c")
-	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-	sql.Join("JOIN sets AS s ON s.code = c.setCode")
-	sql.Select(
-		"c.uuid",
-		"ci.scryfallId",
-		"c.manaCost",
-		"c.name",
-		"s.name AS setName",
-		"c.setCode",
-		"c.number",
-		"ci.multiverseId",
-		"c.power",
-		"c.toughness",
-		"c.type",
-		"c.rarity",
-	)
-
-	query, params := sql.Build()
-	query += " USING SAMPLE 1"
-
-	var results []mtgJsonCard
-	if err := sdk.Connection().ExecuteInto(ctx, &results, query, params...); err != nil {
-		return Card{}, err
-	}
-
-	if len(results) == 0 {
-		return Card{}, missingCardsErr
-	}
-
-	result := results[0]
-	return fromMtgJson(result), nil
-}
-
-func TestFiltering() ([]Card, error) {
-	sdk, err := mtgjson.New()
-	if err != nil {
-		return nil, err
-	}
-
-	defer sdk.Close()
-
-	ctx := context.Background()
-	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
-		return nil, err
-	}
-
-	sql := db.NewSQLBuilder("cards AS c")
-	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-	sql.Join("JOIN sets AS s ON s.code = c.setCode")
-	sql.Where("(c.setCode, c.number) IN (($1, $2), ($3, $4))", "DFT", "75", "TDM", "94")
-	sql.Select(
-		"c.uuid",
-		"ci.scryfallId",
-		"c.manaCost",
-		"c.name",
-		"s.name AS setName",
-		"c.setCode",
-		"c.number",
-		"ci.multiverseId",
-		"c.power",
-		"c.toughness",
-		"c.type",
-		"c.rarity",
-	)
-
-	query, params := sql.Build()
-	fmt.Printf("go query %s", query)
-
-	var results []mtgJsonCard
-	if err := sdk.Connection().ExecuteInto(ctx, &results, query, params...); err != nil {
-		return nil, err
-	}
-
-	return fromMtgJsons(results), nil
-}
-
-func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
-	sdk, err := mtgjson.New()
-	if err != nil {
-		return Card{}, err
-	}
-
-	defer sdk.Close()
-
-	ctx := context.Background()
-	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
-		return Card{}, err
-	}
-
-	sql := db.NewSQLBuilder("cards AS c")
-	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-	sql.Join("JOIN sets AS s ON s.code = c.setCode")
-	sql.WhereEq("ci.scryfallId", scryfallId.Id)
-	sql.Select(
-		"c.uuid",
-		"ci.scryfallId",
-		"c.manaCost",
-		"c.name",
-		"s.name AS setName",
-		"c.setCode",
-		"c.number",
-		"ci.multiverseId",
-		"c.power",
-		"c.toughness",
-		"c.type",
-		"c.rarity",
-	)
-	sql.Limit(1)
-
-	query, params := sql.Build()
-	var matches []mtgJsonCard
-
-	if err := sdk.Connection().ExecuteInto(ctx, &matches, query, params...); err != nil {
-		return Card{}, err
-	}
-
-	if len(matches) == 0 {
-		return Card{}, fmt.Errorf("no matching card found for %s", scryfallId.Id)
-	}
-
-	match := matches[0]
-	return fromMtgJson(match), nil
 }
 
 func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {

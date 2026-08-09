@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jnie1/MTGViewer-V2/auth"
+	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/database"
 	"github.com/jnie1/MTGViewer-V2/routes"
 )
@@ -16,6 +17,13 @@ func RegisterRouter() {
 	}
 
 	defer db.Close()
+
+	sdk, err := cards.OpenSDK()
+	if err != nil {
+		log.Fatal("Error open mtg json sdk: ", err)
+	}
+
+	defer sdk.Close()
 
 	r := gin.Default()
 	r.Use(auth.CorsMiddleware())
