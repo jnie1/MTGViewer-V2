@@ -10,11 +10,12 @@ import (
 )
 
 func RegisterRouter() {
-	if err := database.Open(); err != nil {
+	db, err := database.Open()
+	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
 
-	defer database.Close()
+	defer db.Close()
 
 	r := gin.Default()
 	r.Use(auth.CorsMiddleware())
