@@ -38,14 +38,16 @@ func fetchCollection(c *gin.Context) {
 
 func fetchCard(c *gin.Context) {
 	cardId := c.Param("card")
-
 	scryfallId, err := uuid.Parse(cardId)
+
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cardFound, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
+	ctx := c.Request.Context()
+	cardFound, err := cards.FetchCard(ctx, cards.ScryfallIdentifier{Id: scryfallId})
+
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -99,7 +101,8 @@ func fetchCard(c *gin.Context) {
 }
 
 func fetchRandomCard(c *gin.Context) {
-	result, err := cards.FetchRandomCard()
+	ctx := c.Request.Context()
+	result, err := cards.FetchRandomCard(ctx)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -250,7 +253,8 @@ func AddCardRoutes(router gin.IRouter) {
 	group.POST("/import", importCards)
 	group.POST("/withdraw", withdrawCards)
 	group.GET("/test", func(c *gin.Context) {
-		result, err := cards.TestFiltering()
+		ctx := c.Request.Context()
+		result, err := cards.TestFiltering(ctx)
 
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)

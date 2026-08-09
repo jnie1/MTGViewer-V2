@@ -18,8 +18,7 @@ func OpenSDK() (*mtgjson.SDK, error) {
 	return sdk, err
 }
 
-func FetchRandomCard() (Card, error) {
-	ctx := context.Background()
+func FetchRandomCard(ctx context.Context) (Card, error) {
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
 		return Card{}, err
 	}
@@ -58,8 +57,7 @@ func FetchRandomCard() (Card, error) {
 	return fromMtgJson(result), nil
 }
 
-func TestFiltering() ([]Card, error) {
-	ctx := context.Background()
+func TestFiltering(ctx context.Context) ([]Card, error) {
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
 		return nil, err
 	}
@@ -93,8 +91,7 @@ func TestFiltering() ([]Card, error) {
 	return fromMtgJsons(results), nil
 }
 
-func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
-	ctx := context.Background()
+func FetchCard(ctx context.Context, scryfallId ScryfallIdentifier) (Card, error) {
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
 		return Card{}, err
 	}
