@@ -36,18 +36,18 @@ type CardLog struct {
 	Amount        int                          `json:"amount"`
 }
 
-func ToScryfallIds(transactionLogs []CardLogPreview) []cards.ScryfallIdentifier {
+func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
 	uniqIds := map[uuid.UUID]any{}
 
 	for _, log := range transactionLogs {
 		uniqIds[log.ScryfallId] = nil
 	}
 
-	ids := make([]cards.ScryfallIdentifier, len(uniqIds))
+	ids := make(uuid.UUIDs, len(uniqIds))
 	i := 0
 
 	for id := range uniqIds {
-		ids[i] = cards.ScryfallIdentifier{Id: id}
+		ids[i] = id
 		i += 1
 	}
 

@@ -75,8 +75,8 @@ type ContainerChanges struct {
 type ContainerWithdrawals map[int][]CardIdentifierAmount
 
 type CardIdentifierAmount struct {
-	Card   CardIdentifier `json:"card"`
-	Amount int            `json:"amount"`
+	Card   any `json:"card"`
+	Amount int `json:"amount"`
 }
 
 func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
@@ -89,7 +89,7 @@ func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	card, err := FromObj(obj.Card)
+	card, err := cards.FromObj(obj.Card)
 	if err != nil {
 		return err
 	}

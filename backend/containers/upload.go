@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"mime/multipart"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -77,7 +79,7 @@ func parseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 		return nil, err
 	}
 
-	fetchedCards, err := cards.FetchCollection(setCollectors)
+	fetchedCards, err := cards.FetchIdentifiers(cards.CardIdQuery{SetNumbers: setCollectors})
 	if err != nil {
 		return nil, err
 	}
@@ -113,9 +115,9 @@ func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	}
 
 	requests := []CardRequest{}
-	identifierOptions := map[int]cards.CardIdentifier{}
-	extraIds := []cards.CardIdentifier{}
-	quantityMap := map[any]int{}
+	multiverseIds := map[int]int{}
+	setNumbers := map[cards.SetCollectorNumber]int{}
+	nameSets := map[cards.NameSet]int{}
 
 	for {
 		row, err := csvReader.Read()
@@ -146,41 +148,50 @@ func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 			if err != nil {
 				return nil, err
 			}
-
-			newId := cards.MultiverseIdentifier{MultiverseId: multiverseId}
-			identifierOptions[1] = newId
-			extraIds = append(extraIds, newId)
-			quantityMap[newId] = quantity
+			multiverseIds[multiverseId] = multiverseIds[multiverseId] + quantity
 
 		case headerPositions.SetCode > -1 && headerPositions.CollectorNumber > -1:
-			newId := cards.SetCollectorNumber{Set: row[headerPositions.SetCode], CollectorNumber: row[headerPositions.CollectorNumber]}
-			identifierOptions[2] = newId
-			extraIds = append(extraIds, newId)
-			quantityMap[newId] = quantity
+			setNumber := cards.SetCollectorNumber{
+				Set:             row[headerPositions.SetCode],
+				CollectorNumber: row[headerPositions.CollectorNumber],
+			}
+			setNumbers[setNumber] = setNumbers[setNumber] + quantity
 
 		case headerPositions.Name > -1 && headerPositions.SetCode > -1:
-			newId := cards.NameSet{Name: row[headerPositions.Name], Set: row[headerPositions.SetCode]}
-			identifierOptions[3] = newId
-			extraIds = append(extraIds, newId)
-			quantityMap[newId] = quantity
+			nameSet := cards.NameSet{
+				Name: row[headerPositions.Name],
+				Set:  row[headerPositions.SetCode],
+			}
+			nameSets[nameSet] = nameSets[nameSet] + quantity
 		}
 	}
 
-	if len(extraIds) > 0 {
-		extraCards, err := cards.FetchCollection(extraIds)
+	extraQuery := cards.CardIdQuery{
+		MultiverseIds: slices.Collect(maps.Keys(multiverseIds)),
+		SetNumbers:    slices.Collect(maps.Keys(setNumbers)),
+		NameSets:      slices.Collect(maps.Keys(nameSets)),
+	}
+
+	if !extraQuery.IsEmpty() {
+		extraCards, err := cards.FetchIdentifiers(extraQuery)
 		if err != nil {
 			return nil, err
 		}
+
 		for _, card := range extraCards {
-			for _, id := range identifierOptions {
-				source, err := id.Convert(card)
-				if err != nil {
-					continue
-				}
-				if amount, ok := quantityMap[source]; ok {
-					requests = append(requests, CardRequest{card.ScryfallId, amount})
-					break
-				}
+			if amount, ok := multiverseIds[card.MultiverseId]; ok {
+				requests = append(requests, CardRequest{card.ScryfallId, amount})
+				break
+			}
+
+			if amount, ok := setNumbers[card.SetCollectorNumber()]; ok {
+				requests = append(requests, CardRequest{card.ScryfallId, amount})
+				break
+			}
+
+			if amount, ok := nameSets[card.NameSet()]; ok {
+				requests = append(requests, CardRequest{card.ScryfallId, amount})
+				break
 			}
 		}
 	}

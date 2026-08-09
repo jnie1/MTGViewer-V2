@@ -10,12 +10,75 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 const (
 	scryfallUrl     string = "https://api.scryfall.com"
 	collectionLimit int    = 75
 )
+
+type collectionIdentifier struct {
+	id uuid.UUID
+}
+
+type collectionQuery struct {
+	identifiers []collectionIdentifier
+}
+
+func newQuery(ids uuid.UUIDs) collectionQuery {
+	identifiers := make([]collectionIdentifier, len(ids))
+	for i, id := range ids {
+		identifiers[i] = collectionIdentifier{id}
+	}
+	return collectionQuery{identifiers}
+}
+
+type scryfallImages struct {
+	Small  string `json:"small,omitempty"`
+	Normal string `json:"normal,omitempty"`
+	Large  string `json:"large,omitempty"`
+}
+
+type scryfallCardFace struct {
+	Name     string         `json:"name"`
+	ManaCost string         `json:"mana_cost,omitempty"`
+	Type     string         `json:"type_line"`
+	Images   scryfallImages `json:"image_uris"`
+}
+
+type scryfallCard struct {
+	ScryfallId      uuid.UUID          `json:"id"`
+	ManaCost        string             `json:"mana_cost,omitempty"`
+	Name            string             `json:"name"`
+	SetName         string             `json:"set_name"`
+	Set             string             `json:"set"`
+	CollectorNumber string             `json:"collector_number"`
+	MultiverseIds   []int              `json:"multiverse_ids,omitempty"`
+	Power           string             `json:"power,omitempty"`
+	Toughness       string             `json:"toughness,omitempty"`
+	Images          scryfallImages     `json:"image_uris"`
+	CardFaces       []scryfallCardFace `json:"card_faces,omitempty"`
+	Type            string             `json:"type_line"`
+	Rarity          string             `json:"rarity"`
+	Prices          map[string]string  `json:"prices"`
+}
+
+type searchResult struct {
+	TotalCards int            `json:"total_cards"`
+	HasMore    bool           `json:"has_more"`
+	Cards      []scryfallCard `json:"data"`
+}
+
+type collectionResult struct {
+	Cards []scryfallCard `json:"data"`
+}
+
+type collectionBatchResult struct {
+	cards []Card
+	err   error
+}
 
 func SearchCards(query string, page int) (SearchCardPage, error) {
 	query, err := url.QueryUnescape(query)
@@ -85,7 +148,7 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	return searchPage, nil
 }
 
-func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
+func FetchCollection(identifiers uuid.UUIDs) ([]Card, error) {
 	if len(identifiers) == 0 {
 		return nil, nil
 	}
@@ -120,13 +183,13 @@ func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	return slices.Concat(cards...), nil
 }
 
-func fetchCollectionBatch[Id CardIdentifier](identifiers []Id) ([]Card, error) {
+func fetchCollectionBatch(identifiers uuid.UUIDs) ([]Card, error) {
 	collectionUrl, err := url.JoinPath(scryfallUrl, "/cards/collection")
 	if err != nil {
 		return nil, err
 	}
 
-	query := CollectionQuery[Id]{identifiers}
+	query := newQuery(identifiers)
 	payload, err := json.Marshal(query)
 	if err != nil {
 		return nil, err
@@ -166,4 +229,44 @@ func fetchCollectionBatch[Id CardIdentifier](identifiers []Id) ([]Card, error) {
 	}
 
 	return toCards(result.Cards), nil
+}
+
+func toCard(card scryfallCard) Card {
+	var multiverseId int
+	if len(card.MultiverseIds) == 1 {
+		multiverseId = card.MultiverseIds[0]
+	}
+
+	images := card.Images
+	if len(card.CardFaces) > 0 && card.CardFaces[0].Images.Small != "" {
+		images = card.CardFaces[0].Images
+	}
+
+	return Card{
+		card.ScryfallId,
+		card.Name,
+		card.ManaCost,
+		card.SetName,
+		strings.ToUpper(card.Set),
+		card.CollectorNumber,
+		multiverseId,
+		card.Type,
+		card.Rarity,
+		card.Power,
+		card.Toughness,
+		CardImageUrls{
+			images.Small,
+			images.Normal,
+			images.Large,
+		},
+		card.Prices,
+	}
+}
+
+func toCards(cards []scryfallCard) []Card {
+	result := make([]Card, len(cards))
+	for i, card := range cards {
+		result[i] = toCard(card)
+	}
+	return result
 }

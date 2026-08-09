@@ -2,6 +2,8 @@ package containers
 
 import (
 	"errors"
+	"maps"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
@@ -11,72 +13,51 @@ var ErrNegativeWithdrawal = errors.New("negative withdrawal amount specified")
 var ErrInsufficientDeposits = errors.New("unsufficient cards in containers to fullfill request")
 
 func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
-	identifierOptions := map[int]cards.CardIdentifier{}
-	extraIds := []cards.CardIdentifier{}
-
-	for _, targets := range withdrawals {
-		for _, target := range targets {
-			if target.Card == nil {
-				return ErrUnknownCardIdentifier
-			}
-
-			if _, ok := target.Card.(ScryfallIdentifier); ok {
-				continue
-			}
-
-			copy := target.Card.Copy()
-
-			var key int
-			switch copy.(type) {
-			case cards.NameSet:
-				key = 3
-			case cards.SetCollectorNumber:
-				key = 2
-			case cards.MultiverseIdentifier:
-			case cards.ScryfallIdentifier:
-			default:
-				key = 1
-			}
-
-			// last one wins, intentional
-			identifierOptions[key] = copy
-			extraIds = append(extraIds, copy)
-		}
-	}
-
-	if len(extraIds) == 0 {
-		return nil
-	}
-
-	results, err := cards.FetchCollection(extraIds)
+	extraQuery, err := FindIdentifiers(withdrawals)
 	if err != nil {
 		return err
 	}
 
-	// hacky way to remap cards back to source id, just get all unique id types per card
-	scryfallIdMappings := make(map[cards.CardIdentifier]uuid.UUID, len(results)*len(identifierOptions))
+	if !extraQuery.IsEmpty() {
+		return nil
+	}
+
+	results, err := cards.FetchIdentifiers(extraQuery)
+	if err != nil {
+		return err
+	}
+
+	multiverseIds := map[int]uuid.UUID{}
+	setNumbers := map[cards.SetCollectorNumber]uuid.UUID{}
+	nameSets := map[cards.NameSet]uuid.UUID{}
 
 	for _, card := range results {
-		for _, converter := range identifierOptions {
-			if id, err := converter.Convert(card); err == nil {
-				scryfallIdMappings[id] = card.ScryfallId
-			}
-		}
+		multiverseIds[card.MultiverseId] = card.ScryfallId
+		setNumbers[card.SetCollectorNumber()] = card.ScryfallId
+		nameSets[card.NameSet()] = card.ScryfallId
 	}
 
 	for _, targets := range withdrawals {
-		for i := range targets {
-			target := targets[i]
-			if target.Card == nil {
-				return ErrUnknownCardIdentifier
-			}
-			copy := target.Card.Copy()
-			if scryfallId, ok := scryfallIdMappings[copy]; ok {
-				targets[i] = CardIdentifierAmount{
-					Card:   ScryfallIdentifier{Id: scryfallId},
-					Amount: target.Amount,
+		for i, target := range targets {
+			switch t := target.Card.(type) {
+			case cards.MultiverseIdObj:
+				if scryfallId, ok := multiverseIds[t.MultiverseId]; ok {
+					targets[i] = CardIdentifierAmount{scryfallId, target.Amount}
 				}
+			case cards.SetCollectorNumber:
+				if scryfallId, ok := setNumbers[t]; ok {
+					targets[i] = CardIdentifierAmount{scryfallId, target.Amount}
+				}
+			case cards.NameSet:
+				if scryfallId, ok := nameSets[t]; ok {
+					targets[i] = CardIdentifierAmount{scryfallId, target.Amount}
+				}
+			case cards.ScryfallIdObj:
+				targets[i] = CardIdentifierAmount{t.ScryfallId, target.Amount}
+			default:
+				return cards.ErrUnknownCardIdentifier
 			}
+
 		}
 	}
 
@@ -105,17 +86,17 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 				return nil, ErrNegativeWithdrawal
 			}
 
-			scryfallId, ok := withdrawal.Card.(ScryfallIdentifier)
+			obj, ok := withdrawal.Card.(cards.ScryfallIdObj)
 			if !ok {
-				return nil, ErrUnknownCardIdentifier
+				return nil, cards.ErrUnknownCardIdentifier
 			}
 
-			key := depositKey{containerId, scryfallId.Id}
+			key := depositKey{containerId, obj.ScryfallId}
 			if amountsByContainers[key]-withdrawal.Amount < 0 {
 				return nil, ErrInsufficientDeposits
 			}
 
-			requests = append(requests, CardRequest{scryfallId.Id, -withdrawal.Amount})
+			requests = append(requests, CardRequest{obj.ScryfallId, -withdrawal.Amount})
 		}
 
 		changes = append(changes, ContainerChanges{containerId, requests})
@@ -124,20 +105,60 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 	return changes, nil
 }
 
-func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
-	uniqIds := map[ScryfallIdentifier]bool{}
+func FindIdentifiers(withdrawals ContainerWithdrawals) (cards.CardIdQuery, error) {
+	multiverseIds := map[int]any{}
+	nameSets := map[cards.NameSet]any{}
+	collectorNumbers := map[cards.SetCollectorNumber]any{}
+
 	for _, targets := range withdrawals {
 		for _, target := range targets {
-			if scryfallId, ok := target.Card.(ScryfallIdentifier); ok {
-				uniqIds[scryfallId] = true
+			switch t := target.Card.(type) {
+			case cards.ScryfallIdObj:
+				break
+
+			case cards.MultiverseIdObj:
+				multiverseIds[t.MultiverseId] = nil
+
+			case cards.NameSet:
+				nameSets[t] = nil
+
+			case cards.SetCollectorNumber:
+				collectorNumbers[t] = nil
+
+			default:
+				return cards.CardIdQuery{}, cards.ErrUnknownCardIdentifier
 			}
 		}
 	}
+
+	ids := cards.CardIdQuery{
+		MultiverseIds: slices.Collect(maps.Keys(multiverseIds)),
+		SetNumbers:    slices.Collect(maps.Keys(collectorNumbers)),
+		NameSets:      slices.Collect(maps.Keys(nameSets)),
+	}
+
+	return ids, nil
+}
+
+func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
+	uniqIds := map[uuid.UUID]any{}
+	for _, targets := range withdrawals {
+		for _, target := range targets {
+			switch t := target.Card.(type) {
+			case cards.ScryfallIdObj:
+				uniqIds[t.ScryfallId] = nil
+			case uuid.UUID:
+				uniqIds[t] = nil
+			}
+		}
+	}
+
 	identifiers := make(uuid.UUIDs, len(uniqIds))
 	i := 0
-	for scryfallId := range uniqIds {
-		identifiers[i] = scryfallId.Id
+	for id := range uniqIds {
+		identifiers[i] = id
 		i += 1
 	}
+
 	return identifiers
 }
