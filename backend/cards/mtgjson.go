@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	mtgjson "github.com/mtgjson/mtgjson-sdk-go"
 	"github.com/mtgjson/mtgjson-sdk-go/db"
 )
@@ -91,7 +92,7 @@ func TestFiltering(ctx context.Context) ([]Card, error) {
 	return fromMtgJsons(results), nil
 }
 
-func FetchCard(ctx context.Context, scryfallId ScryfallIdentifier) (Card, error) {
+func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
 		return Card{}, err
 	}
@@ -99,7 +100,7 @@ func FetchCard(ctx context.Context, scryfallId ScryfallIdentifier) (Card, error)
 	sql := db.NewSQLBuilder("cards AS c")
 	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 	sql.Join("JOIN sets AS s ON s.code = c.setCode")
-	sql.WhereEq("ci.scryfallId", scryfallId.Id)
+	sql.WhereEq("ci.scryfallId", scryfallId)
 	sql.Select(
 		"c.uuid",
 		"ci.scryfallId",
@@ -124,7 +125,7 @@ func FetchCard(ctx context.Context, scryfallId ScryfallIdentifier) (Card, error)
 	}
 
 	if len(matches) == 0 {
-		return Card{}, fmt.Errorf("no matching card found for %s", scryfallId.Id)
+		return Card{}, fmt.Errorf("no matching card found for %s", scryfallId)
 	}
 
 	match := matches[0]

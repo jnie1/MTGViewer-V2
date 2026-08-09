@@ -46,7 +46,7 @@ func fetchCard(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	cardFound, err := cards.FetchCard(ctx, cards.ScryfallIdentifier{Id: scryfallId})
+	cardFound, err := cards.FetchCard(ctx, scryfallId)
 
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
@@ -93,10 +93,12 @@ func fetchCard(c *gin.Context) {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
+
 	result := containers.CardContainerMatch{
 		Card:       cardFound,
 		Containers: sortedMergedResult,
 	}
+
 	c.JSON(http.StatusOK, result)
 }
 
