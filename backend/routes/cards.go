@@ -62,10 +62,6 @@ func fetchCard(c *gin.Context) {
 		scryfallIds[i] = card.ScryfallId
 	}
 
-	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
-		return
-	}
 	// find scryfall id in containers
 	containerResult, err := containers.SearchDeposits(scryfallIds)
 
