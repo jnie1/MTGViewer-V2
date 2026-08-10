@@ -27,7 +27,8 @@ func fetchCollection(c *gin.Context) {
 		return
 	}
 
-	result, err := cards.FetchCollection(scryfallIds)
+	ctx := c.Request.Context()
+	result, err := cards.FetchCollection(ctx, scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -126,7 +127,8 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	requests, err := containers.ParseCardRequests(file)
+	ctx := c.Request.Context()
+	requests, err := containers.ParseCardRequests(ctx, file)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -164,7 +166,8 @@ func withdrawCards(c *gin.Context) {
 		return
 	}
 
-	if err := containers.ResolveExtraIdentifiers(withdrawals); err != nil {
+	ctx := c.Request.Context()
+	if err := containers.ResolveExtraIdentifiers(ctx, withdrawals); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -259,7 +262,8 @@ func testIdFind(c *gin.Context) {
 		return
 	}
 
-	result, err := cards.FetchIdentifiers(ids)
+	ctx := c.Request.Context()
+	result, err := cards.FetchIdentifiers(ctx, ids)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

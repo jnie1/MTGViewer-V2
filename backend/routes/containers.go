@@ -57,8 +57,10 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
-	matches, err := cards.FetchCollection(scryfallIds)
+	matches, err := cards.FetchCollection(ctx, scryfallIds)
+
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -104,8 +106,10 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
-	matches, err := cards.FetchCollection(scryfallIds)
+	matches, err := cards.FetchCollection(ctx, scryfallIds)
+
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -151,8 +155,10 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
-	results, err := cards.FetchCollection(scryfallIds)
+	results, err := cards.FetchCollection(ctx, scryfallIds)
+
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return

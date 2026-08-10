@@ -2,6 +2,7 @@ package containers
 
 import (
 	"bufio"
+	"context"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -19,21 +20,21 @@ import (
 
 var ErrFileFormat = errors.New("invalid file format")
 
-func ParseCardRequests(formFile *multipart.FileHeader) ([]CardRequest, error) {
+func ParseCardRequests(ctx context.Context, formFile *multipart.FileHeader) ([]CardRequest, error) {
 	fileExtension := filepath.Ext(formFile.Filename)
 
 	if fileExtension == ".txt" {
-		return parseTextFile(formFile)
+		return parseTextFile(ctx, formFile)
 	}
 
 	if fileExtension == ".csv" {
-		return parseCsvFile(formFile)
+		return parseCsvFile(ctx, formFile)
 	}
 
 	return nil, ErrFileFormat
 }
 
-func parseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
+func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRequest, error) {
 	cardEntryPattern, err := regexp.Compile(`^(?P<amount>\d+) (?P<name>.+?) \((?P<set>.+?)\) (?P<collector>.+)$`)
 	if err != nil {
 		return nil, err
@@ -79,7 +80,8 @@ func parseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 		return nil, err
 	}
 
-	fetchedCards, err := cards.FetchIdentifiers(cards.CardIdQuery{SetNumbers: setCollectors})
+	query := cards.CardIdQuery{SetNumbers: setCollectors}
+	fetchedCards, err := cards.FetchIdentifiers(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +97,7 @@ func parseTextFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	return requests, nil
 }
 
-func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
+func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRequest, error) {
 	file, err := formFile.Open()
 	if err != nil {
 		return nil, err
@@ -173,7 +175,7 @@ func parseCsvFile(formFile *multipart.FileHeader) ([]CardRequest, error) {
 	}
 
 	if !extraQuery.IsEmpty() {
-		extraCards, err := cards.FetchIdentifiers(extraQuery)
+		extraCards, err := cards.FetchIdentifiers(ctx, extraQuery)
 		if err != nil {
 			return nil, err
 		}

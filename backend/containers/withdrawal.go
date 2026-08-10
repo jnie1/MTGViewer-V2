@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"context"
 	"errors"
 	"maps"
 	"slices"
@@ -12,7 +13,7 @@ import (
 var ErrNegativeWithdrawal = errors.New("negative withdrawal amount specified")
 var ErrInsufficientDeposits = errors.New("unsufficient cards in containers to fullfill request")
 
-func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
+func ResolveExtraIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) error {
 	extraQuery, err := FindIdentifiers(withdrawals)
 	if err != nil {
 		return err
@@ -22,7 +23,7 @@ func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
 		return nil
 	}
 
-	results, err := cards.FetchIdentifiers(extraQuery)
+	results, err := cards.FetchIdentifiers(ctx, extraQuery)
 	if err != nil {
 		return err
 	}

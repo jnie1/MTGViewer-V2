@@ -120,12 +120,11 @@ func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 	return fromJsonCard(matches[0])
 }
 
-func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
+func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error) {
 	if len(scryfallIds) == 0 {
 		return nil, nil
 	}
 
-	ctx := context.Background()
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
 		return nil, err
 	}
@@ -177,12 +176,11 @@ func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
 
 }
 
-func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
+func FetchIdentifiers(ctx context.Context, ids CardIdQuery) ([]CardId, error) {
 	if ids.IsEmpty() {
 		return nil, nil
 	}
 
-	ctx := context.Background()
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers"); err != nil {
 		return nil, err
 	}
