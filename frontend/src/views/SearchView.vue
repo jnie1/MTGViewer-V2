@@ -5,17 +5,12 @@ import { isAbortError, timeout } from '@/fetch/abort';
 import SearchItem from '@/search/SearchItem.vue';
 import { searchCards } from '@/search/fetches';
 
-const searchQuery = ref(localStorage.getItem('searchQuery') || '');
-const currentPage = ref(Number(localStorage.getItem('currentPage') || 1));
+const searchQuery = ref('');
+const currentPage = ref(1);
 
-const pendingSearches = ref(Number(localStorage.getItem('pendingSearches') || 0));
-const searchResults = ref<ICard[]>(
-  (() => {
-    const stored = localStorage.getItem('searchResults');
-    return stored ? JSON.parse(stored) : [];
-  })(),
-);
-const hasNextPage = ref(localStorage.getItem('hasNextPage') === 'true');
+const pendingSearches = ref(0);
+const searchResults = ref<ICard[]>([]);
+const hasNextPage = ref(false);
 
 const isLoading = computed(() => pendingSearches.value > 0);
 const isNextDisabled = computed(() => !hasNextPage.value || isLoading.value);
@@ -43,21 +38,7 @@ const handleSearch = (value: string) => {
 const handleLoadMore = () => {
   currentPage.value++;
 };
-watch(searchQuery, (newQuery) => {
-  localStorage.setItem('searchQuery', newQuery);
-});
-watch(currentPage, (newPage) => {
-  localStorage.setItem('currentPage', newPage.toString());
-});
-watch(pendingSearches, (newPending) => {
-  localStorage.setItem('pendingSearches', newPending.toString());
-});
-watch(searchResults, (newResults) => {
-  localStorage.setItem('searchResults', JSON.stringify(newResults));
-});
-watch(hasNextPage, (newHasNext) => {
-  localStorage.setItem('hasNextPage', newHasNext.toString());
-});
+
 watch([searchQuery, currentPage], async ([search, page]) => {
   if (!search) {
     searchResults.value = [];
