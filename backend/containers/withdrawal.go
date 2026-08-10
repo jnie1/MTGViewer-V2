@@ -11,19 +11,11 @@ import (
 )
 
 var ErrNegativeWithdrawal = errors.New("negative withdrawal amount specified")
+var ErrExpectedScryfallId = errors.New("expected scryfall id uuid")
 var ErrInsufficientDeposits = errors.New("unsufficient cards in containers to fullfill request")
 
-func ResolveExtraIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) error {
-	extraQuery, err := FindIdentifiers(withdrawals)
-	if err != nil {
-		return err
-	}
-
-	if !extraQuery.IsEmpty() {
-		return nil
-	}
-
-	results, err := cards.FetchIdentifiers(ctx, extraQuery)
+func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) error {
+	extraQuery, err := FindIdQuery(withdrawals)
 	if err != nil {
 		return err
 	}
@@ -32,10 +24,16 @@ func ResolveExtraIdentifiers(ctx context.Context, withdrawals ContainerWithdrawa
 	setNumbers := map[cards.SetCollectorNumber]uuid.UUID{}
 	nameSets := map[cards.NameSet]uuid.UUID{}
 
-	for _, card := range results {
-		multiverseIds[card.MultiverseId] = card.ScryfallId
-		setNumbers[card.SetCollectorNumber()] = card.ScryfallId
-		nameSets[card.NameSet()] = card.ScryfallId
+	if !extraQuery.IsEmpty() {
+		extraIds, err := cards.FetchIdentifiers(ctx, extraQuery)
+		if err != nil {
+			return err
+		}
+		for _, card := range extraIds {
+			multiverseIds[card.MultiverseId] = card.ScryfallId
+			setNumbers[card.SetCollectorNumber()] = card.ScryfallId
+			nameSets[card.NameSet()] = card.ScryfallId
+		}
 	}
 
 	for _, targets := range withdrawals {
@@ -65,17 +63,12 @@ func ResolveExtraIdentifiers(ctx context.Context, withdrawals ContainerWithdrawa
 	return nil
 }
 
-type depositKey struct {
-	ContainerId int
-	ScryfallId  uuid.UUID
-}
-
 func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDepositPreview) ([]ContainerChanges, error) {
 	changes := []ContainerChanges{}
-	amountsByContainers := map[depositKey]int{}
+	amountsByContainers := map[ContainerCard]int{}
 
 	for _, deposit := range deposits {
-		key := depositKey{deposit.ContainerId, deposit.ScryfallId}
+		key := ContainerCard{deposit.ContainerId, deposit.ScryfallId}
 		amountsByContainers[key] = deposit.Amount
 	}
 
@@ -87,17 +80,17 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 				return nil, ErrNegativeWithdrawal
 			}
 
-			obj, ok := withdrawal.Card.(cards.ScryfallIdObj)
+			id, ok := withdrawal.Card.(uuid.UUID)
 			if !ok {
-				return nil, cards.ErrUnknownCardIdentifier
+				return nil, ErrExpectedScryfallId
 			}
 
-			key := depositKey{containerId, obj.ScryfallId}
+			key := ContainerCard{containerId, id}
 			if amountsByContainers[key]-withdrawal.Amount < 0 {
 				return nil, ErrInsufficientDeposits
 			}
 
-			requests = append(requests, CardRequest{obj.ScryfallId, -withdrawal.Amount})
+			requests = append(requests, CardRequest{id, -withdrawal.Amount})
 		}
 
 		changes = append(changes, ContainerChanges{containerId, requests})
@@ -106,7 +99,7 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 	return changes, nil
 }
 
-func FindIdentifiers(withdrawals ContainerWithdrawals) (cards.CardIdQuery, error) {
+func FindIdQuery(withdrawals ContainerWithdrawals) (cards.CardIdQuery, error) {
 	multiverseIds := map[int]any{}
 	nameSets := map[cards.NameSet]any{}
 	collectorNumbers := map[cards.SetCollectorNumber]any{}

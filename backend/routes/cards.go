@@ -142,7 +142,7 @@ func withdrawCards(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	if err := containers.ResolveExtraIdentifiers(ctx, withdrawals); err != nil {
+	if err := containers.ResolveIdentifiers(ctx, withdrawals); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -231,7 +231,7 @@ func testIdFind(c *gin.Context) {
 		return
 	}
 
-	ids, err := containers.FindIdentifiers(withdrawals)
+	ids, err := containers.FindIdQuery(withdrawals)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
