@@ -246,6 +246,28 @@ func searchCards(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func testIdFind(c *gin.Context) {
+	var withdrawals containers.ContainerWithdrawals
+	if err := c.ShouldBind(&withdrawals); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	ids, err := containers.FindIdentifiers(withdrawals)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	result, err := cards.FetchIdentifiers(ids)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func AddCardRoutes(router gin.IRouter) {
 	group := router.Group("/cards")
 	group.GET("/", fetchCollection)
@@ -254,15 +276,5 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
 	group.POST("/withdraw", withdrawCards)
-	group.GET("/test", func(c *gin.Context) {
-		ctx := c.Request.Context()
-		result, err := cards.TestFiltering(ctx)
-
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-		c.JSON(http.StatusOK, result)
-	})
+	group.GET("/test", testIdFind)
 }
