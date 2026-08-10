@@ -41,8 +41,6 @@ const handleLoadMore = () => {
   currentPage.value++;
 };
 
-// Single source of truth for fetching. Debounces new searches (page reset to 1),
-// but skips the debounce when just paging ("Show More"), since that's a deliberate click.
 watch(
   [searchQuery, currentPage],
   async ([search, page], prev) => {
@@ -63,7 +61,9 @@ watch(
         await timeout(500, abortController.signal);
       }
       const results = await searchCards(search, page, abortController.signal);
-      router.replace({ query: { q: search, page } });
+      if (search !== querySearch || page !== prev?.[1]) {
+        router.replace({ query: { q: search, page } });
+      }
       searchResults.value = page === 1 ? results.cards : [...searchResults.value, ...results.cards];
       hasNextPage.value = results.hasMore;
     } catch (e) {
