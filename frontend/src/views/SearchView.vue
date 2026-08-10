@@ -18,7 +18,18 @@ const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
 
 const isNextDisabled = computed(() => !hasNextPage.value || isLoading.value);
+const uniqueSearchResults = computed(() => {
+  const seenNames = new Set<string>();
 
+  return searchResults.value.filter((card) => {
+    if (seenNames.has(card.name)) {
+      return false;
+    }
+
+    seenNames.add(card.name);
+    return true;
+  });
+});
 const handleSearch = (value: string) => {
   searchQuery.value = value.trim();
   currentPage.value = 1;
@@ -83,6 +94,6 @@ watch(
         <v-progress-circular indeterminate size="64" />
       </v-sheet>
     </v-overlay>
-    <search-item :cards="searchResults" />
+    <search-item :cards="uniqueSearchResults" />
   </main>
 </template>
