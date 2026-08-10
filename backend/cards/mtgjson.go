@@ -125,6 +125,11 @@ func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
 		return nil, nil
 	}
 
+	ctx := context.Background()
+	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
+		return nil, err
+	}
+
 	sql := db.NewSQLBuilder("cards AS c")
 	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 	sql.Join("JOIN sets AS s ON s.code = c.setCode")
@@ -151,7 +156,6 @@ func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
 		"c.rarity",
 	)
 
-	ctx := context.Background()
 	query, params := sql.Build()
 	var matches []mtgJsonCard
 
