@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { ref, computed, watch, onWatcherCleanup } from 'vue';
+import { ref, computed, watch, onWatcherCleanup, watchEffect } from 'vue';
 import type { ICard } from '@/cards/types';
 import { isAbortError, timeout } from '@/fetch/abort';
 import SearchItem from '@/search/SearchItem.vue';
 import { searchCards } from '@/search/fetches';
+import { useRoute, useRouter } from 'vue-router';
 
-const searchQuery = ref('');
-const currentPage = ref(1);
+const router = useRouter();
+const route = useRoute();
 
+const querySearch = Array.isArray(route.query.q) ? route.query.q[0] : route.query.q;
+const queryPage = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
+
+const searchQuery = ref(querySearch || '');
+const currentPage = ref(Number(queryPage) || 1);
 const pendingSearches = ref(0);
 const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
@@ -38,7 +44,19 @@ const handleSearch = (value: string) => {
 const handleLoadMore = () => {
   currentPage.value++;
 };
-
+watchEffect(async () => {
+  const abortController = new AbortController();
+  onWatcherCleanup(() => abortController.abort());
+  try {
+    const results = await searchCards(searchQuery.value, currentPage.value, abortController.signal);
+    searchResults.value = [...searchResults.value, ...results.cards];
+    hasNextPage.value = results.hasMore;
+  } catch (e) {
+    if (!isAbortError(e)) throw e;
+  } finally {
+    pendingSearches.value--;
+  }
+});
 watch([searchQuery, currentPage], async ([search, page]) => {
   if (!search) {
     searchResults.value = [];
@@ -53,6 +71,7 @@ watch([searchQuery, currentPage], async ([search, page]) => {
     pendingSearches.value++;
     await timeout(500, abortController.signal);
     const results = await searchCards(search, page, abortController.signal);
+    router.replace({ query: { q: search, page } });
     searchResults.value = [...searchResults.value, ...results.cards];
     hasNextPage.value = results.hasMore;
   } catch (e) {
