@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onWatcherCleanup, watchEffect } from 'vue';
+import { ref, computed, watch, onWatcherCleanup } from 'vue';
 import type { ICard } from '@/cards/types';
 import { isAbortError, timeout } from '@/fetch/abort';
 import SearchItem from '@/search/SearchItem.vue';
@@ -10,29 +10,14 @@ const router = useRouter();
 const route = useRoute();
 
 const querySearch = Array.isArray(route.query.q) ? route.query.q[0] : route.query.q;
-const queryPage = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
 
 const searchQuery = ref(querySearch || '');
-const currentPage = ref(Number(queryPage) || 1);
-const pendingSearches = ref(0);
+const currentPage = ref(1);
+const isLoading = ref(false);
 const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
 
-const isLoading = computed(() => pendingSearches.value > 0);
 const isNextDisabled = computed(() => !hasNextPage.value || isLoading.value);
-
-const uniqueSearchResults = computed(() => {
-  const seenNames = new Set<string>();
-
-  return searchResults.value.filter((card) => {
-    if (seenNames.has(card.name)) {
-      return false;
-    }
-
-    seenNames.add(card.name);
-    return true;
-  });
-});
 
 const handleSearch = (value: string) => {
   searchQuery.value = value.trim();
@@ -44,43 +29,40 @@ const handleSearch = (value: string) => {
 const handleLoadMore = () => {
   currentPage.value++;
 };
-watchEffect(async () => {
-  const abortController = new AbortController();
-  onWatcherCleanup(() => abortController.abort());
-  try { 
-    router.replace({ query: { q: searchQuery.value, page: 1 } });
-    const results = await searchCards(searchQuery.value, currentPage.value, abortController.signal);
-    searchResults.value = [...searchResults.value, ...results.cards];
-    hasNextPage.value = results.hasMore;
-  } catch (e) {
-    if (!isAbortError(e)) throw e;
-  } finally {
-    pendingSearches.value--;
-  }
-});
-watch([searchQuery, currentPage], async ([search, page]) => {
-  if (!search) {
-    searchResults.value = [];
-    hasNextPage.value = false;
-    return;
-  }
 
-  const abortController = new AbortController();
-  onWatcherCleanup(() => abortController.abort());
+// Single source of truth for fetching. Debounces new searches (page reset to 1),
+// but skips the debounce when just paging ("Show More"), since that's a deliberate click.
+watch(
+  [searchQuery, currentPage],
+  async ([search, page], prev) => {
+    if (!search) {
+      searchResults.value = [];
+      hasNextPage.value = false;
+      return;
+    }
 
-  try {
-    pendingSearches.value++;
-    await timeout(500, abortController.signal);
-    const results = await searchCards(search, page, abortController.signal);
-    router.replace({ query: { q: search, page } });
-    searchResults.value = [...searchResults.value, ...results.cards];
-    hasNextPage.value = results.hasMore;
-  } catch (e) {
-    if (!isAbortError(e)) throw e;
-  } finally {
-    pendingSearches.value--;
-  }
-});
+    const isNewSearch = page === 1 && search !== prev?.[0];
+
+    const abortController = new AbortController();
+    onWatcherCleanup(() => abortController.abort());
+
+    try {
+      isLoading.value = true;
+      if (isNewSearch) {
+        await timeout(500, abortController.signal);
+      }
+      const results = await searchCards(search, page, abortController.signal);
+      router.replace({ query: { q: search, page } });
+      searchResults.value = page === 1 ? results.cards : [...searchResults.value, ...results.cards];
+      hasNextPage.value = results.hasMore;
+    } catch (e) {
+      if (!isAbortError(e)) throw e;
+    } finally {
+      isLoading.value = false;
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -101,6 +83,6 @@ watch([searchQuery, currentPage], async ([search, page]) => {
         <v-progress-circular indeterminate size="64" />
       </v-sheet>
     </v-overlay>
-    <search-item :cards="uniqueSearchResults" />
+    <search-item :cards="searchResults" />
   </main>
 </template>
