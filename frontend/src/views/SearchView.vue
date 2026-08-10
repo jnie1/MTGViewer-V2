@@ -4,17 +4,20 @@ import type { ICard } from '@/cards/types';
 import { isAbortError, timeout } from '@/fetch/abort';
 import SearchItem from '@/search/SearchItem.vue';
 import { searchCards } from '@/search/fetches';
+import { useRoute, useRouter } from 'vue-router';
 
-const searchQuery = ref('');
+const router = useRouter();
+const route = useRoute();
+
+const querySearch = Array.isArray(route.query.q) ? route.query.q[0] : route.query.q;
+
+const searchQuery = ref(querySearch || '');
 const currentPage = ref(1);
-
-const pendingSearches = ref(0);
+const isLoading = ref(false);
 const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
 
-const isLoading = computed(() => pendingSearches.value > 0);
 const isNextDisabled = computed(() => !hasNextPage.value || isLoading.value);
-
 const uniqueSearchResults = computed(() => {
   const seenNames = new Set<string>();
 
@@ -27,7 +30,6 @@ const uniqueSearchResults = computed(() => {
     return true;
   });
 });
-
 const handleSearch = (value: string) => {
   searchQuery.value = value.trim();
   currentPage.value = 1;
@@ -39,28 +41,39 @@ const handleLoadMore = () => {
   currentPage.value++;
 };
 
-watch([searchQuery, currentPage], async ([search, page]) => {
-  if (!search) {
-    searchResults.value = [];
-    hasNextPage.value = false;
-    return;
-  }
+watch(
+  [searchQuery, currentPage],
+  async ([search, page], prev) => {
+    if (!search) {
+      searchResults.value = [];
+      hasNextPage.value = false;
+      return;
+    }
 
-  const abortController = new AbortController();
-  onWatcherCleanup(() => abortController.abort());
+    const isNewSearch = page === 1 && search !== prev?.[0];
 
-  try {
-    pendingSearches.value++;
-    await timeout(500, abortController.signal);
-    const results = await searchCards(search, page, abortController.signal);
-    searchResults.value = [...searchResults.value, ...results.cards];
-    hasNextPage.value = results.hasMore;
-  } catch (e) {
-    if (!isAbortError(e)) throw e;
-  } finally {
-    pendingSearches.value--;
-  }
-});
+    const abortController = new AbortController();
+    onWatcherCleanup(() => abortController.abort());
+
+    try {
+      isLoading.value = true;
+      if (isNewSearch) {
+        await timeout(500, abortController.signal);
+      }
+      const results = await searchCards(search, page, abortController.signal);
+      if (search !== querySearch || page !== prev?.[1]) {
+        router.replace({ query: { q: search, page } });
+      }
+      searchResults.value = page === 1 ? results.cards : [...searchResults.value, ...results.cards];
+      hasNextPage.value = results.hasMore;
+    } catch (e) {
+      if (!isAbortError(e)) throw e;
+    } finally {
+      isLoading.value = false;
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -81,7 +94,6 @@ watch([searchQuery, currentPage], async ([search, page]) => {
         <v-progress-circular indeterminate size="64" />
       </v-sheet>
     </v-overlay>
-
     <search-item :cards="uniqueSearchResults" />
   </main>
 </template>
