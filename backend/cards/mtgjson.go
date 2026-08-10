@@ -192,3 +192,23 @@ func FetchIdentifiers(ctx context.Context, ids CardIdQuery) ([]CardId, error) {
 
 	return results, nil
 }
+
+func FetchScryfallIds(ctx context.Context, name string) ([]ScryfallIdObj, error) {
+	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers"); err != nil {
+		return nil, err
+	}
+
+	sql := db.NewSQLBuilder("cards AS c")
+	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
+	sql.WhereEq("c.name", name)
+	sql.Select("ci.scryfallId")
+
+	query, params := sql.Build()
+	var results []ScryfallIdObj
+
+	if err := sdk.Connection().ExecuteInto(ctx, &results, query, params...); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}

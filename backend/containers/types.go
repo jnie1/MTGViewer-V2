@@ -177,12 +177,13 @@ func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDep
 	boxDeposits := make([]ContainerDeposit, len(boxAmounts))
 
 	for _, card := range cardDeposits {
-		if amount, ok := boxAmounts[card.ContainerId]; ok && amount > 0 {
+		if amount, ok := boxAmounts[card.ContainerId]; ok {
 			idx := len(boxDeposits) - len(boxAmounts)
-			boxDeposits[idx] = ContainerDeposit{
+			deposit := ContainerDeposit{
 				ContainerPreview{card.ContainerId, card.ContainerName},
 				amount,
 			}
+			boxDeposits[idx] = deposit
 			delete(boxAmounts, card.ContainerId)
 		}
 	}

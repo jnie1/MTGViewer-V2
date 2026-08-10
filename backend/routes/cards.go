@@ -53,18 +53,18 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	allPrints, err := cards.SearchCards(cardFound.Name, 1)
+	objs, err := cards.FetchScryfallIds(ctx, cardFound.Name)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	scryfallIds := make(uuid.UUIDs, len(allPrints.Cards))
-	for i, card := range allPrints.Cards {
-		scryfallIds[i] = card.ScryfallId
+	ids := make(uuid.UUIDs, len(objs))
+	for i, obj := range objs {
+		ids[i] = obj.ScryfallId
 	}
 
-	deposits, err := containers.SearchDeposits(scryfallIds)
+	deposits, err := containers.SearchDeposits(ids)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
