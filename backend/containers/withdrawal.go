@@ -113,9 +113,6 @@ func FindIdentifiers(withdrawals ContainerWithdrawals) (cards.CardIdQuery, error
 	for _, targets := range withdrawals {
 		for _, target := range targets {
 			switch t := target.Card.(type) {
-			case cards.ScryfallIdObj:
-				break
-
 			case cards.MultiverseIdObj:
 				multiverseIds[t.MultiverseId] = nil
 
@@ -125,6 +122,7 @@ func FindIdentifiers(withdrawals ContainerWithdrawals) (cards.CardIdQuery, error
 			case cards.SetCollectorNumber:
 				collectorNumbers[t] = nil
 
+			case cards.ScryfallIdObj:
 			default:
 				return cards.CardIdQuery{}, cards.ErrUnknownCardIdentifier
 			}
