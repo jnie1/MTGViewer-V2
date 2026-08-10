@@ -183,17 +183,17 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		for _, card := range extraCards {
 			if amount, ok := multiverseIds[card.MultiverseId]; ok {
 				requests = append(requests, CardRequest{card.ScryfallId, amount})
-				break
+				continue
 			}
 
 			if amount, ok := setNumbers[card.SetCollectorNumber()]; ok {
 				requests = append(requests, CardRequest{card.ScryfallId, amount})
-				break
+				continue
 			}
 
 			if amount, ok := nameSets[card.NameSet()]; ok {
 				requests = append(requests, CardRequest{card.ScryfallId, amount})
-				break
+				continue
 			}
 		}
 	}
