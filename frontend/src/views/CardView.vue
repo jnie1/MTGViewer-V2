@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import CardImage from '@/cards/CardImage.vue';
-import type { ICard } from '@/cards/types';
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/container/types';
@@ -40,7 +39,7 @@ const matches = useRouteData<ICardContainerMatch>();
           class="grid-card-link"
         >
           <v-card class="grid-card" elevation="2">
-            <v-card-title class="grid-card-title">{{ container.containerName }}</v-card-title>
+            <v-card-title class="grid-card-title">{{ container.name }}</v-card-title>
             <v-card-subtitle class="grid-card-subtitle"
               >Amount: {{ container.amount }}</v-card-subtitle
             >

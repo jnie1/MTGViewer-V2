@@ -35,6 +35,11 @@ func (container *ContainerPreview) Container() ContainerPreview {
 	return *container
 }
 
+type ContainerDeposit struct {
+	ContainerPreview
+	Amount int `json:"amount"`
+}
+
 type ContainerDelta struct {
 	ContainerId int
 	Delta       int
@@ -47,14 +52,14 @@ type CardDeposit struct {
 }
 
 type CardDepositPreview struct {
-	ContainerId   int    `json:"containerId"`
-	ContainerName string `json:"containerName"`
+	ContainerId   int
+	ContainerName string
 	cards.CardAmountPreview
 }
 
 type CardContainerMatch struct {
-	Card       cards.Card           `json:"card"`
-	Containers []CardDepositPreview `json:"containers"`
+	Card       cards.Card         `json:"card"`
+	Containers []ContainerDeposit `json:"containers"`
 }
 
 type CardRequest struct {
@@ -161,6 +166,28 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 		return changes
 	}
 	return mergedChanges
+}
+
+func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDeposit {
+	boxAmounts := map[int]int{}
+	for _, deposit := range cardDeposits {
+		boxAmounts[deposit.ContainerId] = boxAmounts[deposit.ContainerId] + deposit.Amount
+	}
+
+	boxDeposits := make([]ContainerDeposit, len(boxAmounts))
+
+	for _, card := range cardDeposits {
+		if amount, ok := boxAmounts[card.ContainerId]; ok && amount > 0 {
+			idx := len(boxDeposits) - len(boxAmounts)
+			boxDeposits[idx] = ContainerDeposit{
+				ContainerPreview{card.ContainerId, card.ContainerName},
+				amount,
+			}
+			delete(boxAmounts, card.ContainerId)
+		}
+	}
+
+	return boxDeposits
 }
 
 func JoinCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {

@@ -3,7 +3,6 @@ package routes
 import (
 	"mime/multipart"
 	"net/http"
-	"sort"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -60,36 +59,12 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	scryfallIds := make([]uuid.UUID, len(allPrints.Cards))
+	scryfallIds := make(uuid.UUIDs, len(allPrints.Cards))
 	for i, card := range allPrints.Cards {
 		scryfallIds[i] = card.ScryfallId
 	}
 
-	// find scryfall id in containers
-	containerResult, err := containers.SearchDeposits(scryfallIds)
-
-	mergedBoxAmount := make(map[int]containers.CardDepositPreview, len(containerResult))
-
-	for _, containerResult := range containerResult {
-		if existing, ok := mergedBoxAmount[containerResult.ContainerId]; ok {
-			existing.Amount = existing.Amount + containerResult.Amount
-			mergedBoxAmount[containerResult.ContainerId] = existing
-		} else {
-			mergedBoxAmount[containerResult.ContainerId] = containerResult
-		}
-	}
-
-	mergedResult := make([]containers.CardDepositPreview, 0, len(mergedBoxAmount))
-	for _, containerResult := range mergedBoxAmount {
-		mergedResult = append(mergedResult, containerResult)
-	}
-
-	sort.Slice(mergedResult, func(i, j int) bool {
-		return mergedResult[i].ContainerId < mergedResult[j].ContainerId
-	})
-
-	sortedMergedResult := mergedResult
-
+	deposits, err := containers.SearchDeposits(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -97,7 +72,7 @@ func fetchCard(c *gin.Context) {
 
 	result := containers.CardContainerMatch{
 		Card:       cardFound,
-		Containers: sortedMergedResult,
+		Containers: containers.MergeDespositsByContainer(deposits),
 	}
 
 	c.JSON(http.StatusOK, result)
@@ -249,6 +224,29 @@ func searchCards(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func testIdFind(c *gin.Context) {
+	var withdrawals containers.ContainerWithdrawals
+	if err := c.ShouldBind(&withdrawals); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	ids, err := containers.FindIdentifiers(withdrawals)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	ctx := c.Request.Context()
+	result, err := cards.FetchIdentifiers(ctx, ids)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func AddCardRoutes(router gin.IRouter) {
 	group := router.Group("/cards")
 	group.GET("/", fetchCollection)
@@ -257,4 +255,5 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
 	group.POST("/withdraw", withdrawCards)
+	group.POST("/test", testIdFind)
 }

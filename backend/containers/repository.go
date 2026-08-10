@@ -173,7 +173,8 @@ func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
-		WHERE cd.scryfall_id = ANY($1);`, pq.Array(scryfallIds))
+		WHERE cd.scryfall_id = ANY($1)
+		ORDER BY c.sort_order;`, pq.Array(scryfallIds))
 
 	if err != nil {
 		return nil, err
