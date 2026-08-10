@@ -65,7 +65,7 @@ func inValues[T any](b *db.SQLBuilder, column string, values []T) string {
 		param := b.AddParam(val)
 		placeholders[i] = fmt.Sprintf("$%d", param)
 	}
-	return fmt.Sprintf("%s IN (%s)", column, strings.Join(placeholders, ", "))
+	return fmt.Sprintf("%s IN (%s)", column, strings.Join(placeholders, ","))
 }
 
 func inTuples[T any](b *db.SQLBuilder, columns []string, tuples [][]T) string {
@@ -76,10 +76,6 @@ func inTuples[T any](b *db.SQLBuilder, columns []string, tuples [][]T) string {
 		}
 	}
 
-	if len(tuples) == 0 {
-		panic("empty tuples")
-	}
-
 	params := make([]string, len(tuples))
 	for i, tup := range tuples {
 		placeholders := make([]string, tupleLen)
@@ -87,9 +83,9 @@ func inTuples[T any](b *db.SQLBuilder, columns []string, tuples [][]T) string {
 			param := b.AddParam(val)
 			placeholders[j] = fmt.Sprintf("$%d", param)
 		}
-		params[i] = strings.Join(placeholders, ",")
+		params[i] = fmt.Sprintf("(%s)", strings.Join(placeholders, ","))
 	}
 
-	cond := fmt.Sprintf("(%s) IN (%s)", strings.Join(columns, ","), strings.Join(params, ","))
+	cond := fmt.Sprintf("(%s) IN (%s)", strings.Join(columns, ","), strings.Join(params, ", "))
 	return cond
 }
