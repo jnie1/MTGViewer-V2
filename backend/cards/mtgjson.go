@@ -78,7 +78,7 @@ func FetchRandomCard(ctx context.Context) (Card, error) {
 		return Card{}, ErrMissingCards
 	}
 
-	return fromJsonCard(results[0]), nil
+	return fromJsonCard(results[0])
 }
 
 func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
@@ -117,7 +117,7 @@ func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 		return Card{}, fmt.Errorf("no matching card found for %s", scryfallId)
 	}
 
-	return fromJsonCard(matches[0]), nil
+	return fromJsonCard(matches[0])
 }
 
 func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
@@ -148,19 +148,17 @@ func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
 		return nil, err
 	}
 
-	results := make([]CardId, len(matches))
-	for i, m := range matches {
-		results[i] = fromJsonId(m)
-	}
-
-	return results, nil
+	return fromJsonIds(matches)
 }
 
-func fromJsonCard(source mtgJsonCard) Card {
+func fromJsonCard(source mtgJsonCard) (Card, error) {
 	var multiverseId int
+	var err error
+
 	if source.MultiverseId != "" {
-		if id, err := strconv.Atoi(source.MultiverseId); err == nil {
-			multiverseId = id
+		multiverseId, err = strconv.Atoi(source.MultiverseId)
+		if err != nil {
+			return Card{}, err
 		}
 	}
 
@@ -182,14 +180,17 @@ func fromJsonCard(source mtgJsonCard) Card {
 		map[string]string{},
 	}
 
-	return card
+	return card, nil
 }
 
-func fromJsonId(source mtgJsonId) CardId {
+func fromJsonId(source mtgJsonId) (CardId, error) {
 	var multiverseId int
+	var err error
+
 	if source.MultiverseId != "" {
-		if id, err := strconv.Atoi(source.MultiverseId); err == nil {
-			multiverseId = id
+		multiverseId, err = strconv.Atoi(source.MultiverseId)
+		if err != nil {
+			return CardId{}, err
 		}
 	}
 
@@ -201,5 +202,19 @@ func fromJsonId(source mtgJsonId) CardId {
 		multiverseId,
 	}
 
-	return card
+	return card, nil
+}
+
+func fromJsonIds(sources []mtgJsonId) ([]CardId, error) {
+	results := make([]CardId, len(sources))
+
+	for i, s := range sources {
+		id, err := fromJsonId(s)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = id
+	}
+
+	return results, nil
 }
