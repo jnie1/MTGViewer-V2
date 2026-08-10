@@ -120,6 +120,59 @@ func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 	return fromJsonCard(matches[0])
 }
 
+func FetchCollection(scryfallIds uuid.UUIDs) ([]Card, error) {
+	if len(scryfallIds) == 0 {
+		return nil, nil
+	}
+
+	sql := db.NewSQLBuilder("cards AS c")
+	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
+	sql.Join("JOIN sets AS s ON s.code = c.setCode")
+	// TODO: maybe chunking?
+
+	vals := make([]any, len(scryfallIds))
+	for i, id := range scryfallIds {
+		vals[i] = id
+	}
+	sql.WhereIn("ci.scryfallId", vals)
+
+	sql.Select(
+		"c.uuid",
+		"ci.scryfallId",
+		"c.manaCost",
+		"c.name",
+		"s.name AS setName",
+		"c.setCode",
+		"c.number",
+		"ci.multiverseId",
+		"c.power",
+		"c.toughness",
+		"c.type",
+		"c.rarity",
+	)
+
+	ctx := context.Background()
+	query, params := sql.Build()
+	var matches []mtgJsonCard
+
+	if err := sdk.Connection().ExecuteInto(ctx, &matches, query, params...); err != nil {
+		return nil, err
+	}
+
+	results := make([]Card, len(matches))
+
+	for i, s := range matches {
+		id, err := fromJsonCard(s)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = id
+	}
+
+	return results, nil
+
+}
+
 func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
 	if ids.IsEmpty() {
 		return nil, nil
@@ -148,7 +201,17 @@ func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
 		return nil, err
 	}
 
-	return fromJsonIds(matches)
+	results := make([]CardId, len(matches))
+
+	for i, m := range matches {
+		id, err := fromJsonId(m)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = id
+	}
+
+	return results, nil
 }
 
 func fromJsonCard(source mtgJsonCard) (Card, error) {
@@ -193,20 +256,6 @@ func fromJsonId(source mtgJsonId) (CardId, error) {
 	}
 
 	return card, nil
-}
-
-func fromJsonIds(sources []mtgJsonId) ([]CardId, error) {
-	results := make([]CardId, len(sources))
-
-	for i, s := range sources {
-		id, err := fromJsonId(s)
-		if err != nil {
-			return nil, err
-		}
-		results[i] = id
-	}
-
-	return results, nil
 }
 
 func parseMultiverseId(source string) (int, error) {
