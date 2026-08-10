@@ -152,14 +152,9 @@ func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
 }
 
 func fromJsonCard(source mtgJsonCard) (Card, error) {
-	var multiverseId int
-	var err error
-
-	if source.MultiverseId != "" {
-		multiverseId, err = strconv.Atoi(source.MultiverseId)
-		if err != nil {
-			return Card{}, err
-		}
+	multiverseId, err := parseMultiverseId(source.MultiverseId)
+	if err != nil {
+		return Card{}, err
 	}
 
 	images := CardImageUrls{}
@@ -184,14 +179,9 @@ func fromJsonCard(source mtgJsonCard) (Card, error) {
 }
 
 func fromJsonId(source mtgJsonId) (CardId, error) {
-	var multiverseId int
-	var err error
-
-	if source.MultiverseId != "" {
-		multiverseId, err = strconv.Atoi(source.MultiverseId)
-		if err != nil {
-			return CardId{}, err
-		}
+	multiverseId, err := parseMultiverseId(source.MultiverseId)
+	if err != nil {
+		return CardId{}, err
 	}
 
 	card := CardId{
@@ -217,4 +207,12 @@ func fromJsonIds(sources []mtgJsonId) ([]CardId, error) {
 	}
 
 	return results, nil
+}
+
+func parseMultiverseId(source string) (int, error) {
+	if source != "" {
+		return strconv.Atoi(source)
+	} else {
+		return 0, nil
+	}
 }
