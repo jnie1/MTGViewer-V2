@@ -47,7 +47,8 @@ const handleLoadMore = () => {
 watchEffect(async () => {
   const abortController = new AbortController();
   onWatcherCleanup(() => abortController.abort());
-  try {
+  try { 
+    router.replace({ query: { q: searchQuery.value, page: 1 } });
     const results = await searchCards(searchQuery.value, currentPage.value, abortController.signal);
     searchResults.value = [...searchResults.value, ...results.cards];
     hasNextPage.value = results.hasMore;
