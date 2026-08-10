@@ -222,7 +222,10 @@ func fromJsonCard(source mtgJsonCard) (Card, error) {
 		return Card{}, err
 	}
 
-	images := CardImageUrls{}
+	images, err := ImageURLs(source.ScryfallId)
+	if err != nil {
+		return Card{}, err
+	}
 
 	card := Card{
 		source.ScryfallId,

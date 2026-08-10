@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	scryfallUrl string = "https://api.scryfall.com"
+	scryfallApiUrl   string = "https://api.scryfall.com"
+	scryfallImageUrl string = "https://cards.scryfall.io"
 )
 
 type scryfallImages struct {
@@ -51,13 +52,40 @@ type searchResult struct {
 	Cards      []scryfallCard `json:"data"`
 }
 
+func ImageURLs(scryfallId uuid.UUID) (CardImageURLs, error) {
+	preview, err := imageURL(scryfallId, "thumb", "front", "webp")
+	if err != nil {
+		return CardImageURLs{}, err
+	}
+
+	normal, err := imageURL(scryfallId, "grid", "front", "webp")
+	if err != nil {
+		return CardImageURLs{}, err
+	}
+
+	full, err := imageURL(scryfallId, "display", "front", "webp")
+	if err != nil {
+		return CardImageURLs{}, err
+	}
+
+	return CardImageURLs{preview, normal, full}, nil
+}
+
+func imageURL(scryfallId uuid.UUID, size, face, ext string) (string, error) {
+	fileName := scryfallId.String()
+	dir1 := fileName[0]
+	dir2 := fileName[1]
+	imgPath := fmt.Sprintf("./%s/%s/%c/%c/%s.%s", size, face, dir1, dir2, fileName, ext)
+	return url.JoinPath(scryfallImageUrl, imgPath)
+}
+
 func SearchCards(query string, page int) (SearchCardPage, error) {
 	query, err := url.QueryUnescape(query)
 	if err != nil {
 		return SearchCardPage{}, err
 	}
 
-	searchPath, err := url.JoinPath(scryfallUrl, "/cards/search")
+	searchPath, err := url.JoinPath(scryfallApiUrl, "/cards/search")
 	if err != nil {
 		return SearchCardPage{}, err
 	}
@@ -142,7 +170,7 @@ func toCard(card scryfallCard) Card {
 		card.Rarity,
 		card.Power,
 		card.Toughness,
-		CardImageUrls{
+		CardImageURLs{
 			images.Small,
 			images.Normal,
 			images.Large,

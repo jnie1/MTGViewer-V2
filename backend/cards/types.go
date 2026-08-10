@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type CardImageUrls struct {
+type CardImageURLs struct {
 	Preview string `json:"preview,omitempty"`
 	Normal  string `json:"normal,omitempty"`
 	Full    string `json:"full,omitempty"`
@@ -26,7 +26,7 @@ type Card struct {
 	Rarity          string            `json:"rarity"`
 	Power           string            `json:"power,omitempty"`
 	Toughness       string            `json:"toughness,omitempty"`
-	Images          CardImageUrls     `json:"imageUrls"`
+	Images          CardImageURLs     `json:"imageUrls"`
 	Prices          map[string]string `json:"prices"`
 }
 
