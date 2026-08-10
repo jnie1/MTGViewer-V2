@@ -29,6 +29,14 @@ type mtgJsonCard struct {
 	Rarity          string    `json:"rarity"`
 }
 
+type mtgJsonId struct {
+	ScryfallId      uuid.UUID `json:"scryfallId"`
+	Name            string    `json:"name"`
+	Set             string    `json:"setCode"`
+	CollectorNumber string    `json:"number"`
+	MultiverseId    string    `json:"multiverseId,omitempty"`
+}
+
 func OpenSDK() (*mtgjson.SDK, error) {
 	var err error
 	sdk, err = mtgjson.New()
@@ -70,8 +78,7 @@ func FetchRandomCard(ctx context.Context) (Card, error) {
 		return Card{}, ErrMissingCards
 	}
 
-	result := results[0]
-	return fromMtgJson(result), nil
+	return fromJsonCard(results[0]), nil
 }
 
 func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
@@ -110,8 +117,7 @@ func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 		return Card{}, fmt.Errorf("no matching card found for %s", scryfallId)
 	}
 
-	match := matches[0]
-	return fromMtgJson(match), nil
+	return fromJsonCard(matches[0]), nil
 }
 
 func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
@@ -132,20 +138,25 @@ func FetchIdentifiers(ids CardIdQuery) ([]CardId, error) {
 		"ci.multiverseId",
 		"c.name",
 		"c.setCode",
-		"c.number AS collectorNumber",
+		"c.number",
 	)
 
 	query, params := sql.Build()
-	var results []CardId
+	var matches []mtgJsonId
 
-	if err := sdk.Connection().ExecuteInto(ctx, &results, query, params...); err != nil {
+	if err := sdk.Connection().ExecuteInto(ctx, &matches, query, params...); err != nil {
 		return nil, err
+	}
+
+	results := make([]CardId, len(matches))
+	for i, m := range matches {
+		results[i] = fromJsonId(m)
 	}
 
 	return results, nil
 }
 
-func fromMtgJson(source mtgJsonCard) Card {
+func fromJsonCard(source mtgJsonCard) Card {
 	var multiverseId int
 	if source.MultiverseId != "" {
 		if id, err := strconv.Atoi(source.MultiverseId); err == nil {
@@ -174,10 +185,21 @@ func fromMtgJson(source mtgJsonCard) Card {
 	return card
 }
 
-func fromMtgJsons(sources []mtgJsonCard) []Card {
-	results := make([]Card, len(sources))
-	for i, s := range sources {
-		results[i] = fromMtgJson(s)
+func fromJsonId(source mtgJsonId) CardId {
+	var multiverseId int
+	if source.MultiverseId != "" {
+		if id, err := strconv.Atoi(source.MultiverseId); err == nil {
+			multiverseId = id
+		}
 	}
-	return results
+
+	card := CardId{
+		source.ScryfallId,
+		source.Name,
+		source.Set,
+		source.CollectorNumber,
+		multiverseId,
+	}
+
+	return card
 }

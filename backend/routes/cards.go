@@ -276,5 +276,5 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
 	group.POST("/withdraw", withdrawCards)
-	group.GET("/test", testIdFind)
+	group.POST("/test", testIdFind)
 }

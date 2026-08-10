@@ -27,10 +27,10 @@ type NameSet struct {
 
 type CardId struct {
 	ScryfallId      uuid.UUID `json:"scryfallId"`
-	MultiverseId    int       `json:"multiverseId"`
 	Name            string    `json:"name" `
 	SetCode         string    `json:"setCode"`
 	CollectorNumber string    `json:"collectorNumber"`
+	MultiverseId    int       `json:"multiverseId,omitempty"`
 }
 
 func (id CardId) SetCollectorNumber() SetCollectorNumber {

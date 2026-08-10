@@ -14,14 +14,18 @@ type CardIdQuery struct {
 }
 
 func (query CardIdQuery) IsEmpty() bool {
-	return len(query.MultiverseIds) == 0 || len(query.SetNumbers) == 0 || len(query.NameSets) == 0
+	return len(query.MultiverseIds) == 0 && len(query.SetNumbers) == 0 && len(query.NameSets) == 0
 }
 
 func WhereIds(b *db.SQLBuilder, ids CardIdQuery, multiverseId, name, setCode, collectorNumber string) *db.SQLBuilder {
 	conds := []string{}
 
 	if len(ids.MultiverseIds) > 0 {
-		conds = append(conds, inValues(b, multiverseId, ids.MultiverseIds))
+		vals := make([]string, len(ids.MultiverseIds))
+		for i, id := range ids.MultiverseIds {
+			vals[i] = fmt.Sprintf("%d", id)
+		}
+		conds = append(conds, inValues(b, multiverseId, vals))
 	}
 
 	if len(ids.SetNumbers) > 0 {
@@ -36,7 +40,9 @@ func WhereIds(b *db.SQLBuilder, ids CardIdQuery, multiverseId, name, setCode, co
 		conds = append(conds, inTuples(b, columns, vals))
 	}
 
-	if len(conds) > 0 {
+	if len(conds) == 1 {
+		b.AddWhere(conds[0])
+	} else if len(conds) > 1 {
 		b.AddWhere(fmt.Sprintf("(%s)", strings.Join(conds, " OR ")))
 	}
 
