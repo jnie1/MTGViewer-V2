@@ -66,10 +66,7 @@ function handleAddToCart(amount: number) {
             <v-card-subtitle class="grid-card-subtitle"
               >Amount: {{ container.amount }}</v-card-subtitle
             >
-            <button
-              :disabled="isMaxed(matches.card.scryfallId)"
-              @click="handleAddToCart(container.amount)"
-            >
+            <button :disabled="isMaxed(matches.card.scryfallId)" @click="handleAddToCart(1)">
               {{ isMaxed(matches.card.scryfallId) ? 'Max in cart' : 'add to cart' }}
             </button>
           </v-card>
