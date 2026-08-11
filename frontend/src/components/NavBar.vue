@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router';
+import { useRoute, RouterLink } from 'vue-router';
+import { useCart } from '@/cart/CartContainer';
+import { computed } from 'vue';
+const route = useRoute();
+const { cart } = useCart();
+const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0));
 </script>
 
 <template>
@@ -20,15 +25,37 @@ import { RouterLink } from 'vue-router';
       <li>
         <router-link to="/search">Search</router-link>
       </li>
+      <li class="cart-item">
+        <router-link v-if="route.path.includes('card')" to="/cart" class="cart-wrapper">
+          <img class="cart-icon" src="@/assets/cart.svg" alt="My Icon" />
+          <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+        </router-link>
+      </li>
     </ul>
   </nav>
 </template>
 
 <style lang="css" scoped>
+ul {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
 li {
-  list-style-type: none;
-  display: inline;
   padding: 1%;
   font-size: 15px;
+}
+
+.cart-item {
+  margin-left: auto;
+}
+
+.cart-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 </style>
