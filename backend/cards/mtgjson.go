@@ -163,8 +163,8 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 
 }
 
-func FetchIdentifiers(ctx context.Context, ids CardIdQuery) ([]CardId, error) {
-	if ids.IsEmpty() {
+func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId, error) {
+	if len(multiverseIds) == 0 {
 		return nil, nil
 	}
 
@@ -174,7 +174,85 @@ func FetchIdentifiers(ctx context.Context, ids CardIdQuery) ([]CardId, error) {
 
 	sql := db.NewSQLBuilder("cards AS c")
 	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-	WhereIds(sql, ids, "ci.multiverseId", "c.name", "c.setCode", "c.number")
+
+	vals := make([]string, len(multiverseIds))
+	for i, id := range multiverseIds {
+		vals[i] = fmt.Sprintf("%d", id)
+	}
+	whereValues(sql, "ci.multiverseId", vals)
+
+	sql.Select(
+		"ci.scryfallId",
+		"c.name",
+		"c.setCode",
+		"c.number AS collectorNumber",
+		"CAST(ci.multiverseId AS INTEGER) AS multiverseId",
+	)
+
+	query, params := sql.Build()
+	var results []CardId
+
+	if err := sdk.Connection().ExecuteInto(ctx, &results, query, params...); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNumber) ([]CardId, error) {
+	if len(setCollectors) == 0 {
+		return nil, nil
+	}
+
+	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers"); err != nil {
+		return nil, err
+	}
+
+	sql := db.NewSQLBuilder("cards AS c")
+	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
+
+	tups := make([][2]string, len(setCollectors))
+	for i, sn := range setCollectors {
+		tups[i] = [2]string{sn.Set, sn.CollectorNumber}
+	}
+	whereTuples2(sql, [2]string{"c.setCode", "c.number"}, tups)
+
+	sql.Select(
+		"ci.scryfallId",
+		"c.name",
+		"c.setCode",
+		"c.number AS collectorNumber",
+		"CAST(ci.multiverseId AS INTEGER) AS multiverseId",
+	)
+
+	query, params := sql.Build()
+	var results []CardId
+
+	if err := sdk.Connection().ExecuteInto(ctx, &results, query, params...); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error) {
+	if len(nameSets) == 0 {
+		return nil, nil
+	}
+
+	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers"); err != nil {
+		return nil, err
+	}
+
+	sql := db.NewSQLBuilder("cards AS c")
+	sql.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
+
+	tups := make([][2]string, len(nameSets))
+	for i, ns := range nameSets {
+		tups[i] = [2]string{ns.Name, ns.Set}
+	}
+	whereTuples2(sql, [2]string{"c.name", "c.setCode"}, tups)
+
 	sql.Select(
 		"ci.scryfallId",
 		"c.name",

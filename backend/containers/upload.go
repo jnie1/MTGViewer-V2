@@ -80,15 +80,14 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 		return nil, err
 	}
 
-	query := cards.CardIdQuery{SetNumbers: setCollectors}
-	fetchedCards, err := cards.FetchIdentifiers(ctx, query)
+	cardIds, err := cards.FetchIdsBySetCollector(ctx, setCollectors)
 	if err != nil {
 		return nil, err
 	}
 
-	requests := make([]CardRequest, len(fetchedCards))
+	requests := make([]CardRequest, len(cardIds))
 
-	for i, card := range fetchedCards {
+	for i, card := range cardIds {
 		source := cards.SetCollectorNumber{Set: card.SetCode, CollectorNumber: card.CollectorNumber}
 		newRequest := CardRequest{ScryfallId: card.ScryfallId, Delta: amountMap[source]}
 		requests[i] = newRequest
@@ -118,7 +117,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 
 	requests := []CardRequest{}
 	multiverseIds := map[int]int{}
-	setNumbers := map[cards.SetCollectorNumber]int{}
+	setCollectors := map[cards.SetCollectorNumber]int{}
 	nameSets := map[cards.NameSet]int{}
 
 	for {
@@ -153,11 +152,11 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 			multiverseIds[multiverseId] = multiverseIds[multiverseId] + quantity
 
 		case headerPositions.SetCode > -1 && headerPositions.CollectorNumber > -1:
-			setNumber := cards.SetCollectorNumber{
+			setCollector := cards.SetCollectorNumber{
 				Set:             row[headerPositions.SetCode],
 				CollectorNumber: row[headerPositions.CollectorNumber],
 			}
-			setNumbers[setNumber] = setNumbers[setNumber] + quantity
+			setCollectors[setCollector] = setCollectors[setCollector] + quantity
 
 		case headerPositions.Name > -1 && headerPositions.SetCode > -1:
 			nameSet := cards.NameSet{
@@ -168,32 +167,41 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		}
 	}
 
-	extraQuery := cards.CardIdQuery{
-		MultiverseIds: slices.Collect(maps.Keys(multiverseIds)),
-		SetNumbers:    slices.Collect(maps.Keys(setNumbers)),
-		NameSets:      slices.Collect(maps.Keys(nameSets)),
-	}
-
-	if !extraQuery.IsEmpty() {
-		extraCards, err := cards.FetchIdentifiers(ctx, extraQuery)
+	if len(multiverseIds) > 0 {
+		keys := slices.Collect(maps.Keys(multiverseIds))
+		cardIds, err := cards.FetchIdsByMultiverseId(ctx, keys)
 		if err != nil {
 			return nil, err
 		}
-
-		for _, card := range extraCards {
+		for _, card := range cardIds {
 			if amount, ok := multiverseIds[card.MultiverseId]; ok {
 				requests = append(requests, CardRequest{card.ScryfallId, amount})
-				continue
 			}
+		}
+	}
 
-			if amount, ok := setNumbers[card.SetCollectorNumber()]; ok {
+	if len(setCollectors) > 0 {
+		keys := slices.Collect(maps.Keys(setCollectors))
+		cardIds, err := cards.FetchIdsBySetCollector(ctx, keys)
+		if err != nil {
+			return nil, err
+		}
+		for _, card := range cardIds {
+			if amount, ok := setCollectors[card.SetCollectorNumber()]; ok {
 				requests = append(requests, CardRequest{card.ScryfallId, amount})
-				continue
 			}
+		}
+	}
 
+	if len(nameSets) > 0 {
+		keys := slices.Collect(maps.Keys(nameSets))
+		cardIds, err := cards.FetchIdsByNameSet(ctx, keys)
+		if err != nil {
+			return nil, err
+		}
+		for _, card := range cardIds {
 			if amount, ok := nameSets[card.NameSet()]; ok {
 				requests = append(requests, CardRequest{card.ScryfallId, amount})
-				continue
 			}
 		}
 	}
