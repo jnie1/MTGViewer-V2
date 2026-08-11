@@ -105,8 +105,8 @@ func FindIdQuery(withdrawals ContainerWithdrawals) (cards.CardIdQuery, error) {
 	collectorNumbers := map[cards.SetCollectorNumber]any{}
 
 	for _, targets := range withdrawals {
-		for _, target := range targets {
-			switch t := target.Card.(type) {
+		for i := range targets {
+			switch t := targets[i].Card.(type) {
 			case cards.MultiverseIdObj:
 				multiverseIds[t.MultiverseId] = nil
 
