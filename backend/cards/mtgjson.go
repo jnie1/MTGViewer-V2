@@ -143,15 +143,15 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 		"c.rarity",
 	)
 
-	var results []Card
+	var rows []Card
 	sql, params := q.Build()
 
-	if err := sdk.Connection().ExecuteInto(ctx, &results, sql, params...); err != nil {
+	if err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...); err != nil {
 		return nil, err
 	}
 
-	for i := range results {
-		result := &results[i]
+	for i := range rows {
+		result := &rows[i]
 		images, err := ImageURLs(result.ScryfallId)
 		if err != nil {
 			return nil, err
@@ -159,7 +159,7 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 		result.Images = images
 	}
 
-	return results, nil
+	return rows, nil
 
 }
 
@@ -189,11 +189,11 @@ func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId,
 		"CAST(ci.multiverseId AS INTEGER) AS multiverseId",
 	)
 
-	var results []CardId
+	var rows []CardId
 	sql, params := q.Build()
-	err := sdk.Connection().ExecuteInto(ctx, &results, sql, params...)
+	err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...)
 
-	return results, err
+	return rows, err
 }
 
 func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNumber) ([]CardId, error) {
@@ -222,11 +222,11 @@ func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNum
 		"CAST(ci.multiverseId AS INTEGER) AS multiverseId",
 	)
 
-	var results []CardId
+	var rows []CardId
 	query, params := q.Build()
-	err := sdk.Connection().ExecuteInto(ctx, &results, query, params...)
+	err := sdk.Connection().ExecuteInto(ctx, &rows, query, params...)
 
-	return results, err
+	return rows, err
 }
 
 func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error) {
@@ -255,11 +255,11 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 		"CAST(ci.multiverseId AS INTEGER) AS multiverseId",
 	)
 
-	var results []CardId
+	var rows []CardId
 	sql, params := q.Build()
-	err := sdk.Connection().ExecuteInto(ctx, &results, sql, params...)
+	err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...)
 
-	return results, err
+	return rows, err
 }
 
 func FetchScryfallIds(ctx context.Context, name string) ([]ScryfallIdObj, error) {
@@ -272,11 +272,11 @@ func FetchScryfallIds(ctx context.Context, name string) ([]ScryfallIdObj, error)
 	q.WhereEq("c.name", name)
 	q.Select("ci.scryfallId")
 
-	var results []ScryfallIdObj
+	var rows []ScryfallIdObj
 	sql, params := q.Build()
-	err := sdk.Connection().ExecuteInto(ctx, &results, sql, params...)
+	err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...)
 
-	return results, err
+	return rows, err
 }
 
 func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]CardPricePreview, error) {
@@ -308,11 +308,11 @@ func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]
 	q.WhereIn("ci.scryfallId", vals)
 	q.Select("ci.scryfallId", "p.price AS price")
 
-	var prices []CardPricePreview
+	var rows []CardPricePreview
 	sql, params := q.Build()
-	err := sdk.Connection().ExecuteInto(ctx, &prices, sql, params...)
+	err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...)
 
-	return prices, err
+	return rows, err
 }
 
 func priceDBQuery(alias string, price float64) *db.SQLBuilder {
