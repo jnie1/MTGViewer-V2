@@ -39,9 +39,14 @@ type CardAmountPreview struct {
 	Amount     int
 }
 
-type CardPrice struct {
+type CardPricePreview struct {
 	ScryfallId uuid.UUID `json:"scryfallId"`
 	Price      float64   `json:"price"`
+}
+
+type CardPriceAmount struct {
+	CardAmount
+	Price float64 `json:"price"`
 }
 
 type SearchCardPage struct {

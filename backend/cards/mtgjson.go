@@ -279,7 +279,7 @@ func FetchScryfallIds(ctx context.Context, name string) ([]ScryfallIdObj, error)
 	return results, err
 }
 
-func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]CardPrice, error) {
+func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]CardPricePreview, error) {
 	if len(scryfallIds) == 0 {
 		return nil, nil
 	}
@@ -308,7 +308,7 @@ func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]
 	q.WhereIn("ci.scryfallId", vals)
 	q.Select("ci.scryfallId", "p.price AS price")
 
-	var prices []CardPrice
+	var prices []CardPricePreview
 	sql, params := q.Build()
 	err := sdk.Connection().ExecuteInto(ctx, &prices, sql, params...)
 

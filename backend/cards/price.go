@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func FindCheapCards(cards []Card, amounts []CardAmountPreview, prices []CardPrice, price float64) []CardAmount {
-	belowPrice := []CardAmount{}
+func FindCheapCards(cards []Card, amounts []CardAmountPreview, prices []CardPricePreview, price float64) []CardPriceAmount {
+	belowPrice := []CardPriceAmount{}
 
 	amountsByCard := map[uuid.UUID]int{}
 	for _, amt := range amounts {
@@ -23,9 +23,14 @@ func FindCheapCards(cards []Card, amounts []CardAmountPreview, prices []CardPric
 		if strings.Contains(card.Type, "Land") {
 			continue
 		}
-		cardPrice := pricesByCard[card.ScryfallId]
+		cardPrice, ok := pricesByCard[card.ScryfallId]
+		if !ok {
+			continue
+		}
+
 		if cardPrice <= price {
-			belowPrice = append(belowPrice, CardAmount{card, amountsByCard[card.ScryfallId]})
+			belowPrice = append(belowPrice, CardPriceAmount{
+				CardAmount{card, amountsByCard[card.ScryfallId]}, cardPrice})
 		}
 	}
 
