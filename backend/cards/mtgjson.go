@@ -279,7 +279,7 @@ func FetchScryfallIds(ctx context.Context, name string) ([]ScryfallIdObj, error)
 	return results, err
 }
 
-func FetchCheapCards(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]CardPrice, error) {
+func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]CardPrice, error) {
 	if len(scryfallIds) == 0 {
 		return nil, nil
 	}

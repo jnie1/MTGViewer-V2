@@ -1,28 +1,33 @@
 package cards
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 )
 
-func FindCheapCards(cards []Card, amounts []CardAmountPreview, price float64) ([]CardAmount, error) {
+func FindCheapCards(cards []Card, amounts []CardAmountPreview, prices []CardPrice, price float64) []CardAmount {
 	belowPrice := []CardAmount{}
-	amountsById := map[uuid.UUID]int{}
 
+	amountsByCard := map[uuid.UUID]int{}
 	for _, amt := range amounts {
-		amountsById[amt.ScryfallId] = amt.Amount
+		amountsByCard[amt.ScryfallId] = amt.Amount
+	}
+
+	pricesByCard := map[uuid.UUID]float64{}
+	for _, price := range prices {
+		pricesByCard[price.ScryfallId] = price.Price
 	}
 
 	for _, card := range cards {
-		cardPrice, err := strconv.ParseFloat(card.Prices["usd"], 64)
-		if err != nil {
-			return nil, err
+		if strings.Contains(card.Type, "Land") {
+			continue
 		}
-		if cardPrice <= price && !strings.Contains(card.Type, "Land") {
-			belowPrice = append(belowPrice, CardAmount{card, amountsById[card.ScryfallId]})
+		cardPrice := pricesByCard[card.ScryfallId]
+		if cardPrice <= price {
+			belowPrice = append(belowPrice, CardAmount{card, amountsByCard[card.ScryfallId]})
 		}
 	}
-	return belowPrice, nil
+
+	return belowPrice
 }

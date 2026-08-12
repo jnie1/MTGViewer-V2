@@ -108,19 +108,20 @@ func checkPrune(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
+
 	matches, err := cards.FetchCollection(ctx, scryfallIds)
-
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	result, err := cards.FindCheapCards(matches, amounts, maxPrice)
+	prices, err := cards.FetchPrices(ctx, scryfallIds, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
+	result := cards.FindCheapCards(matches, amounts, prices, maxPrice)
 	c.JSON(http.StatusOK, result)
 }
 
@@ -157,31 +158,32 @@ func applyPrune(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
-	results, err := cards.FetchCollection(ctx, scryfallIds)
 
+	matches, err := cards.FetchCollection(ctx, scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cheapCards, err := cards.FindCheapCards(results, amounts, maxPrice)
+	prices, err := cards.FetchPrices(ctx, scryfallIds, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
+	cheapCards := cards.FindCheapCards(matches, amounts, prices, maxPrice)
 	cheapIds := make(uuid.UUIDs, len(cheapCards))
 	for i, card := range cheapCards {
 		cheapIds[i] = card.ScryfallId
 	}
 
-	matches, err := containers.SearchDeposits(cheapIds)
+	deposits, err := containers.SearchDeposits(cheapIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	changes := containers.TranslatePrune(matches, maxCopies)
+	changes := containers.TranslatePrune(deposits, maxCopies)
 
 	if err := containers.UpdateDeposits(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
