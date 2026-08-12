@@ -43,7 +43,6 @@ type scryfallCard struct {
 	CardFaces       []scryfallCardFace `json:"card_faces,omitempty"`
 	Type            string             `json:"type_line"`
 	Rarity          string             `json:"rarity"`
-	Prices          map[string]string  `json:"prices"`
 }
 
 type searchResult struct {
@@ -173,7 +172,6 @@ func toCard(card scryfallCard) Card {
 			images.Normal,
 			images.Large,
 		},
-		card.Prices,
 	}
 }
 

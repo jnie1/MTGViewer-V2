@@ -15,19 +15,18 @@ type CardImageURLs struct {
 }
 
 type Card struct {
-	ScryfallId      uuid.UUID         `json:"scryfallId"`
-	Name            string            `json:"name"`
-	ManaCost        string            `json:"manaCost,omitempty"`
-	Set             string            `json:"set"`
-	SetCode         string            `json:"setCode"`
-	CollectorNumber string            `json:"collectorNumber"`
-	MultiverseId    int               `json:"multiverseId,omitempty"`
-	Type            string            `json:"type"`
-	Rarity          string            `json:"rarity"`
-	Power           string            `json:"power,omitempty"`
-	Toughness       string            `json:"toughness,omitempty"`
-	Images          CardImageURLs     `json:"imageUrls"`
-	Prices          map[string]string `json:"prices"`
+	ScryfallId      uuid.UUID     `json:"scryfallId"`
+	Name            string        `json:"name"`
+	ManaCost        string        `json:"manaCost,omitempty"`
+	Set             string        `json:"set"`
+	SetCode         string        `json:"setCode"`
+	CollectorNumber string        `json:"collectorNumber"`
+	MultiverseId    int           `json:"multiverseId,omitempty"`
+	Type            string        `json:"type"`
+	Rarity          string        `json:"rarity"`
+	Power           string        `json:"power,omitempty"`
+	Toughness       string        `json:"toughness,omitempty"`
+	Images          CardImageURLs `json:"imageUrls"`
 }
 
 type CardAmount struct {
