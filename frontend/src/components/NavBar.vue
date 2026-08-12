@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { useRoute, RouterLink } from 'vue-router';
-import { useCart } from '@/cart/CartContainer';
+import { cart } from '@/cart/CartContainer';
 import { computed } from 'vue';
 const route = useRoute();
-const { cart } = useCart();
 const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0));
 </script>
 
