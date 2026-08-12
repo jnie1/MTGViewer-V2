@@ -4,7 +4,7 @@ import type { ICard } from '@/cards/types';
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/container/types';
-import { useCart } from '@/cart/CartContainer';
+import { addToCart, cart } from '@/cart/CartContainer';
 import { computed } from 'vue';
 
 defineOptions({
@@ -14,7 +14,6 @@ defineOptions({
   },
 });
 const matches = useRouteData<ICardContainerMatch>();
-const { cart, addToCart } = useCart();
 
 const totalAvailable = computed(() => matches.containers.reduce((sum, c) => sum + c.amount, 0));
 

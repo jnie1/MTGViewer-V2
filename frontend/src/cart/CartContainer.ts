@@ -7,7 +7,7 @@ export interface ICartItem {
   max: number
 }
 
-const STORAGE_KEY = 'cart';
+const STORAGE_KEY: string = 'shoppingCardCart';
 
 function loadCart(): ICartItem[] {
   try {
@@ -18,7 +18,7 @@ function loadCart(): ICartItem[] {
   }
 }
 
-const cart = reactive<ICartItem[]>(loadCart());
+export const cart = reactive<ICartItem[]>(loadCart());
 
 watch(
   cart,
@@ -28,34 +28,28 @@ watch(
   { deep: true }
 );
 
-export function useCart() {
-  
+export function removeFromCart(scryfallId: string) {
+  const index = cart.findIndex((item) => item.scryfallId === scryfallId);
+  if (index !== -1) cart.splice(index, 1);
+}
 
-  function removeFromCart(scryfallId: string) {
-    const index = cart.findIndex((item) => item.scryfallId === scryfallId);
-    if (index !== -1) cart.splice(index, 1);
+export function addToCart(scryfallId: string, name: string, amount: number, max: number) {
+  const existing = cart.find((item) => item.scryfallId === scryfallId);
+  if (existing) {
+    existing.amount = Math.min(existing.amount + amount, max);
+    existing.max = max; // keep max in sync in case data refreshed
+  } else {
+    cart.push({ scryfallId, name, amount: Math.min(amount, max), max });
   }
-  
-  function addToCart(scryfallId: string, name: string, amount: number, max: number) {
-    const existing = cart.find((item) => item.scryfallId === scryfallId);
-    if (existing) {
-      existing.amount = Math.min(existing.amount + amount, max);
-      existing.max = max; // keep max in sync in case data refreshed
-    } else {
-      cart.push({ scryfallId, name, amount: Math.min(amount, max), max });
-    }
-  }
+}
 
-  function updateAmount(scryfallId: string, newAmount: number) {
-    const existing = cart.find((item) => item.scryfallId === scryfallId);
-    if (!existing) return;
+export function updateAmount(scryfallId: string, newAmount: number) {
+  const existing = cart.find((item) => item.scryfallId === scryfallId);
+  if (!existing) return;
 
-    if (newAmount <= 0) {
-      removeFromCart(scryfallId);
-    } else {
-      existing.amount = Math.min(newAmount, existing.max);
-    }
+  if (newAmount <= 0) {
+    removeFromCart(scryfallId);
+  } else {
+    existing.amount = Math.min(newAmount, existing.max);
   }
-  
-  return { cart, addToCart, removeFromCart, updateAmount };
 }
