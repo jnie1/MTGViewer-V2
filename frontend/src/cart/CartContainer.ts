@@ -9,10 +9,26 @@ export interface ICartItem {
 
 const STORAGE_KEY: string = 'shoppingCardCart';
 
+function isCartItem(value: unknown): value is ICartItem {
+  if (typeof value !== 'object' || value === null) return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.scryfallId === 'string' &&
+    typeof item.name === 'string' &&
+    typeof item.amount === 'number' &&
+    typeof item.max === 'number'
+  );
+}
+
 function loadCart(): ICartItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter(isCartItem);
   } catch {
     return [];
   }
