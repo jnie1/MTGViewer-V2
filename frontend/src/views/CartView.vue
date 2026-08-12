@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { useCart } from '@/cart/CartContainer';
+import { updateAmount, cart, removeFromCart } from '@/cart/CartContainer';
 
-const { cart, removeFromCart, updateAmount } = useCart();
 </script>
 
 <template>
