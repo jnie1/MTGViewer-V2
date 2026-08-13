@@ -306,7 +306,7 @@ func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]
 
 	q.Where(fmt.Sprintf("p.date = (%s)", maxDate))
 	q.WhereIn("ci.scryfallId", vals)
-	q.Select("ci.scryfallId", "p.price AS price")
+	q.Select("ci.scryfallId", "p.price")
 
 	var rows []CardPricePreview
 	sql, params := q.Build()
