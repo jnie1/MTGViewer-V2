@@ -25,7 +25,7 @@ const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0
         <router-link to="/search">Search</router-link>
       </li>
       <li class="cart-item">
-        <router-link v-if="route.path.includes('card')" to="/cart" class="cart-wrapper">
+        <router-link v-if="cartCount > 0" to="/cart" class="cart-wrapper">
           <img class="cart-icon" src="@/assets/cart.svg" alt="My Icon" />
           <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
         </router-link>
