@@ -18,6 +18,9 @@ func whereValues[V any](b *db.SQLBuilder, column string, values []V) *db.SQLBuil
 	return b
 }
 
+// adds a where in clause with exactly size 2 tuples
+// golang doesn't allow generic typing around different sized arrays
+// so the sql is basically always: WHERE (col1, col2) IN ((v1, v2), (v3, v4), ...)
 func whereTuples2[C ~[2]string, T ~[2]V, V any](b *db.SQLBuilder, columns C, tuples []T) *db.SQLBuilder {
 	placeholders := make([]string, len(tuples))
 	for i, tup := range tuples {
