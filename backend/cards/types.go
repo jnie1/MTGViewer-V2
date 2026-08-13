@@ -16,6 +16,7 @@ type CardImageURLs struct {
 
 type Card struct {
 	ScryfallId      uuid.UUID     `json:"scryfallId"`
+	OracleId        uuid.UUID     `json:"oracleId"`
 	Name            string        `json:"name"`
 	ManaCost        string        `json:"manaCost,omitempty"`
 	Set             string        `json:"set"`

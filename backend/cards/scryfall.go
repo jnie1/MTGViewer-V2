@@ -34,6 +34,7 @@ type scryfallCardFace struct {
 
 type scryfallCard struct {
 	ScryfallId      uuid.UUID          `json:"id"`
+	OracleId        uuid.UUID          `json:"oracle_id"`
 	ManaCost        string             `json:"mana_cost,omitempty"`
 	Name            string             `json:"name"`
 	SetName         string             `json:"set_name"`
@@ -159,6 +160,7 @@ func toCard(card scryfallCard) Card {
 
 	return Card{
 		card.ScryfallId,
+		card.OracleId,
 		card.Name,
 		card.ManaCost,
 		card.SetName,

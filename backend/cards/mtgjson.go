@@ -28,8 +28,8 @@ func FetchRandomCard(ctx context.Context) (Card, error) {
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 	q.Join("JOIN sets AS s ON s.code = c.setCode")
 	q.Select(
-		"c.uuid",
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.manaCost",
 		"c.name",
 		"s.name AS set",
@@ -75,6 +75,7 @@ func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 	q.WhereEq("ci.scryfallId", scryfallId)
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.manaCost",
 		"c.name",
 		"s.name AS set",
@@ -131,6 +132,7 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.manaCost",
 		"c.name",
 		"s.name AS set",
@@ -183,6 +185,7 @@ func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId,
 
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.name",
 		"c.setCode",
 		"c.number AS collectorNumber",
@@ -216,6 +219,7 @@ func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNum
 
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.name",
 		"c.setCode",
 		"c.number AS collectorNumber",
@@ -249,6 +253,7 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.name",
 		"c.setCode",
 		"c.number AS collectorNumber",

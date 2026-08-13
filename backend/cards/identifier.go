@@ -27,6 +27,7 @@ type NameSet struct {
 
 type CardId struct {
 	ScryfallId      uuid.UUID `json:"scryfallId"`
+	OracleId        uuid.UUID `json:"oracleId"`
 	Name            string    `json:"name"`
 	SetCode         string    `json:"setCode"`
 	CollectorNumber string    `json:"collectorNumber"`
