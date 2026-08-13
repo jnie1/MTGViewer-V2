@@ -44,6 +44,7 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
   if (max === 0 || isMaxed(scryfallId, containerId)) return;
   addToCart(scryfallId, containerId, matches.card.name, amount, max);
 }
+
 </script>
 
 <template>
@@ -86,21 +87,29 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
                 >Amount: {{ container.amount }}</v-card-subtitle
               >
               <ul class="print-list">
-                <li v-for="print in container.prints" :key="print.scryfallId" class="print-row">
-                  <v-card-subtitle class="grid-card-subtitle">
-                    {{ print.scryfallId }} — {{ print.amount }}
-                  </v-card-subtitle>
-                  <button
-                    class="add-to-cart"
-                    :disabled="isMaxed(print.scryfallId, container.containerId)"
-                    @click="handleAddToCart(print.scryfallId, 1, container.containerId)"
-                  >
-                    {{
-                      amountInCart(print.scryfallId, container.containerId) > 0
-                        ? `${amountInCart(print.scryfallId, container.containerId)} in cart`
-                        : 'add to cart'
-                    }}
-                  </button>
+                <li v-for="print in container.prints" :key="print.scryfallId" class="print-col">
+                  <v-container class="print-row">
+                    <v-img
+                      class="card-img"
+                      :alt="matches.card.name"
+                      :src="print.images.full"
+                      :lazy-src="print.images.preview"
+                    />
+                    <v-card-subtitle class="grid-card-subtitle">
+                      — {{ print.amount }}
+                    </v-card-subtitle>
+                    <button
+                      class="add-to-cart"
+                      :disabled="isMaxed(print.scryfallId, container.containerId)"
+                      @click="handleAddToCart(print.scryfallId, 1, container.containerId)"
+                    >
+                      {{
+                        amountInCart(print.scryfallId, container.containerId) > 0
+                          ? `${amountInCart(print.scryfallId, container.containerId)} in cart`
+                          : 'add to cart'
+                      }}
+                    </button>
+                  </v-container>
                 </li>
               </ul>
             </div>
@@ -112,6 +121,12 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
 </template>
 
 <style lang="css" scoped>
+.card-img {
+  height: 156px;
+  width: 112px;
+  border-radius: 16px;
+}
+
 .card-view {
   display: flex;
   flex-direction: column;
@@ -137,7 +152,7 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
 }
 
 .grid-card-link:hover .print-list{
-  display: block;
+  display: flex;
 }
 
 .grid-card {
@@ -194,14 +209,18 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
 }
 
 .print-list {
+  display: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
   list-style: none;
   padding: 0;
   margin: 0.25rem 0 0;
   font-size: 0.75rem;
-  display: none;
 }
 .print-row {
   display: flex;
+  flex-direction: row;
   align-items: center;
   width: 100%;
 }
