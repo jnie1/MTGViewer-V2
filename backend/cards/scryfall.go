@@ -71,8 +71,8 @@ func ImageURLs(scryfallId uuid.UUID) (CardImageURLs, error) {
 }
 
 func imageURL(scryfallId uuid.UUID, size, face, ext string) (string, error) {
-	fileName := scryfallId.String()
-	return url.JoinPath(scryfallImageUrl, size, face, string(fileName[0]), string(fileName[1]), fileName, ext)
+	fileName := fmt.Sprintf("%s.%s", scryfallId, ext)
+	return url.JoinPath(scryfallImageUrl, size, face, string(fileName[0]), string(fileName[1]), fileName)
 }
 
 func SearchCards(query string, page int) (SearchCardPage, error) {
