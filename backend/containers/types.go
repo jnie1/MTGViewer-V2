@@ -35,7 +35,7 @@ func (container *ContainerPreview) Container() ContainerPreview {
 	return *container
 }
 
-type PrintsPreview []cards.CardAmountPreview
+type PrintsPreview []cards.CardAmountImagePreview
 
 type ContainerDeposit struct {
 	ContainerPreview
@@ -182,9 +182,22 @@ func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDep
 		boxAmounts[deposit.ContainerId] = boxAmounts[deposit.ContainerId] + deposit.Amount
 	}
 
-	printsInBox := map[int][]cards.CardAmountPreview{}
+	printsInBox := map[int][]cards.CardAmountImagePreview{}
 	for _, deposit := range cardDeposits {
-		printsInBox[deposit.ContainerId] = append(printsInBox[deposit.ContainerId], deposit.CardAmountPreview)
+		image, err := cards.ImageURLs(deposit.ScryfallId)
+		if err != nil {
+			printsInBox[deposit.ContainerId] = append(printsInBox[deposit.ContainerId], cards.CardAmountImagePreview{
+				ScryfallId: deposit.ScryfallId,
+				Images:     cards.CardImageURLs{},
+				Amount:     deposit.Amount,
+			})
+		} else {
+			printsInBox[deposit.ContainerId] = append(printsInBox[deposit.ContainerId], cards.CardAmountImagePreview{
+				ScryfallId: deposit.ScryfallId,
+				Images:     image,
+				Amount:     deposit.Amount,
+			})
+		}
 	}
 
 	boxDeposits := make([]ContainerDeposit, len(boxAmounts))
@@ -204,7 +217,7 @@ func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDep
 				deposit := ContainerDeposit{
 					ContainerPreview{card.ContainerId, card.ContainerName},
 					amount,
-					[]cards.CardAmountPreview{},
+					[]cards.CardAmountImagePreview{},
 				}
 				boxDeposits[idx] = deposit
 				delete(boxAmounts, card.ContainerId)
