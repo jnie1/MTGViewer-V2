@@ -4,7 +4,6 @@ import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/container/types';
 import { addToCart, cart } from '@/cart/CartContainer';
-import { computed } from 'vue';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
@@ -67,7 +66,8 @@ function handleAddToCart(amount: number, containerId: string) {
             <router-link
               class="grid-card-title"
               :to="{ name: 'container', params: { containerId: container.containerId } }"
-              >{{ container.containerName }}</router-link>
+              >{{ container.name }}</router-link
+            >
             <v-card-subtitle class="grid-card-subtitle"
               >Amount: {{ container.amount }}</v-card-subtitle
             >

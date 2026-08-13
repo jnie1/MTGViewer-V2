@@ -35,6 +35,11 @@ func (container *ContainerPreview) Container() ContainerPreview {
 	return *container
 }
 
+type ContainerDeposit struct {
+	ContainerPreview
+	Amount int `json:"amount"`
+}
+
 type ContainerDelta struct {
 	ContainerId int
 	Delta       int
@@ -47,14 +52,19 @@ type CardDeposit struct {
 }
 
 type CardDepositPreview struct {
-	ContainerId   int    `json:"containerId"`
-	ContainerName string `json:"containerName"`
+	ContainerId   int
+	ContainerName string
 	cards.CardAmountPreview
 }
 
 type CardContainerMatch struct {
-	Card       cards.Card           `json:"card"`
-	Containers []CardDepositPreview `json:"containers"`
+	Card       cards.Card         `json:"card"`
+	Containers []ContainerDeposit `json:"containers"`
+}
+
+type CardPrunePreview struct {
+	Total int                     `json:"total"`
+	Cards []cards.CardPriceAmount `json:"cards"`
 }
 
 type CardRequest struct {
@@ -75,8 +85,8 @@ type ContainerChanges struct {
 type ContainerWithdrawals map[int][]CardIdentifierAmount
 
 type CardIdentifierAmount struct {
-	Card   CardIdentifier `json:"card"`
-	Amount int            `json:"amount"`
+	Card   any `json:"card"`
+	Amount int `json:"amount"`
 }
 
 func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
@@ -89,7 +99,7 @@ func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	card, err := FromObj(obj.Card)
+	card, err := cards.FromObj(obj.Card)
 	if err != nil {
 		return err
 	}
@@ -161,6 +171,29 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 		return changes
 	}
 	return mergedChanges
+}
+
+func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDeposit {
+	boxAmounts := map[int]int{}
+	for _, deposit := range cardDeposits {
+		boxAmounts[deposit.ContainerId] = boxAmounts[deposit.ContainerId] + deposit.Amount
+	}
+
+	boxDeposits := make([]ContainerDeposit, len(boxAmounts))
+
+	for _, card := range cardDeposits {
+		if amount, ok := boxAmounts[card.ContainerId]; ok {
+			idx := len(boxDeposits) - len(boxAmounts)
+			deposit := ContainerDeposit{
+				ContainerPreview{card.ContainerId, card.ContainerName},
+				amount,
+			}
+			boxDeposits[idx] = deposit
+			delete(boxAmounts, card.ContainerId)
+		}
+	}
+
+	return boxDeposits
 }
 
 func JoinCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {

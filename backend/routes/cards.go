@@ -3,7 +3,6 @@ package routes
 import (
 	"mime/multipart"
 	"net/http"
-	"sort"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +26,8 @@ func fetchCollection(c *gin.Context) {
 		return
 	}
 
-	result, err := cards.FetchCollection(scryfallIds)
+	ctx := c.Request.Context()
+	result, err := cards.FetchCollection(ctx, scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -38,72 +38,49 @@ func fetchCollection(c *gin.Context) {
 
 func fetchCard(c *gin.Context) {
 	cardId := c.Param("card")
-
 	scryfallId, err := uuid.Parse(cardId)
+
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cardFound, err := cards.FetchCard(cards.ScryfallIdentifier{Id: scryfallId})
-	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
-		return
-	}
-
-	allPrints, err := cards.SearchCards(cardFound.Name, 1)
-	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
-		return
-	}
-
-	scryfallIds := make([]uuid.UUID, len(allPrints.Cards))
-	for i, card := range allPrints.Cards {
-		scryfallIds[i] = card.ScryfallId
-	}
+	ctx := c.Request.Context()
+	cardFound, err := cards.FetchCard(ctx, scryfallId)
 
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
-	// find scryfall id in containers
-	containerResult, err := containers.SearchDeposits(scryfallIds)
 
-	mergedBoxAmount := make(map[int]containers.CardDepositPreview, len(containerResult))
-
-	for _, containerResult := range containerResult {
-		if existing, ok := mergedBoxAmount[containerResult.ContainerId]; ok {
-			existing.Amount = existing.Amount + containerResult.Amount
-			mergedBoxAmount[containerResult.ContainerId] = existing
-		} else {
-			mergedBoxAmount[containerResult.ContainerId] = containerResult
-		}
-	}
-
-	mergedResult := make([]containers.CardDepositPreview, 0, len(mergedBoxAmount))
-	for _, containerResult := range mergedBoxAmount {
-		mergedResult = append(mergedResult, containerResult)
-	}
-
-	sort.Slice(mergedResult, func(i, j int) bool {
-		return mergedResult[i].ContainerId < mergedResult[j].ContainerId
-	})
-
-	sortedMergedResult := mergedResult
-
+	objs, err := cards.FetchScryfallIds(ctx, cardFound.Name)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
+
+	ids := make(uuid.UUIDs, len(objs))
+	for i, obj := range objs {
+		ids[i] = obj.ScryfallId
+	}
+
+	deposits, err := containers.SearchDeposits(ids)
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
 	result := containers.CardContainerMatch{
 		Card:       cardFound,
-		Containers: sortedMergedResult,
+		Containers: containers.MergeDespositsByContainer(deposits),
 	}
+
 	c.JSON(http.StatusOK, result)
 }
 
 func fetchRandomCard(c *gin.Context) {
-	result, err := cards.FetchRandomCard()
+	ctx := c.Request.Context()
+	result, err := cards.FetchRandomCard(ctx)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -125,7 +102,8 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	requests, err := containers.ParseCardRequests(file)
+	ctx := c.Request.Context()
+	requests, err := containers.ParseCardRequests(ctx, file)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -163,7 +141,8 @@ func withdrawCards(c *gin.Context) {
 		return
 	}
 
-	if err := containers.ResolveExtraIdentifiers(withdrawals); err != nil {
+	ctx := c.Request.Context()
+	if err := containers.ResolveIdentifiers(ctx, withdrawals); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}

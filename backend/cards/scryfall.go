@@ -1,21 +1,79 @@
 package cards
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 const (
-	scryfallUrl     string = "https://api.scryfall.com"
-	collectionLimit int    = 75
+	scryfallApiUrl   string = "https://api.scryfall.com"
+	scryfallImageUrl string = "https://cards.scryfall.io"
 )
+
+type scryfallImages struct {
+	Small  string `json:"small,omitempty"`
+	Normal string `json:"normal,omitempty"`
+	Large  string `json:"large,omitempty"`
+}
+
+type scryfallCardFace struct {
+	Name     string         `json:"name"`
+	ManaCost string         `json:"mana_cost,omitempty"`
+	Type     string         `json:"type_line"`
+	Images   scryfallImages `json:"image_uris"`
+}
+
+type scryfallCard struct {
+	ScryfallId      uuid.UUID          `json:"id"`
+	ManaCost        string             `json:"mana_cost,omitempty"`
+	Name            string             `json:"name"`
+	SetName         string             `json:"set_name"`
+	Set             string             `json:"set"`
+	CollectorNumber string             `json:"collector_number"`
+	MultiverseIds   []int              `json:"multiverse_ids,omitempty"`
+	Power           string             `json:"power,omitempty"`
+	Toughness       string             `json:"toughness,omitempty"`
+	Images          scryfallImages     `json:"image_uris"`
+	CardFaces       []scryfallCardFace `json:"card_faces,omitempty"`
+	Type            string             `json:"type_line"`
+	Rarity          string             `json:"rarity"`
+}
+
+type searchResult struct {
+	TotalCards int            `json:"total_cards"`
+	HasMore    bool           `json:"has_more"`
+	Cards      []scryfallCard `json:"data"`
+}
+
+func ImageURLs(scryfallId uuid.UUID) (CardImageURLs, error) {
+	preview, err := imageURL(scryfallId, "thumb", "front", "webp")
+	if err != nil {
+		return CardImageURLs{}, err
+	}
+
+	normal, err := imageURL(scryfallId, "grid", "front", "webp")
+	if err != nil {
+		return CardImageURLs{}, err
+	}
+
+	full, err := imageURL(scryfallId, "display", "front", "webp")
+	if err != nil {
+		return CardImageURLs{}, err
+	}
+
+	return CardImageURLs{preview, normal, full}, nil
+}
+
+func imageURL(scryfallId uuid.UUID, size, face, ext string) (string, error) {
+	fileName := fmt.Sprintf("%s.%s", scryfallId, ext)
+	return url.JoinPath(scryfallImageUrl, size, face, string(fileName[0]), string(fileName[1]), fileName)
+}
 
 func SearchCards(query string, page int) (SearchCardPage, error) {
 	query, err := url.QueryUnescape(query)
@@ -23,7 +81,7 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 		return SearchCardPage{}, err
 	}
 
-	searchPath, err := url.JoinPath(scryfallUrl, "/cards/search")
+	searchPath, err := url.JoinPath(scryfallApiUrl, "/cards/search")
 	if err != nil {
 		return SearchCardPage{}, err
 	}
@@ -85,165 +143,41 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	return searchPage, nil
 }
 
-func FetchRandomCard() (Card, error) {
-	randomUrl, err := url.JoinPath(scryfallUrl, "/cards/random")
-	if err != nil {
-		return Card{}, err
+func toCard(card scryfallCard) Card {
+	var multiverseId int
+	if len(card.MultiverseIds) == 1 {
+		multiverseId = card.MultiverseIds[0]
 	}
 
-	req, err := http.NewRequest("GET", randomUrl, nil)
-	if err != nil {
-		return Card{}, err
+	images := card.Images
+	if len(card.CardFaces) > 0 && card.CardFaces[0].Images.Small != "" {
+		images = card.CardFaces[0].Images
 	}
 
-	req.Header.Set("User-Agent", "mtg-viewer-v2")
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return Card{}, err
+	return Card{
+		card.ScryfallId,
+		card.Name,
+		card.ManaCost,
+		card.SetName,
+		strings.ToUpper(card.Set),
+		card.CollectorNumber,
+		multiverseId,
+		card.Type,
+		card.Rarity,
+		card.Power,
+		card.Toughness,
+		CardImageURLs{
+			images.Small,
+			images.Normal,
+			images.Large,
+		},
 	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return Card{}, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.Contains(contentType, "application/json") {
-		return Card{}, fmt.Errorf("unexpected response content %s", contentType)
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-
-	var result scryfallCard
-	if err := decoder.Decode(&result); err != nil {
-		return Card{}, err
-	}
-
-	return toCard(result), nil
 }
 
-func FetchCard(scryfallId ScryfallIdentifier) (Card, error) {
-	randomUrl, err := url.JoinPath(scryfallUrl, "/cards/", scryfallId.Id.String())
-	if err != nil {
-		return Card{}, err
+func toCards(cards []scryfallCard) []Card {
+	result := make([]Card, len(cards))
+	for i, card := range cards {
+		result[i] = toCard(card)
 	}
-
-	req, err := http.NewRequest("GET", randomUrl, nil)
-	if err != nil {
-		return Card{}, err
-	}
-
-	req.Header.Set("User-Agent", "mtg-viewer-v2")
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return Card{}, err
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return Card{}, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.Contains(contentType, "application/json") {
-		return Card{}, fmt.Errorf("unexpected response content %s", contentType)
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-
-	var result scryfallCard
-	if err := decoder.Decode(&result); err != nil {
-		return Card{}, err
-	}
-
-	return toCard(result), nil
-}
-
-func FetchCollection[Id CardIdentifier](identifiers []Id) ([]Card, error) {
-	if len(identifiers) == 0 {
-		return nil, nil
-	}
-
-	results := make(chan collectionBatchResult)
-	workerCount := 0
-
-	for batch := range slices.Chunk(identifiers, collectionLimit) {
-		workerCount++
-		go func() {
-			cards, err := fetchCollectionBatch(batch)
-			results <- collectionBatchResult{cards, err}
-		}()
-	}
-
-	var cards [][]Card
-	var errs []error
-
-	for range workerCount {
-		result := <-results
-		if result.err != nil {
-			errs = append(errs, result.err)
-		} else {
-			cards = append(cards, result.cards)
-		}
-	}
-
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
-	}
-
-	return slices.Concat(cards...), nil
-}
-
-func fetchCollectionBatch[Id CardIdentifier](identifiers []Id) ([]Card, error) {
-	collectionUrl, err := url.JoinPath(scryfallUrl, "/cards/collection")
-	if err != nil {
-		return nil, err
-	}
-
-	query := CollectionQuery[Id]{identifiers}
-	payload, err := json.Marshal(query)
-	if err != nil {
-		return nil, err
-	}
-
-	body := bytes.NewBuffer(payload)
-	req, err := http.NewRequest("POST", collectionUrl, body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "mtg-viewer-v2")
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.Contains(contentType, "application/json") {
-		return nil, fmt.Errorf("unexpected response content %s", contentType)
-	}
-
-	decoder := json.NewDecoder(resp.Body)
-
-	var result collectionResult
-	if err := decoder.Decode(&result); err != nil {
-		return nil, err
-	}
-
-	return toCards(result.Cards), nil
+	return result
 }

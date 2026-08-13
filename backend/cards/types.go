@@ -8,26 +8,25 @@ import (
 	"github.com/google/uuid"
 )
 
-type CardImageUrls struct {
+type CardImageURLs struct {
 	Preview string `json:"preview,omitempty"`
 	Normal  string `json:"normal,omitempty"`
 	Full    string `json:"full,omitempty"`
 }
 
 type Card struct {
-	ScryfallId      uuid.UUID         `json:"scryfallId"`
-	Name            string            `json:"name"`
-	ManaCost        string            `json:"manaCost,omitempty"`
-	Set             string            `json:"set"`
-	SetCode         string            `json:"set_code"`
-	CollectorNumber string            `json:"collector_number"`
-	MultiverseIds   []int             `json:"multiverse_ids,omitempty"`
-	Type            string            `json:"type"`
-	Rarity          string            `json:"rarity"`
-	Power           string            `json:"power,omitempty"`
-	Toughness       string            `json:"toughness,omitempty"`
-	Images          CardImageUrls     `json:"imageUrls"`
-	Prices          map[string]string `json:"prices"`
+	ScryfallId      uuid.UUID     `json:"scryfallId"`
+	Name            string        `json:"name"`
+	ManaCost        string        `json:"manaCost,omitempty"`
+	Set             string        `json:"set"`
+	SetCode         string        `json:"setCode"`
+	CollectorNumber string        `json:"collectorNumber"`
+	MultiverseId    int           `json:"multiverseId,omitempty"`
+	Type            string        `json:"type"`
+	Rarity          string        `json:"rarity"`
+	Power           string        `json:"power,omitempty"`
+	Toughness       string        `json:"toughness,omitempty"`
+	Images          CardImageURLs `json:"imageUrls"`
 }
 
 type CardAmount struct {
@@ -36,8 +35,18 @@ type CardAmount struct {
 }
 
 type CardAmountPreview struct {
+	ScryfallId uuid.UUID
+	Amount     int
+}
+
+type CardPricePreview struct {
 	ScryfallId uuid.UUID `json:"scryfallId"`
-	Amount     int       `json:"amount"`
+	Price      float64   `json:"price"`
+}
+
+type CardPriceAmount struct {
+	CardAmount
+	Price float64 `json:"price"`
 }
 
 type SearchCardPage struct {
@@ -47,97 +56,33 @@ type SearchCardPage struct {
 	HasMore    bool   `json:"hasMore"`
 }
 
-type scryfallImages struct {
-	Small  string `json:"small,omitempty"`
-	Normal string `json:"normal,omitempty"`
-	Large  string `json:"large,omitempty"`
-}
+func ParseScryfallIds(ids []string) (uuid.UUIDs, error) {
+	scryfallIds := make(uuid.UUIDs, len(ids))
 
-type scryfallCardFace struct {
-	Name     string         `json:"name"`
-	ManaCost string         `json:"mana_cost,omitempty"`
-	Type     string         `json:"type_line"`
-	Images   scryfallImages `json:"image_uris"`
-}
+	for i, id := range ids {
+		id, err := uuid.Parse(id)
+		if err != nil {
+			return nil, err
+		}
 
-type scryfallCard struct {
-	ScryfallId      uuid.UUID          `json:"id"`
-	ManaCost        string             `json:"mana_cost,omitempty"`
-	Name            string             `json:"name"`
-	SetName         string             `json:"set_name"`
-	Set             string             `json:"set"`
-	CollectorNumber string             `json:"collector_number"`
-	MultiverseIds   []int              `json:"multiverse_ids,omitempty"`
-	Power           string             `json:"power,omitempty"`
-	Toughness       string             `json:"toughness,omitempty"`
-	Images          scryfallImages     `json:"image_uris"`
-	CardFaces       []scryfallCardFace `json:"card_faces,omitempty"`
-	Type            string             `json:"type_line"`
-	Rarity          string             `json:"rarity"`
-	Prices          map[string]string  `json:"prices"`
-}
-
-type searchResult struct {
-	TotalCards int            `json:"total_cards"`
-	HasMore    bool           `json:"has_more"`
-	Cards      []scryfallCard `json:"data"`
-}
-
-type collectionResult struct {
-	Cards []scryfallCard `json:"data"`
-}
-
-type collectionBatchResult struct {
-	cards []Card
-	err   error
-}
-
-func toCard(card scryfallCard) Card {
-	images := card.Images
-	if len(card.CardFaces) > 0 && card.CardFaces[0].Images.Small != "" {
-		images = card.CardFaces[0].Images
+		scryfallIds[i] = id
 	}
-	return Card{
-		card.ScryfallId,
-		card.Name,
-		card.ManaCost,
-		card.SetName,
-		strings.ToUpper(card.Set),
-		card.CollectorNumber,
-		card.MultiverseIds,
-		card.Type,
-		card.Rarity,
-		card.Power,
-		card.Toughness,
-		CardImageUrls{
-			images.Small,
-			images.Normal,
-			images.Large,
-		},
-		card.Prices,
-	}
+
+	return scryfallIds, nil
 }
 
-func toCards(cards []scryfallCard) []Card {
-	result := make([]Card, len(cards))
-	for i, card := range cards {
-		result[i] = toCard(card)
-	}
-	return result
-}
-
-func ToScryfallIds(amounts []CardAmountPreview) []ScryfallIdentifier {
+func ToScryfallIds(amounts []CardAmountPreview) uuid.UUIDs {
 	uniqIds := map[uuid.UUID]any{}
 
 	for _, deposit := range amounts {
 		uniqIds[deposit.ScryfallId] = nil
 	}
 
-	ids := make([]ScryfallIdentifier, len(uniqIds))
+	ids := make(uuid.UUIDs, len(uniqIds))
 	i := 0
 
 	for id := range uniqIds {
-		ids[i] = ScryfallIdentifier{Id: id}
+		ids[i] = id
 		i += 1
 	}
 

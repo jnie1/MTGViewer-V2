@@ -1,99 +1,110 @@
 package containers
 
 import (
+	"context"
 	"errors"
+	"maps"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
 var ErrNegativeWithdrawal = errors.New("negative withdrawal amount specified")
+var ErrExpectedScryfallId = errors.New("expected scryfall id uuid")
 var ErrInsufficientDeposits = errors.New("unsufficient cards in containers to fullfill request")
 
-func ResolveExtraIdentifiers(withdrawals ContainerWithdrawals) error {
-	identifierOptions := map[int]cards.CardIdentifier{}
-	extraIds := []cards.CardIdentifier{}
-
-	for _, targets := range withdrawals {
-		for _, target := range targets {
-			if target.Card == nil {
-				return ErrUnknownCardIdentifier
-			}
-
-			if _, ok := target.Card.(ScryfallIdentifier); ok {
-				continue
-			}
-
-			copy := target.Card.Copy()
-
-			var key int
-			switch copy.(type) {
-			case cards.NameSet:
-				key = 3
-			case cards.SetCollectorNumber:
-				key = 2
-			case cards.MultiverseIdentifier:
-			case cards.ScryfallIdentifier:
-			default:
-				key = 1
-			}
-
-			// last one wins, intentional
-			identifierOptions[key] = copy
-			extraIds = append(extraIds, copy)
-		}
-	}
-
-	if len(extraIds) == 0 {
-		return nil
-	}
-
-	results, err := cards.FetchCollection(extraIds)
-	if err != nil {
-		return err
-	}
-
-	// hacky way to remap cards back to source id, just get all unique id types per card
-	scryfallIdMappings := make(map[cards.CardIdentifier]uuid.UUID, len(results)*len(identifierOptions))
-
-	for _, card := range results {
-		for _, converter := range identifierOptions {
-			if id, err := converter.Convert(card); err == nil {
-				scryfallIdMappings[id] = card.ScryfallId
-			}
-		}
-	}
+func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) error {
+	multiverseIds := map[int]uuid.UUID{}
+	setCollectors := map[cards.SetCollectorNumber]uuid.UUID{}
+	nameSets := map[cards.NameSet]uuid.UUID{}
 
 	for _, targets := range withdrawals {
 		for i := range targets {
-			target := targets[i]
-			if target.Card == nil {
-				return ErrUnknownCardIdentifier
+			switch t := targets[i].Card.(type) {
+			case cards.MultiverseIdObj:
+				multiverseIds[t.MultiverseId] = uuid.Nil
+
+			case cards.SetCollectorNumber:
+				setCollectors[t] = uuid.Nil
+
+			case cards.NameSet:
+				nameSets[t] = uuid.Nil
+
+			case cards.ScryfallIdObj:
+			default:
+				return cards.ErrUnknownCardIdentifier
 			}
-			copy := target.Card.Copy()
-			if scryfallId, ok := scryfallIdMappings[copy]; ok {
-				targets[i] = CardIdentifierAmount{
-					Card:   ScryfallIdentifier{Id: scryfallId},
-					Amount: target.Amount,
+		}
+	}
+
+	if len(multiverseIds) > 0 {
+		keys := slices.Collect(maps.Keys(multiverseIds))
+		cardIds, err := cards.FetchIdsByMultiverseId(ctx, keys)
+		if err != nil {
+			return err
+		}
+		for _, card := range cardIds {
+			multiverseIds[card.MultiverseId] = card.ScryfallId
+		}
+	}
+
+	if len(setCollectors) > 0 {
+		keys := slices.Collect(maps.Keys(setCollectors))
+		cardIds, err := cards.FetchIdsBySetCollector(ctx, keys)
+		if err != nil {
+			return err
+		}
+		for _, card := range cardIds {
+			setCollectors[card.SetCollectorNumber()] = card.ScryfallId
+		}
+
+	}
+
+	if len(nameSets) > 0 {
+		keys := slices.Collect(maps.Keys(nameSets))
+		cardIds, err := cards.FetchIdsByNameSet(ctx, keys)
+		if err != nil {
+			return err
+		}
+		for _, card := range cardIds {
+			nameSets[card.NameSet()] = card.ScryfallId
+		}
+	}
+
+	for _, targets := range withdrawals {
+		for i, target := range targets {
+			switch t := target.Card.(type) {
+			case cards.MultiverseIdObj:
+				if scryfallId := multiverseIds[t.MultiverseId]; scryfallId != uuid.Nil {
+					targets[i] = CardIdentifierAmount{scryfallId, target.Amount}
 				}
+			case cards.SetCollectorNumber:
+				if scryfallId := setCollectors[t]; scryfallId != uuid.Nil {
+					targets[i] = CardIdentifierAmount{scryfallId, target.Amount}
+				}
+			case cards.NameSet:
+				if scryfallId := nameSets[t]; scryfallId != uuid.Nil {
+					targets[i] = CardIdentifierAmount{scryfallId, target.Amount}
+				}
+			case cards.ScryfallIdObj:
+				targets[i] = CardIdentifierAmount{t.ScryfallId, target.Amount}
+			default:
+				return cards.ErrUnknownCardIdentifier
 			}
+
 		}
 	}
 
 	return nil
 }
 
-type depositKey struct {
-	ContainerId int
-	ScryfallId  uuid.UUID
-}
-
 func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDepositPreview) ([]ContainerChanges, error) {
 	changes := []ContainerChanges{}
-	amountsByContainers := map[depositKey]int{}
+	amountsByContainers := map[ContainerCard]int{}
 
 	for _, deposit := range deposits {
-		key := depositKey{deposit.ContainerId, deposit.ScryfallId}
+		key := ContainerCard{deposit.ContainerId, deposit.ScryfallId}
 		amountsByContainers[key] = deposit.Amount
 	}
 
@@ -105,17 +116,17 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 				return nil, ErrNegativeWithdrawal
 			}
 
-			scryfallId, ok := withdrawal.Card.(ScryfallIdentifier)
+			id, ok := withdrawal.Card.(uuid.UUID)
 			if !ok {
-				return nil, ErrUnknownCardIdentifier
+				return nil, ErrExpectedScryfallId
 			}
 
-			key := depositKey{containerId, scryfallId.Id}
+			key := ContainerCard{containerId, id}
 			if amountsByContainers[key]-withdrawal.Amount < 0 {
 				return nil, ErrInsufficientDeposits
 			}
 
-			requests = append(requests, CardRequest{scryfallId.Id, -withdrawal.Amount})
+			requests = append(requests, CardRequest{id, -withdrawal.Amount})
 		}
 
 		changes = append(changes, ContainerChanges{containerId, requests})
@@ -125,19 +136,24 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 }
 
 func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
-	uniqIds := map[ScryfallIdentifier]bool{}
+	uniqIds := map[uuid.UUID]any{}
 	for _, targets := range withdrawals {
 		for _, target := range targets {
-			if scryfallId, ok := target.Card.(ScryfallIdentifier); ok {
-				uniqIds[scryfallId] = true
+			switch t := target.Card.(type) {
+			case cards.ScryfallIdObj:
+				uniqIds[t.ScryfallId] = nil
+			case uuid.UUID:
+				uniqIds[t] = nil
 			}
 		}
 	}
+
 	identifiers := make(uuid.UUIDs, len(uniqIds))
 	i := 0
-	for scryfallId := range uniqIds {
-		identifiers[i] = scryfallId.Id
+	for id := range uniqIds {
+		identifiers[i] = id
 		i += 1
 	}
+
 	return identifiers
 }

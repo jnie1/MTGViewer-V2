@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
 	"github.com/jnie1/MTGViewer-V2/transactions"
@@ -57,8 +56,10 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
-	matches, err := cards.FetchCollection(scryfallIds)
+	matches, err := cards.FetchCollection(ctx, scryfallIds)
+
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -104,20 +105,38 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
-	matches, err := cards.FetchCollection(scryfallIds)
+
+	matches, err := cards.FetchCollection(ctx, scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	result, err := cards.FindCheapCards(matches, amounts, maxPrice)
+	prices, err := cards.FetchPrices(ctx, scryfallIds, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	cheapCards := containers.FindCheapCandidates(matches, prices, maxPrice)
+	deposits, err := containers.SearchDeposits(cheapCards)
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	changes := containers.TranslatePrune(deposits, maxCopies)
+	preview, err := containers.PreviewPrune(changes, matches, prices)
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, preview)
 }
 
 func applyPrune(c *gin.Context) {
@@ -151,31 +170,30 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
-	results, err := cards.FetchCollection(scryfallIds)
+
+	matches, err := cards.FetchCollection(ctx, scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cheapCards, err := cards.FindCheapCards(results, amounts, maxPrice)
+	prices, err := cards.FetchPrices(ctx, scryfallIds, maxPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cheapIds := make(uuid.UUIDs, len(cheapCards))
-	for i, card := range cheapCards {
-		cheapIds[i] = card.ScryfallId
-	}
+	cheapCards := containers.FindCheapCandidates(matches, prices, maxPrice)
+	deposits, err := containers.SearchDeposits(cheapCards)
 
-	matches, err := containers.SearchDeposits(cheapIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	changes := containers.TranslatePrune(matches, maxCopies)
+	changes := containers.TranslatePrune(deposits, maxCopies)
 
 	if err := containers.UpdateDeposits(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)

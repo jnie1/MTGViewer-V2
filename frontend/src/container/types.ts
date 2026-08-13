@@ -2,7 +2,7 @@ import type { ICard } from '@/cards/types';
 
 export interface ICardContainer {
   containerId: string;
-  containerName: string;
+  name: string;
   amount: number;
 }
 export interface ICardContainerMatch {
