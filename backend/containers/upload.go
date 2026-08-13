@@ -175,7 +175,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		}
 		for _, card := range cardIds {
 			if amount, ok := multiverseIds[card.MultiverseId]; ok {
-				requests = append(requests, CardRequest{card.ScryfallId, amount})
+				requests = append(requests, CardRequest{card.ScryfallId, card.OracleId, amount})
 			}
 		}
 	}
@@ -188,7 +188,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		}
 		for _, card := range cardIds {
 			if amount, ok := setCollectors[card.SetCollectorNumber()]; ok {
-				requests = append(requests, CardRequest{card.ScryfallId, amount})
+				requests = append(requests, CardRequest{card.ScryfallId, card.OracleId, amount})
 			}
 		}
 	}
@@ -201,7 +201,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		}
 		for _, card := range cardIds {
 			if amount, ok := nameSets[card.NameSet()]; ok {
-				requests = append(requests, CardRequest{card.ScryfallId, amount})
+				requests = append(requests, CardRequest{card.ScryfallId, card.OracleId, amount})
 			}
 		}
 	}

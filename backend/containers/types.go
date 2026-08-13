@@ -69,6 +69,7 @@ type CardPrunePreview struct {
 
 type CardRequest struct {
 	ScryfallId uuid.UUID
+	OracleId   uuid.UUID
 	Delta      int
 }
 
@@ -125,8 +126,10 @@ func CompareRemaining(a, b ContainerAllocation) int {
 
 func mergeCardRequestsChecked(requests []CardRequest) ([]CardRequest, bool) {
 	cardCounter := map[uuid.UUID]int{}
+	oracleIds := map[uuid.UUID]uuid.UUID{}
 	for _, request := range requests {
 		cardCounter[request.ScryfallId] = cardCounter[request.ScryfallId] + request.Delta
+		oracleIds[request.ScryfallId] = request.OracleId
 	}
 
 	if len(cardCounter) == len(requests) {
@@ -138,7 +141,7 @@ func mergeCardRequestsChecked(requests []CardRequest) ([]CardRequest, bool) {
 	i := 0
 
 	for cardId, delta := range cardCounter {
-		mergedRequests[i] = CardRequest{cardId, delta}
+		mergedRequests[i] = CardRequest{cardId, oracleIds[cardId], delta}
 		i += 1
 	}
 

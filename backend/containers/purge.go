@@ -62,7 +62,7 @@ func TranslatePrune(matches []CardDepositPreview, targetCopies int) []ContainerC
 
 			if pruneAmount > 0 {
 				containerId := deposit.ContainerId
-				request := CardRequest{deposit.ScryfallId, -pruneAmount}
+				request := CardRequest{deposit.ScryfallId, deposit.OracleId, -pruneAmount}
 				changesByContainer[containerId] = append(changesByContainer[containerId], request)
 			}
 
