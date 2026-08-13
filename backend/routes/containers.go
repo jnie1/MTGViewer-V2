@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
 	"github.com/jnie1/MTGViewer-V2/transactions"
@@ -121,8 +120,23 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
-	result := cards.FindCheapCards(matches, amounts, prices, maxPrice)
-	c.JSON(http.StatusOK, result)
+	cheapCards := containers.FindCheapCandidates(matches, prices, maxPrice)
+	deposits, err := containers.SearchDeposits(cheapCards)
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	changes := containers.TranslatePrune(deposits, maxCopies)
+	preview, err := containers.PreviewPrune(changes, matches, prices)
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, preview)
 }
 
 func applyPrune(c *gin.Context) {
@@ -171,13 +185,9 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	cheapCards := cards.FindCheapCards(matches, amounts, prices, maxPrice)
-	cheapIds := make(uuid.UUIDs, len(cheapCards))
-	for i, card := range cheapCards {
-		cheapIds[i] = card.ScryfallId
-	}
+	cheapCards := containers.FindCheapCandidates(matches, prices, maxPrice)
+	deposits, err := containers.SearchDeposits(cheapCards)
 
-	deposits, err := containers.SearchDeposits(cheapIds)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return

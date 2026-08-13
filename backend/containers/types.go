@@ -62,6 +62,11 @@ type CardContainerMatch struct {
 	Containers []ContainerDeposit `json:"containers"`
 }
 
+type CardPrunePreview struct {
+	Total int                     `json:"total"`
+	Cards []cards.CardPriceAmount `json:"cards"`
+}
+
 type CardRequest struct {
 	ScryfallId uuid.UUID
 	Delta      int
