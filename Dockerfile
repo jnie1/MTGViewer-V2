@@ -28,7 +28,7 @@ RUN go mod download
 COPY backend ./
 
 # Compile Go binary
-RUN CGO_ENABLED=0 go build -tags=prod -ldflags="-s -w" -o app .
+RUN go build -tags=prod -ldflags="-s -w" -o app .
 
 # Runtime stage
 FROM debian:bookworm-slim
