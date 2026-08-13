@@ -223,7 +223,7 @@ func UpdateDeposits(changes []ContainerChanges) error {
 
 	for _, change := range changes {
 		for _, request := range change.Requests {
-			valueRow := fmt.Sprintf("(%d, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.Delta)
+			valueRow := fmt.Sprintf("(%d, '%s'::uuid, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.OracleId, request.Delta)
 			valueStatements = append(valueStatements, valueRow)
 		}
 	}
@@ -232,10 +232,10 @@ func UpdateDeposits(changes []ContainerChanges) error {
 
 	_, err := db.Exec(`
 		MERGE INTO card_deposits AS cd
-		USING (VALUES ` + allValues + `) AS ds (container_id, scryfall_id, delta)
+		USING (VALUES ` + allValues + `) AS ds (container_id, scryfall_id, oracle_id, delta)
 		ON cd.container_id = ds.container_id AND cd.scryfall_id = ds.scryfall_id
 		WHEN NOT MATCHED THEN
-			INSERT (container_id, scryfall_id, amount) VALUES (ds.container_id, ds.scryfall_id, ds.delta)
+			INSERT (container_id, scryfall_id, oracle_id, amount) VALUES (ds.container_id, ds.scryfall_id, ds.oracle_id, ds.delta)
 		WHEN MATCHED AND cd.amount + ds.delta > 0 THEN
 			UPDATE SET amount = cd.amount + ds.delta
 		WHEN MATCHED THEN
