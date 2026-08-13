@@ -162,7 +162,6 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 	}
 
 	return rows, nil
-
 }
 
 func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId, error) {

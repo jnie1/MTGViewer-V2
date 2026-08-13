@@ -88,7 +88,7 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT scryfall_id, amount
+		SELECT scryfall_id, oracle_id, amount
 		FROM card_deposits
 		WHERE container_id = $1`, containerId)
 
@@ -101,7 +101,7 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 
 	for row.Next() {
 		amount := cards.CardAmountPreview{}
-		if err := row.Scan(&amount.ScryfallId, &amount.Amount); err != nil {
+		if err := row.Scan(&amount.ScryfallId, &amount.OracleId, &amount.Amount); err != nil {
 			return nil, err
 		}
 
@@ -115,9 +115,9 @@ func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT cd.scryfall_id, SUM(cd.amount)
+		SELECT cd.scryfall_id, cd.oracle_id, SUM(cd.amount)
 		FROM card_deposits cd 
-		GROUP BY cd.scryfall_id 
+		GROUP BY cd.scryfall_id, cd.oracle_id 
 		HAVING SUM(cd.amount) > $1;`, count)
 
 	if err != nil {
@@ -129,7 +129,7 @@ func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
 
 	for row.Next() {
 		deposit := cards.CardAmountPreview{}
-		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
+		if err := row.Scan(&deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
 
@@ -170,7 +170,7 @@ func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.amount
+		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
 		WHERE cd.scryfall_id = ANY($1)
@@ -186,7 +186,7 @@ func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 
 	for row.Next() {
 		deposit := CardDepositPreview{}
-		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.Amount); err != nil {
+		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
 

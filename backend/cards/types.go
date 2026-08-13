@@ -37,6 +37,7 @@ type CardAmount struct {
 
 type CardAmountPreview struct {
 	ScryfallId uuid.UUID
+	OracleId   uuid.UUID
 	Amount     int
 }
 
