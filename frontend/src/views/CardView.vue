@@ -14,20 +14,27 @@ defineOptions({
 });
 const matches = useRouteData<ICardContainerMatch>();
 
-const totalAvailable = computed(() => matches.containers.reduce((sum, c) => sum + c.amount, 0));
-
-function amountInCart(scryfallId: string): number {
-  const existing = cart.find((item) => item.scryfallId === scryfallId);
+function amountInCart(scryfallId: string, containerId: string): number {
+  const existing = cart.find(
+    (item) => item.scryfallId === scryfallId && item.containerId === containerId,
+  );
   return existing ? existing.amount : 0;
 }
 
-function isMaxed(scryfallId: string): boolean {
-  return amountInCart(scryfallId) >= totalAvailable.value;
+function amountInContainer(containerId: string) {
+  return matches.containers.find((container) => container.containerId === containerId);
 }
 
-function handleAddToCart(amount: number) {
-  if (isMaxed(matches.card.scryfallId)) return;
-  addToCart(matches.card.scryfallId, matches.card.name, amount, totalAvailable.value);
+function isMaxed(scryfallId: string, containerId: string): boolean {
+  const container = amountInContainer(containerId);
+  return container ? amountInCart(scryfallId, containerId) >= container.amount : false;
+}
+
+function handleAddToCart(amount: number, containerId: string) {
+  if (isMaxed(matches.card.scryfallId, containerId)) return;
+  const container = amountInContainer(containerId);
+  if (!container) return;
+  addToCart(matches.card.scryfallId, containerId, matches.card.name, amount, container.amount);
 }
 </script>
 
@@ -64,8 +71,15 @@ function handleAddToCart(amount: number) {
             <v-card-subtitle class="grid-card-subtitle"
               >Amount: {{ container.amount }}</v-card-subtitle
             >
-            <button :disabled="isMaxed(matches.card.scryfallId)" @click="handleAddToCart(1)">
-              {{ isMaxed(matches.card.scryfallId) ? 'Max in cart' : 'add to cart' }}
+            <button
+              :disabled="isMaxed(matches.card.scryfallId, container.containerId)"
+              @click="handleAddToCart(1, container.containerId)"
+            >
+              {{
+                amountInCart(matches.card.scryfallId, container.containerId) > 0
+                  ? `${amountInCart(matches.card.scryfallId, container.containerId)} in cart`
+                  : 'add to cart'
+              }}
             </button>
           </v-card>
         </div>

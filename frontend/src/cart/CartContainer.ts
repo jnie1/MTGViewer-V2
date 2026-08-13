@@ -4,7 +4,8 @@ export interface ICartItem {
   scryfallId: string;
   name: string;
   amount: number;
-  max: number
+  max: number;
+  containerId: string;
 }
 
 const STORAGE_KEY: string = 'shoppingCardCart';
@@ -16,7 +17,8 @@ function isCartItem(value: unknown): value is ICartItem {
     typeof item.scryfallId === 'string' &&
     typeof item.name === 'string' &&
     typeof item.amount === 'number' &&
-    typeof item.max === 'number'
+    typeof item.max === 'number' &&
+    typeof item.containerId === 'string'
   );
 }
 
@@ -41,31 +43,53 @@ watch(
   (value) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   },
-  { deep: true }
+  { deep: true },
 );
 
-export function removeFromCart(scryfallId: string) {
-  const index = cart.findIndex((item) => item.scryfallId === scryfallId);
+function findItem(scryfallId: string, containerId: string) {
+  return cart.find((item) => item.scryfallId === scryfallId && item.containerId === containerId);
+}
+
+export function removeFromCart(scryfallId: string, containerId: string) {
+  const index = cart.findIndex(
+    (item) => item.scryfallId === scryfallId && item.containerId === containerId,
+  );
   if (index !== -1) cart.splice(index, 1);
 }
 
-export function addToCart(scryfallId: string, name: string, amount: number, max: number) {
-  const existing = cart.find((item) => item.scryfallId === scryfallId);
+export function addToCart(
+  scryfallId: string,
+  containerId: string,
+  name: string,
+  amount: number,
+  max: number,
+) {
+  const existing = findItem(scryfallId, containerId);
   if (existing) {
     existing.amount = Math.min(existing.amount + amount, max);
     existing.max = max; // keep max in sync in case data refreshed
   } else {
-    cart.push({ scryfallId, name, amount: Math.min(amount, max), max });
+    cart.push({
+      scryfallId,
+      name,
+      amount: Math.min(amount, max),
+      max,
+      containerId,
+    });
   }
 }
 
-export function updateAmount(scryfallId: string, newAmount: number) {
-  const existing = cart.find((item) => item.scryfallId === scryfallId);
+export function updateAmount(scryfallId: string, containerId: string, newAmount: number) {
+  const existing = findItem(scryfallId, containerId);
   if (!existing) return;
 
   if (newAmount <= 0) {
-    removeFromCart(scryfallId);
+    removeFromCart(scryfallId, containerId);
   } else {
     existing.amount = Math.min(newAmount, existing.max);
   }
+}
+
+export function removeAllCards() {
+  cart.splice(0);
 }

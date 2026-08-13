@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { updateAmount, cart, removeFromCart } from '@/cart/CartContainer';
+import { updateAmount, cart, removeFromCart, removeAllCards } from '@/cart/CartContainer';
 
 </script>
 
@@ -14,18 +14,19 @@ import { updateAmount, cart, removeFromCart } from '@/cart/CartContainer';
         </router-link>
 
         <div class="qty-controls">
-          <button @click="updateAmount(item.scryfallId, item.amount - 1)">−</button>
+          <button @click="updateAmount(item.scryfallId, item.containerId, item.amount - 1)">−</button>
           <span>{{ item.amount }}</span>
           <button
             :disabled="item.amount >= item.max"
-            @click="updateAmount(item.scryfallId, item.amount + 1)"
+            @click="updateAmount(item.scryfallId, item.containerId, item.amount + 1)"
           >
             +
           </button>
         </div>
-        <button @click="removeFromCart(item.scryfallId)">Remove</button>
+        <button @click="removeFromCart(item.scryfallId, item.containerId)">Remove</button>
       </li>
     </ul>
+    <button v-if="cart.length > 0" @click="removeAllCards">Clear All</button>
   </main>
 </template>
 
