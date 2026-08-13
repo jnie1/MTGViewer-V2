@@ -127,5 +127,17 @@ func PreviewPrune(changes []ContainerChanges, fullCards []cards.Card, prices []c
 		total += amount
 	}
 
+	slices.SortFunc(previewCards, func(a, b cards.CardPriceAmount) int {
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare != 0 {
+			return nameCompare
+		}
+		setCompare := strings.Compare(a.Set, b.Set)
+		if setCompare != 0 {
+			return setCompare
+		}
+		return cmp.Compare(a.Price, b.Price)
+	})
+
 	return CardPrunePreview{total, previewCards}, nil
 }
