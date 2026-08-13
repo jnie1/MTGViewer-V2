@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import CardImage from '@/cards/CardImage.vue';
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/container/types';
 import { addToCart, cart } from '@/cart/CartContainer';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
@@ -13,6 +17,16 @@ defineOptions({
 });
 const matches = useRouteData<ICardContainerMatch>();
 
+function amountInContainer(containerId: string) {
+  return matches.containers.find((container) => container.containerId === containerId);
+}
+
+function printAmountInContainer(containerId: string, scryfallId: string): number {
+  const container = amountInContainer(containerId);
+  const print = container?.prints.find((p) => p.scryfallId === scryfallId);
+  return print ? print.amount : 0;
+}
+
 function amountInCart(scryfallId: string, containerId: string): number {
   const existing = cart.find(
     (item) => item.scryfallId === scryfallId && item.containerId === containerId,
@@ -20,41 +34,40 @@ function amountInCart(scryfallId: string, containerId: string): number {
   return existing ? existing.amount : 0;
 }
 
-function amountInContainer(containerId: string) {
-  return matches.containers.find((container) => container.containerId === containerId);
-}
-
 function isMaxed(scryfallId: string, containerId: string): boolean {
-  const container = amountInContainer(containerId);
-  return container ? amountInCart(scryfallId, containerId) >= container.amount : false;
+  const max = printAmountInContainer(containerId, scryfallId);
+  return amountInCart(scryfallId, containerId) >= max;
 }
 
-function handleAddToCart(amount: number, containerId: string) {
-  if (isMaxed(matches.card.scryfallId, containerId)) return;
-  const container = amountInContainer(containerId);
-  if (!container) return;
-  addToCart(matches.card.scryfallId, containerId, matches.card.name, amount, container.amount);
+function handleAddToCart(scryfallId: string, amount: number, containerId: string) {
+  const max = printAmountInContainer(containerId, scryfallId);
+  if (max === 0 || isMaxed(scryfallId, containerId)) return;
+  addToCart(scryfallId, containerId, matches.card.name, amount, max);
 }
 </script>
 
 <template>
   <main class="card-view">
-    <div>
-      <card-image :card="matches.card" highlight />
+    <div class="card-top">
+      <div>
+        <card-image :card="matches.card" highlight />
+      </div>
+      <v-card width="300" min-height="100" density="comfortable" :loading="!matches">
+        <v-card-item>
+          <v-card-title>{{ matches.card.name }}</v-card-title>
+          <v-card-subtitle v-if="matches?.card.manaCost">{{
+            matches.card.manaCost
+          }}</v-card-subtitle>
+        </v-card-item>
+        <v-card-text>
+          <p>{{ matches.card.type }}</p>
+          <p>{{ capitalize(matches.card.rarity) }}</p>
+          <p v-if="matches.card.power || matches.card?.toughness">
+            {{ matches.card.power }} / {{ matches.card.toughness }}
+          </p>
+        </v-card-text>
+      </v-card>
     </div>
-    <v-card width="300" min-height="100" density="comfortable" :loading="!matches">
-      <v-card-item>
-        <v-card-title>{{ matches.card.name }}</v-card-title>
-        <v-card-subtitle v-if="matches?.card.manaCost">{{ matches.card.manaCost }}</v-card-subtitle>
-      </v-card-item>
-      <v-card-text>
-        <p>{{ matches.card.type }}</p>
-        <p>{{ capitalize(matches.card.rarity) }}</p>
-        <p v-if="matches.card.power || matches.card?.toughness">
-          {{ matches.card.power }} / {{ matches.card.toughness }}
-        </p>
-      </v-card-text>
-    </v-card>
     <v-container>
       <div class="grid-table">
         <div
@@ -63,24 +76,34 @@ function handleAddToCart(amount: number, containerId: string) {
           class="grid-card-link"
         >
           <v-card class="grid-card" elevation="2">
-            <router-link
-              class="grid-card-title"
-              :to="{ name: 'container', params: { containerId: container.containerId } }"
-              >{{ container.name }}</router-link
-            >
-            <v-card-subtitle class="grid-card-subtitle"
-              >Amount: {{ container.amount }}</v-card-subtitle
-            >
-            <button
-              :disabled="isMaxed(matches.card.scryfallId, container.containerId)"
-              @click="handleAddToCart(1, container.containerId)"
-            >
-              {{
-                amountInCart(matches.card.scryfallId, container.containerId) > 0
-                  ? `${amountInCart(matches.card.scryfallId, container.containerId)} in cart`
-                  : 'add to cart'
-              }}
-            </button>
+            <div class="grid-card-text">
+              <router-link
+                class="grid-card-title"
+                :to="{ name: 'container', params: { containerId: container.containerId } }"
+                >{{ container.name }}</router-link
+              >
+              <v-card-subtitle class="grid-card-subtitle"
+                >Amount: {{ container.amount }}</v-card-subtitle
+              >
+              <ul class="print-list">
+                <li v-for="print in container.prints" :key="print.scryfallId" class="print-row">
+                  <v-card-subtitle class="grid-card-subtitle">
+                    {{ print.scryfallId }} — {{ print.amount }}
+                  </v-card-subtitle>
+                  <button
+                    class="add-to-cart"
+                    :disabled="isMaxed(print.scryfallId, container.containerId)"
+                    @click="handleAddToCart(print.scryfallId, 1, container.containerId)"
+                  >
+                    {{
+                      amountInCart(print.scryfallId, container.containerId) > 0
+                        ? `${amountInCart(print.scryfallId, container.containerId)} in cart`
+                        : 'add to cart'
+                    }}
+                  </button>
+                </li>
+              </ul>
+            </div>
           </v-card>
         </div>
       </div>
@@ -91,18 +114,17 @@ function handleAddToCart(amount: number, containerId: string) {
 <style lang="css" scoped>
 .card-view {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 40px;
   padding: 12px 0;
 }
 
 .grid-table {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 1rem;
-  justify-items: center;
 }
 
 .grid-card-link {
@@ -111,17 +133,22 @@ function handleAddToCart(amount: number, containerId: string) {
   color: inherit;
   gap: 0.75rem;
   min-height: 100%;
-  width: 80%;
-  max-width: 336px;
+  width: 100%;
+}
+
+.grid-card-link:hover .print-list{
+  display: block;
 }
 
 .grid-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
   min-height: 100%;
   width: 100%;
-  max-width: 336px;
+  padding: 0 1rem;
 }
 
 .grid-card-title {
@@ -134,5 +161,48 @@ function handleAddToCart(amount: number, containerId: string) {
   font-weight: 300;
   padding-bottom: 0.5rem;
   font-weight: bold;
+}
+
+.card-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+.grid-card-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.add-to-cart {
+  color: #333;
+  background-color: #f0f0f0;
+  transition: color 0.2s ease;
+  margin-left: auto;
+}
+
+.add-to-cart:hover {
+  color: #ff5722;
+}
+
+.print-select {
+  margin-top: 12px;
+}
+
+.print-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  display: none;
+}
+.print-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 </style>

@@ -35,8 +35,8 @@ type CardAmount struct {
 }
 
 type CardAmountPreview struct {
-	ScryfallId uuid.UUID
-	Amount     int
+	ScryfallId uuid.UUID `json:"scryfallId"`
+	Amount     int       `json:"amount"`
 }
 
 type CardPricePreview struct {
