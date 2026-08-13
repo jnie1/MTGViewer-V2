@@ -3,6 +3,8 @@ import CardImage from '@/cards/CardImage.vue';
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/container/types';
+import { addToCart, cart } from '@/cart/CartContainer';
+
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     const { scryfallId } = to.params;
@@ -10,6 +12,29 @@ defineOptions({
   },
 });
 const matches = useRouteData<ICardContainerMatch>();
+
+function amountInCart(scryfallId: string, containerId: string): number {
+  const existing = cart.find(
+    (item) => item.scryfallId === scryfallId && item.containerId === containerId,
+  );
+  return existing ? existing.amount : 0;
+}
+
+function amountInContainer(containerId: string) {
+  return matches.containers.find((container) => container.containerId === containerId);
+}
+
+function isMaxed(scryfallId: string, containerId: string): boolean {
+  const container = amountInContainer(containerId);
+  return container ? amountInCart(scryfallId, containerId) >= container.amount : false;
+}
+
+function handleAddToCart(amount: number, containerId: string) {
+  if (isMaxed(matches.card.scryfallId, containerId)) return;
+  const container = amountInContainer(containerId);
+  if (!container) return;
+  addToCart(matches.card.scryfallId, containerId, matches.card.name, amount, container.amount);
+}
 </script>
 
 <template>
@@ -32,19 +57,32 @@ const matches = useRouteData<ICardContainerMatch>();
     </v-card>
     <v-container>
       <div class="grid-table">
-        <router-link
+        <div
           v-for="container in matches.containers"
           :key="container.containerId"
-          :to="{ name: 'container', params: { containerId: container.containerId } }"
           class="grid-card-link"
         >
           <v-card class="grid-card" elevation="2">
-            <v-card-title class="grid-card-title">{{ container.name }}</v-card-title>
+            <router-link
+              class="grid-card-title"
+              :to="{ name: 'container', params: { containerId: container.containerId } }"
+              >{{ container.name }}</router-link
+            >
             <v-card-subtitle class="grid-card-subtitle"
               >Amount: {{ container.amount }}</v-card-subtitle
             >
+            <button
+              :disabled="isMaxed(matches.card.scryfallId, container.containerId)"
+              @click="handleAddToCart(1, container.containerId)"
+            >
+              {{
+                amountInCart(matches.card.scryfallId, container.containerId) > 0
+                  ? `${amountInCart(matches.card.scryfallId, container.containerId)} in cart`
+                  : 'add to cart'
+              }}
+            </button>
           </v-card>
-        </router-link>
+        </div>
       </div>
     </v-container>
   </main>
