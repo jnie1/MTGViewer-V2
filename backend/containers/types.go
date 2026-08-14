@@ -226,6 +226,24 @@ func FilterCards(fullCards []cards.Card, deposits []CardDepositPreview) []cards.
 	return matches
 }
 
+func ToScryfallIds(deposits []CardDepositPreview) uuid.UUIDs {
+	uniqIds := map[uuid.UUID]any{}
+
+	for _, deposit := range deposits {
+		uniqIds[deposit.ScryfallId] = nil
+	}
+
+	ids := make(uuid.UUIDs, len(uniqIds))
+	i := 0
+
+	for id := range uniqIds {
+		ids[i] = id
+		i += 1
+	}
+
+	return ids
+}
+
 func JoinCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {
 	depositAmounts := make([]CardDeposit, len(deposits))
 	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))

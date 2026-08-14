@@ -112,28 +112,32 @@ func GetAmounts(ctx context.Context, containerId int) ([]cards.CardAmountPreview
 	return amounts, nil
 }
 
-func FindExcessAmounts(ctx context.Context, count int) ([]cards.CardAmountPreview, error) {
+func FindExcessDeposits(ctx context.Context, count int) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.QueryContext(ctx, `
-		SELECT cd.scryfall_id, cd.oracle_id, SUM(cd.amount)
-		FROM card_deposits cd 
-		GROUP BY cd.scryfall_id, cd.oracle_id 
-		HAVING SUM(cd.amount) > $1;`, count)
+		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
+		FROM card_deposits cd
+		JOIN containers AS c ON cd.container_id = c.container_id
+		WHERE cd.oracle_id IN (
+			SELECT DISTINCT cd2.oracle_id
+			FROM card_deposits cd2
+			GROUP BY cd2.oracle_id
+			HAVING SUM(cd2.amount) > $1
+		);`, count)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-	deposits := []cards.CardAmountPreview{}
+	deposits := []CardDepositPreview{}
 
 	for row.Next() {
-		deposit := cards.CardAmountPreview{}
+		deposit := CardDepositPreview{}
 		if err := row.Scan(&deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
-
 		deposits = append(deposits, deposit)
 	}
 
@@ -252,7 +256,7 @@ func DeleteContainer(ctx context.Context, containerId int) error {
 	return err
 }
 
-func FindEmptyOracleIds(ctx context.Context) (uuid.UUIDs, error) {
+func FindMissingOracleIds(ctx context.Context) (uuid.UUIDs, error) {
 	db := database.Instance()
 
 	row, err := db.QueryContext(ctx, `

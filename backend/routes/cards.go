@@ -210,7 +210,7 @@ func searchCards(c *gin.Context) {
 func refreshOracle(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	ids, err := containers.FindEmptyOracleIds(ctx)
+	ids, err := containers.FindMissingOracleIds(ctx)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

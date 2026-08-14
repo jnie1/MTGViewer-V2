@@ -10,25 +10,36 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func FindCheapCandidates(options []cards.Card, prices []cards.CardPricePreview, price float64) uuid.UUIDs {
+func FindCheapCandidates(options []CardDepositPreview, fullCards []cards.Card, prices []cards.CardPricePreview, price float64) []CardDepositPreview {
+	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
+	for _, card := range fullCards {
+		cardsById[card.ScryfallId] = card
+	}
+
 	pricesByCard := make(map[uuid.UUID]float64, len(prices))
 	for _, price := range prices {
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	belowPrice := uuid.UUIDs{}
+	belowPrice := []CardDepositPreview{}
 
-	for _, card := range options {
-		if strings.Contains(card.Type, "Land") {
-			continue
-		}
-		cardPrice, ok := pricesByCard[card.ScryfallId]
+	for _, deposit := range options {
+		card, ok := cardsById[deposit.ScryfallId]
 		if !ok {
 			continue
 		}
 
+		cardPrice, ok := pricesByCard[deposit.ScryfallId]
+		if !ok {
+			continue
+		}
+
+		if strings.Contains(card.Type, "Land") {
+			continue
+		}
+
 		if cardPrice <= price {
-			belowPrice = append(belowPrice, card.ScryfallId)
+			belowPrice = append(belowPrice, deposit)
 		}
 	}
 
