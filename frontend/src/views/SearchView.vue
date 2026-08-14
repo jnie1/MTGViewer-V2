@@ -69,7 +69,9 @@ watch(
     } catch (e) {
       if (!isAbortError(e)) throw e;
     } finally {
-      isLoading.value = false;
+      if (!abortController.signal.aborted) {
+        isLoading.value = false;
+      }
     }
   },
   { immediate: true },

@@ -35,9 +35,12 @@ func (container *ContainerPreview) Container() ContainerPreview {
 	return *container
 }
 
+type PrintsPreview []cards.CardAmountImagePreview
+
 type ContainerDeposit struct {
 	ContainerPreview
-	Amount int `json:"amount"`
+	Amount        int `json:"amount"`
+	PrintsPreview `json:"prints"`
 }
 
 type ContainerDelta struct {
@@ -52,8 +55,8 @@ type CardDeposit struct {
 }
 
 type CardDepositPreview struct {
-	ContainerId   int
-	ContainerName string
+	ContainerId   int    `json:"containerId"`
+	ContainerName string `json:"containerName"`
 	cards.CardAmountPreview
 }
 
@@ -179,17 +182,46 @@ func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDep
 		boxAmounts[deposit.ContainerId] = boxAmounts[deposit.ContainerId] + deposit.Amount
 	}
 
+	printsInBox := map[int][]cards.CardAmountImagePreview{}
+	for _, deposit := range cardDeposits {
+		image, err := cards.ImageURLs(deposit.ScryfallId)
+		if err != nil {
+			printsInBox[deposit.ContainerId] = append(printsInBox[deposit.ContainerId], cards.CardAmountImagePreview{
+				ScryfallId: deposit.ScryfallId,
+				Images:     cards.CardImageURLs{},
+				Amount:     deposit.Amount,
+			})
+		} else {
+			printsInBox[deposit.ContainerId] = append(printsInBox[deposit.ContainerId], cards.CardAmountImagePreview{
+				ScryfallId: deposit.ScryfallId,
+				Images:     image,
+				Amount:     deposit.Amount,
+			})
+		}
+	}
+
 	boxDeposits := make([]ContainerDeposit, len(boxAmounts))
 
 	for _, card := range cardDeposits {
 		if amount, ok := boxAmounts[card.ContainerId]; ok {
 			idx := len(boxDeposits) - len(boxAmounts)
-			deposit := ContainerDeposit{
-				ContainerPreview{card.ContainerId, card.ContainerName},
-				amount,
+			if prints, ok := printsInBox[card.ContainerId]; ok {
+				deposit := ContainerDeposit{
+					ContainerPreview{card.ContainerId, card.ContainerName},
+					amount,
+					prints,
+				}
+				boxDeposits[idx] = deposit
+				delete(boxAmounts, card.ContainerId)
+			} else {
+				deposit := ContainerDeposit{
+					ContainerPreview{card.ContainerId, card.ContainerName},
+					amount,
+					[]cards.CardAmountImagePreview{},
+				}
+				boxDeposits[idx] = deposit
+				delete(boxAmounts, card.ContainerId)
 			}
-			boxDeposits[idx] = deposit
-			delete(boxAmounts, card.ContainerId)
 		}
 	}
 
