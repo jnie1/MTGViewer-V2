@@ -176,11 +176,11 @@ func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId,
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 
-	vals := make([]string, len(multiverseIds))
+	vals := make([]any, len(multiverseIds))
 	for i, id := range multiverseIds {
 		vals[i] = fmt.Sprintf("%d", id)
 	}
-	whereValues(q, "ci.multiverseId", vals)
+	q.WhereIn("ci.multiverseId", vals)
 
 	q.Select(
 		"ci.scryfallId",
@@ -266,17 +266,34 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 	return rows, err
 }
 
-func FetchScryfallIds(ctx context.Context, name string) ([]ScryfallIdObj, error) {
+func FetchIdsByOracleId(ctx context.Context, oracleIds uuid.UUIDs) ([]CardId, error) {
+	if len(oracleIds) == 0 {
+		return nil, nil
+	}
+
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers"); err != nil {
 		return nil, err
 	}
 
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-	q.WhereEq("c.name", name)
-	q.Select("ci.scryfallId")
 
-	var rows []ScryfallIdObj
+	vals := make([]any, len(oracleIds))
+	for i, id := range oracleIds {
+		vals[i] = id
+	}
+	q.WhereIn("ci.scryfallOracleId", vals)
+
+	q.Select(
+		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
+		"c.name",
+		"c.setCode",
+		"c.number AS collectorNumber",
+		"CAST(ci.multiverseId AS INTEGER) AS multiverseId",
+	)
+
+	var rows []CardId
 	sql, params := q.Build()
 	err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...)
 
@@ -291,11 +308,6 @@ func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "all_prices_today"); err != nil {
 		return nil, err
 	}
-
-	// TODO: check if needed
-	// if _, err := sdk.Refresh(ctx); err != nil {
-	// 	return nil, err
-	// }
 
 	q := priceDBQuery("p", price)
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = p.uuid")
