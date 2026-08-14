@@ -266,40 +266,6 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 	return rows, err
 }
 
-func FetchIdsByOracleId(ctx context.Context, oracleIds uuid.UUIDs) ([]CardId, error) {
-	if len(oracleIds) == 0 {
-		return nil, nil
-	}
-
-	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers"); err != nil {
-		return nil, err
-	}
-
-	q := db.NewSQLBuilder("cards AS c")
-	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-
-	vals := make([]any, len(oracleIds))
-	for i, id := range oracleIds {
-		vals[i] = id
-	}
-	q.WhereIn("ci.scryfallOracleId", vals)
-
-	q.Select(
-		"ci.scryfallId",
-		"ci.scryfallOracleId AS oracleId",
-		"c.name",
-		"c.setCode",
-		"c.number AS collectorNumber",
-		"CAST(ci.multiverseId AS INTEGER) AS multiverseId",
-	)
-
-	var rows []CardId
-	sql, params := q.Build()
-	err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...)
-
-	return rows, err
-}
-
 func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]CardPricePreview, error) {
 	if len(scryfallIds) == 0 {
 		return nil, nil

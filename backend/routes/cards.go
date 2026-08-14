@@ -39,7 +39,6 @@ func fetchCollection(c *gin.Context) {
 func fetchCard(c *gin.Context) {
 	cardId := c.Param("card")
 	scryfallId, err := uuid.Parse(cardId)
-
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -47,13 +46,13 @@ func fetchCard(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	cardFound, err := cards.FetchCard(ctx, scryfallId)
-
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	deposits, err := containers.SearchDepositsByOracleId(ctx, []uuid.UUID{cardFound.OracleId})
+	oracleId := []uuid.UUID{cardFound.OracleId}
+	deposits, err := containers.SearchDepositsByOracleId(ctx, oracleId)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -228,8 +227,13 @@ func refreshOracle(c *gin.Context) {
 	}
 
 	objs := make([]cards.ScryfallOracleObj, len(matches))
-	for i, card := range objs {
+	for i, card := range matches {
 		objs[i] = cards.ScryfallOracleObj{ScryfallId: card.ScryfallId, OracleId: card.OracleId}
+	}
+
+	if len(objs) == 0 {
+		c.Status(http.StatusInternalServerError)
+		return
 	}
 
 	err = containers.UpdateOracleIds(ctx, objs)

@@ -201,8 +201,8 @@ func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDep
 
 func FilterCards(fullCards []cards.Card, deposits []CardDepositPreview) []cards.Card {
 	oracleIds := map[uuid.UUID]any{}
-	for _, card := range fullCards {
-		oracleIds[card.OracleId] = nil
+	for _, deposit := range deposits {
+		oracleIds[deposit.OracleId] = nil
 	}
 
 	matches := make([]cards.Card, len(oracleIds))

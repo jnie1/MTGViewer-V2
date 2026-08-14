@@ -221,20 +221,19 @@ func UpdateContainer(ctx context.Context, containerId int, container ContainerEn
 
 func UpdateDeposits(ctx context.Context, changes []ContainerChanges) error {
 	db := database.Instance()
-	valueStatements := []string{}
 
+	vals := make([]string, len(changes))
 	for _, change := range changes {
-		for _, request := range change.Requests {
-			valueRow := fmt.Sprintf("(%d, '%s'::uuid, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.OracleId, request.Delta)
-			valueStatements = append(valueStatements, valueRow)
+		for i, request := range change.Requests {
+			vals[i] = fmt.Sprintf("(%d, '%s'::uuid, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.OracleId, request.Delta)
 		}
 	}
 
-	allValues := strings.Join(valueStatements, ", ")
+	values := strings.Join(vals, ", ")
 
 	_, err := db.ExecContext(ctx, `
 		MERGE INTO card_deposits AS cd
-		USING (VALUES `+allValues+`) AS ds (container_id, scryfall_id, oracle_id, delta)
+		USING (VALUES `+values+`) AS ds (container_id, scryfall_id, oracle_id, delta)
 		ON cd.container_id = ds.container_id AND cd.scryfall_id = ds.scryfall_id
 		WHEN NOT MATCHED THEN
 			INSERT (container_id, scryfall_id, oracle_id, amount) VALUES (ds.container_id, ds.scryfall_id, ds.oracle_id, ds.delta)
@@ -289,7 +288,6 @@ func UpdateOracleIds(ctx context.Context, oracleIds []cards.ScryfallOracleObj) e
 	for i, id := range oracleIds {
 		vals[i] = fmt.Sprintf("('%s'::uuid,'%s'::uuid)", id.ScryfallId, id.OracleId)
 	}
-
 	values := strings.Join(vals, ", ")
 
 	_, err := db.ExecContext(ctx, `
@@ -297,7 +295,7 @@ func UpdateOracleIds(ctx context.Context, oracleIds []cards.ScryfallOracleObj) e
 		USING (VALUES `+values+`) AS os (scryfall_id, oracle_id)
 		ON cd.scryfall_id = os.scryfall_id
 		WHEN MATCHED THEN
-			UPDATE SET cd.oracle_id = os.oracle_id;`)
+			UPDATE SET oracle_id = os.oracle_id;`)
 
 	return err
 }
