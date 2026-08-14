@@ -53,18 +53,7 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	objs, err := cards.FetchScryfallIds(ctx, cardFound.Name)
-	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
-		return
-	}
-
-	ids := make(uuid.UUIDs, len(objs))
-	for i, obj := range objs {
-		ids[i] = obj.ScryfallId
-	}
-
-	deposits, err := containers.SearchDeposits(ids)
+	deposits, err := containers.SearchDepositsByOracleId(ctx, []uuid.UUID{cardFound.OracleId})
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -186,6 +175,7 @@ func searchCards(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	cardPage, err := cards.SearchCards(cardQuery, pageNum)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -197,28 +187,21 @@ func searchCards(c *gin.Context) {
 		return
 	}
 
-	cardIds := make(uuid.UUIDs, len(cardPage.Cards))
+	oracleIds := make(uuid.UUIDs, len(cardPage.Cards))
 	for i, card := range cardPage.Cards {
-		cardIds[i] = card.ScryfallId
+		oracleIds[i] = card.OracleId
 	}
 
-	cardMatches, err := containers.MatchCards(cardIds)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	filteredCards, err := cards.FilterCards(cardPage.Cards, cardMatches)
+	cardMatches, err := containers.SearchDepositsByOracleId(ctx, oracleIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	result := cards.SearchCardPage{
-		TotalCards: cardPage.TotalCards,
-		Page:       cardPage.Page,
-		HasMore:    cardPage.HasMore,
-		Cards:      filteredCards,
+		Page:    cardPage.Page,
+		HasMore: cardPage.HasMore,
+		Cards:   containers.FilterCards(cardPage.Cards, cardMatches),
 	}
 
 	c.JSON(http.StatusOK, result)

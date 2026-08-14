@@ -199,6 +199,33 @@ func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDep
 	return boxDeposits
 }
 
+func FilterCards(fullCards []cards.Card, deposits []CardDepositPreview) []cards.Card {
+	oracleIds := map[uuid.UUID]any{}
+	for _, card := range fullCards {
+		oracleIds[card.OracleId] = nil
+	}
+
+	matches := make([]cards.Card, len(oracleIds))
+	i := 0
+
+	for _, card := range fullCards {
+		if _, ok := oracleIds[card.OracleId]; ok {
+			matches[i] = card
+			i += 1
+		}
+	}
+
+	slices.SortFunc(matches, func(a, b cards.Card) int {
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare == 0 {
+			return strings.Compare(a.Set, b.Set)
+		}
+		return nameCompare
+	})
+
+	return matches
+}
+
 func JoinCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {
 	depositAmounts := make([]CardDeposit, len(deposits))
 	cardMap := make(map[uuid.UUID]cards.Card, len(fullCards))

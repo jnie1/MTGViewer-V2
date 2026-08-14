@@ -140,33 +140,6 @@ func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
 	return deposits, nil
 }
 
-func MatchCards(scryfallIds uuid.UUIDs) (uuid.UUIDs, error) {
-	db := database.Instance()
-
-	row, err := db.Query(`
-		SELECT DISTINCT cd.scryfall_id
-		FROM card_deposits AS cd
-		WHERE cd.scryfall_id = ANY($1);`, pq.Array(scryfallIds))
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer row.Close()
-	matches := uuid.UUIDs{}
-
-	for row.Next() {
-		var cardId uuid.UUID
-		if err := row.Scan(&cardId); err != nil {
-			return nil, err
-		}
-
-		matches = append(matches, cardId)
-	}
-
-	return matches, nil
-}
-
 func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
@@ -174,15 +147,13 @@ func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
-		WHERE cd.scryfall_id = ANY($1)
-		ORDER BY c.sort_order;`, pq.Array(scryfallIds))
+		WHERE cd.scryfall_id = ANY($1);`, pq.Array(scryfallIds))
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-
 	deposits := []CardDepositPreview{}
 
 	for row.Next() {
@@ -190,7 +161,33 @@ func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
+		deposits = append(deposits, deposit)
+	}
 
+	return deposits, nil
+}
+
+func SearchDepositsByOracleId(ctx context.Context, oracleIds uuid.UUIDs) ([]CardDepositPreview, error) {
+	db := database.Instance()
+
+	row, err := db.QueryContext(ctx, `
+		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
+		FROM card_deposits AS cd
+		JOIN containers AS c ON cd.container_id = c.container_id
+		WHERE cd.oracle_id = ANY($1);`, pq.Array(oracleIds))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	deposits := []CardDepositPreview{}
+
+	for row.Next() {
+		deposit := CardDepositPreview{}
+		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
+			return nil, err
+		}
 		deposits = append(deposits, deposit)
 	}
 
@@ -202,7 +199,7 @@ func AddContainer(container ContainerEntry) error {
 
 	_, err := db.Exec(`
 		INSERT INTO containers (container_name, capacity, deletion_mark) 
-		VALUES ($1, $2, FALSE)`, container.Name, container.Capacity)
+		VALUES ($1, $2, FALSE);`, container.Name, container.Capacity)
 
 	return err
 }

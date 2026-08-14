@@ -96,7 +96,6 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	}
 
 	searchParams := url.Values{}
-	searchParams.Add("unique", "prints")
 	searchParams.Add("page", strconv.Itoa(page))
 	searchParams.Add("q", query)
 
@@ -138,10 +137,9 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	}
 
 	searchPage := SearchCardPage{
-		TotalCards: result.TotalCards,
-		Cards:      toCards(result.Cards),
-		Page:       page,
-		HasMore:    result.HasMore,
+		Cards:   toCards(result.Cards),
+		Page:    page,
+		HasMore: result.HasMore,
 	}
 
 	return searchPage, nil
