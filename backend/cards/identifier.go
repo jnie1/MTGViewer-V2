@@ -13,7 +13,7 @@ type ScryfallIdObj struct {
 
 type ScryfallOracleObj struct {
 	ScryfallId uuid.UUID `json:"scryfallId"`
-	OraclId    uuid.UUID `json:"oracleId"`
+	OracleId   uuid.UUID `json:"oracleId"`
 }
 
 type MultiverseIdObj struct {

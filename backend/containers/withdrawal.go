@@ -63,7 +63,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 		for _, card := range cardIds {
 			multiverseIds[card.MultiverseId] = cards.ScryfallOracleObj{
 				ScryfallId: card.ScryfallId,
-				OraclId:    card.OracleId,
+				OracleId:   card.OracleId,
 			}
 		}
 	}
@@ -77,7 +77,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 		for _, card := range cardIds {
 			setCollectors[card.SetCollectorNumber()] = cards.ScryfallOracleObj{
 				ScryfallId: card.ScryfallId,
-				OraclId:    card.OracleId,
+				OracleId:   card.OracleId,
 			}
 		}
 
@@ -92,7 +92,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 		for _, card := range cardIds {
 			nameSets[card.NameSet()] = cards.ScryfallOracleObj{
 				ScryfallId: card.ScryfallId,
-				OraclId:    card.OracleId,
+				OracleId:   card.OracleId,
 			}
 		}
 	}
@@ -102,7 +102,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 			switch t := target.Card.(type) {
 			case cards.ScryfallIdObj:
 				if oracleId := scryfallIds[t.ScryfallId]; oracleId != uuid.Nil {
-					obj := cards.ScryfallOracleObj{ScryfallId: t.ScryfallId, OraclId: oracleId}
+					obj := cards.ScryfallOracleObj{ScryfallId: t.ScryfallId, OracleId: oracleId}
 					targets[i] = CardIdentifierAmount{obj, target.Amount}
 				}
 			case cards.MultiverseIdObj:
@@ -154,7 +154,7 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 				return nil, ErrInsufficientDeposits
 			}
 
-			requests = append(requests, CardRequest{obj.ScryfallId, obj.OraclId, -withdrawal.Amount})
+			requests = append(requests, CardRequest{obj.ScryfallId, obj.OracleId, -withdrawal.Amount})
 		}
 
 		changes = append(changes, ContainerChanges{containerId, requests})

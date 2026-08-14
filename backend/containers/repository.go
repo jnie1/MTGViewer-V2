@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -239,7 +240,7 @@ func UpdateDeposits(changes []ContainerChanges) error {
 		WHEN MATCHED AND cd.amount + ds.delta > 0 THEN
 			UPDATE SET amount = cd.amount + ds.delta
 		WHEN MATCHED THEN
-			DELETE`)
+			DELETE;`)
 
 	return err
 }
@@ -249,7 +250,53 @@ func DeleteContainer(containerId int) error {
 
 	_, err := db.Exec(`
 		DELETE FROM containers
-		WHERE container_id = $1`, containerId)
+		WHERE container_id = $1;`, containerId)
+
+	return err
+}
+
+func FindEmptyOracleIds(ctx context.Context) (uuid.UUIDs, error) {
+	db := database.Instance()
+
+	row, err := db.QueryContext(ctx, `
+		SELECT DISTINCT cd.scryfall_id
+		FROM card_deposits cd
+		WHERE cd.oracle_id = $1;`, uuid.Nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	ids := uuid.UUIDs{}
+
+	for row.Next() {
+		id := uuid.UUID{}
+		if err := row.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
+func UpdateOracleIds(ctx context.Context, oracleIds []cards.ScryfallOracleObj) error {
+	db := database.Instance()
+
+	vals := make([]string, len(oracleIds))
+	for i, id := range oracleIds {
+		vals[i] = fmt.Sprintf("('%s'::uuid,'%s'::uuid)", id.ScryfallId, id.OracleId)
+	}
+
+	values := strings.Join(vals, ", ")
+
+	_, err := db.ExecContext(ctx, `
+		MERGE INTO card_deposits AS cd
+		USING (VALUES `+values+`) AS os (scryfall_id, oracle_id)
+		ON cd.scryfall_id = os.scryfall_id
+		WHEN MATCHED THEN
+			UPDATE SET cd.oracle_id = os.oracle_id;`)
 
 	return err
 }
