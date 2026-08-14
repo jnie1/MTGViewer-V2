@@ -72,6 +72,8 @@ func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 	q.Join("JOIN sets AS s ON s.code = c.setCode")
+	// hack for now, just get the first side only
+	q.Where("c.side IS NULL OR c.side = $1", "a")
 	q.WhereEq("ci.scryfallId", scryfallId)
 	q.Select(
 		"ci.scryfallId",
@@ -122,6 +124,9 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 	q.Join("JOIN sets AS s ON s.code = c.setCode")
+
+	// hack for now, just get the first side only
+	q.Where("c.side IS NULL OR c.side = $1", "a")
 
 	// TODO: maybe chunking?
 	vals := make([]any, len(scryfallIds))
@@ -176,6 +181,9 @@ func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId,
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 
+	// hack for now, just get the first side only
+	q.Where("c.side IS NULL OR c.side = $1", "a")
+
 	vals := make([]any, len(multiverseIds))
 	for i, id := range multiverseIds {
 		vals[i] = fmt.Sprintf("%d", id)
@@ -210,6 +218,9 @@ func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNum
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 
+	// hack for now, just get the first side only
+	q.Where("c.side IS NULL OR c.side = $1", "a")
+
 	tups := make([][2]string, len(setCollectors))
 	for i, sn := range setCollectors {
 		tups[i] = [2]string{sn.Set, sn.CollectorNumber}
@@ -243,6 +254,9 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
+
+	// hack for now, just get the first side only
+	q.Where("c.side IS NULL OR c.side = $1", "a")
 
 	tups := make([][2]string, len(nameSets))
 	for i, ns := range nameSets {
