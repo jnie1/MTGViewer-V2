@@ -135,7 +135,7 @@ func FindExcessDeposits(ctx context.Context, count int) ([]CardDepositPreview, e
 
 	for row.Next() {
 		deposit := CardDepositPreview{}
-		if err := row.Scan(&deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
+		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
 		deposits = append(deposits, deposit)
