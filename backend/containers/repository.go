@@ -12,14 +12,14 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func GetAllocations() ([]ContainerAllocation, error) {
+func GetAllocations(ctx context.Context) ([]ContainerAllocation, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT c.container_id, COALESCE(SUM(cd.amount), 0) AS used, c.capacity
 		FROM containers c
 		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
-		GROUP BY c.container_id`)
+		GROUP BY c.container_id;`)
 
 	if err != nil {
 		return nil, err
@@ -40,15 +40,15 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	return allocations, nil
 }
 
-func GetContainers() ([]Container, error) {
+func GetContainers(ctx context.Context) ([]Container, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT c.container_id, c.container_name,  COALESCE(SUM(cd.amount), 0) AS used, c.capacity
 		FROM containers c
 		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
 		GROUP BY c.container_id
-		ORDER BY sort_order`)
+		ORDER BY sort_order;`)
 
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func GetContainers() ([]Container, error) {
 	return containers, nil
 }
 
-func GetContainer(containerId int) (ContainerEntry, error) {
+func GetContainer(ctx context.Context, containerId int) (ContainerEntry, error) {
 	db := database.Instance()
 
 	row := db.QueryRow(`
@@ -85,13 +85,13 @@ func GetContainer(containerId int) (ContainerEntry, error) {
 	return container, err
 }
 
-func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
+func GetAmounts(ctx context.Context, containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT scryfall_id, oracle_id, amount
 		FROM card_deposits
-		WHERE container_id = $1`, containerId)
+		WHERE container_id = $1;`, containerId)
 
 	if err != nil {
 		return nil, err
@@ -112,10 +112,10 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	return amounts, nil
 }
 
-func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
+func FindExcessAmounts(ctx context.Context, count int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT cd.scryfall_id, cd.oracle_id, SUM(cd.amount)
 		FROM card_deposits cd 
 		GROUP BY cd.scryfall_id, cd.oracle_id 
@@ -140,10 +140,10 @@ func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
 	return deposits, nil
 }
 
-func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
+func SearchDeposits(ctx context.Context, scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
@@ -194,20 +194,20 @@ func SearchDepositsByOracleId(ctx context.Context, oracleIds uuid.UUIDs) ([]Card
 	return deposits, nil
 }
 
-func AddContainer(container ContainerEntry) error {
+func AddContainer(ctx context.Context, container ContainerEntry) error {
 	db := database.Instance()
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		INSERT INTO containers (container_name, capacity, deletion_mark) 
 		VALUES ($1, $2, FALSE);`, container.Name, container.Capacity)
 
 	return err
 }
 
-func UpdateContainer(containerId int, container ContainerEntry) error {
+func UpdateContainer(ctx context.Context, containerId int, container ContainerEntry) error {
 	db := database.Instance()
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		UPDATE containers
 		SET container_name = $2, capacity = $3, deletion_mark = $4
 		WHERE container_id = $1;`, containerId, container.Name, container.Capacity, container.IsDeleted)
@@ -215,7 +215,7 @@ func UpdateContainer(containerId int, container ContainerEntry) error {
 	return err
 }
 
-func UpdateDeposits(changes []ContainerChanges) error {
+func UpdateDeposits(ctx context.Context, changes []ContainerChanges) error {
 	db := database.Instance()
 	valueStatements := []string{}
 
@@ -228,9 +228,9 @@ func UpdateDeposits(changes []ContainerChanges) error {
 
 	allValues := strings.Join(valueStatements, ", ")
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		MERGE INTO card_deposits AS cd
-		USING (VALUES ` + allValues + `) AS ds (container_id, scryfall_id, oracle_id, delta)
+		USING (VALUES `+allValues+`) AS ds (container_id, scryfall_id, oracle_id, delta)
 		ON cd.container_id = ds.container_id AND cd.scryfall_id = ds.scryfall_id
 		WHEN NOT MATCHED THEN
 			INSERT (container_id, scryfall_id, oracle_id, amount) VALUES (ds.container_id, ds.scryfall_id, ds.oracle_id, ds.delta)
@@ -242,10 +242,10 @@ func UpdateDeposits(changes []ContainerChanges) error {
 	return err
 }
 
-func DeleteContainer(containerId int) error {
+func DeleteContainer(ctx context.Context, containerId int) error {
 	db := database.Instance()
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		DELETE FROM containers
 		WHERE container_id = $1;`, containerId)
 

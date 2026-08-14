@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,9 @@ import (
 )
 
 func fetchCardTransactions(c *gin.Context) {
-	result, err := transactions.GetTransactions()
+	ctx := c.Request.Context()
+	result, err := transactions.GetTransactions(ctx)
+
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -37,16 +40,16 @@ func fetchCardLogs(c *gin.Context) {
 		}
 	}
 
-	allLogs, err := getLogs(group1, group2)
+	ctx := c.Request.Context()
+	logs, err := getLogs(ctx, group1, group2)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	logs := transactions.MergeLogs(allLogs)
+	logs = transactions.MergeLogs(logs)
 	scryfallIds := transactions.ToScryfallIds(logs)
 
-	ctx := c.Request.Context()
 	matches, err := cards.FetchCollection(ctx, scryfallIds)
 
 	if err != nil {
@@ -63,15 +66,15 @@ func fetchCardLogs(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func getLogs(group1, group2 uuid.UUID) ([]transactions.CardLogPreview, error) {
+func getLogs(ctx context.Context, group1, group2 uuid.UUID) ([]transactions.CardLogPreview, error) {
 	if group2 == uuid.Nil {
-		return transactions.GetLogs(group1)
+		return transactions.GetLogs(ctx, group1)
 	}
-	logRange, err := transactions.GetTimeRange(group1, group2)
+	logRange, err := transactions.GetTimeRange(ctx, group1, group2)
 	if err != nil {
 		return nil, err
 	}
-	return transactions.GetLogsFromRange(logRange)
+	return transactions.GetLogsFromRange(ctx, logRange)
 }
 
 func AddTransactionRoutes(router gin.IRouter) {
