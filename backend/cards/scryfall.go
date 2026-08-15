@@ -17,12 +17,9 @@ const (
 )
 
 type scryfallImages struct {
-	Small   string `json:"small,omitempty"`
-	Normal  string `json:"normal,omitempty"`
-	Large   string `json:"large,omitempty"`
-	Thumb   string `json:"thumb,omitempty"`
-	Grid    string `json:"grid,omitempty"`
-	Display string `json:"display,omitempty"`
+	Small  string `json:"small,omitempty"`
+	Normal string `json:"normal,omitempty"`
+	Large  string `json:"large,omitempty"`
 }
 
 type scryfallCardFace struct {
@@ -170,9 +167,9 @@ func toCard(card scryfallCard) Card {
 		card.Power,
 		card.Toughness,
 		CardImageURLs{
-			images.Thumb,
-			images.Grid,
-			images.Display,
+			images.Small,
+			images.Normal,
+			images.Large,
 		},
 	}
 }
