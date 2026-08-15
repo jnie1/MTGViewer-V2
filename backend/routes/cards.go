@@ -224,14 +224,14 @@ func refreshOracle(c *gin.Context) {
 		return
 	}
 
+	if len(matches) == 0 {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
 	objs := make([]cards.ScryfallOracleObj, len(matches))
 	for i, card := range matches {
 		objs[i] = cards.ScryfallOracleObj{ScryfallId: card.ScryfallId, OracleId: card.OracleId}
-	}
-
-	if len(objs) == 0 {
-		c.Status(http.StatusInternalServerError)
-		return
 	}
 
 	err = containers.UpdateOracleIds(objs)
