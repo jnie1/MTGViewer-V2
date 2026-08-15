@@ -39,7 +39,6 @@ func fetchCollection(c *gin.Context) {
 func fetchCard(c *gin.Context) {
 	cardId := c.Param("card")
 	scryfallId, err := uuid.Parse(cardId)
-
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -47,24 +46,13 @@ func fetchCard(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	cardFound, err := cards.FetchCard(ctx, scryfallId)
-
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
-	objs, err := cards.FetchScryfallIds(ctx, cardFound.Name)
-	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
-		return
-	}
-
-	ids := make(uuid.UUIDs, len(objs))
-	for i, obj := range objs {
-		ids[i] = obj.ScryfallId
-	}
-
-	deposits, err := containers.SearchDeposits(ids)
+	oracleId := []uuid.UUID{cardFound.OracleId}
+	deposits, err := containers.SearchDepositsByOracleId(oracleId)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -197,31 +185,62 @@ func searchCards(c *gin.Context) {
 		return
 	}
 
-	cardIds := make(uuid.UUIDs, len(cardPage.Cards))
+	oracleIds := make(uuid.UUIDs, len(cardPage.Cards))
 	for i, card := range cardPage.Cards {
-		cardIds[i] = card.ScryfallId
+		oracleIds[i] = card.OracleId
 	}
 
-	cardMatches, err := containers.MatchCards(cardIds)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	filteredCards, err := cards.FilterCards(cardPage.Cards, cardMatches)
+	cardMatches, err := containers.SearchDepositsByOracleId(oracleIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	result := cards.SearchCardPage{
-		TotalCards: cardPage.TotalCards,
-		Page:       cardPage.Page,
-		HasMore:    cardPage.HasMore,
-		Cards:      filteredCards,
+		Page:    cardPage.Page,
+		HasMore: cardPage.HasMore,
+		Cards:   containers.FilterCards(cardPage.Cards, cardMatches),
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+func refreshOracle(c *gin.Context) {
+	ids, err := containers.FindMissingOracleIds()
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(ids) == 0 {
+		c.Status(http.StatusOK)
+		return
+	}
+
+	ctx := c.Request.Context()
+	matches, err := cards.FetchCollection(ctx, ids)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(matches) == 0 {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	objs := make([]cards.ScryfallOracleObj, len(matches))
+	for i, card := range matches {
+		objs[i] = cards.ScryfallOracleObj{ScryfallId: card.ScryfallId, OracleId: card.OracleId}
+	}
+
+	err = containers.UpdateOracleIds(objs)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 func AddCardRoutes(router gin.IRouter) {
@@ -232,4 +251,5 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", importCards)
 	group.POST("/withdraw", withdrawCards)
+	group.POST("/oracle", refreshOracle)
 }
