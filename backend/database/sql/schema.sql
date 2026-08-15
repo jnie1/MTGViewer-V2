@@ -30,5 +30,5 @@ CREATE TABLE users (
 	user_id SERIAL PRIMARY KEY,
 	email VARCHAR(128) NOT NULL,
 	password_hash TEXT NOT NULL,
-	role_string VARCHAR(32) NOT NULL
+	user_role VARCHAR(32) NOT NULL
 );
