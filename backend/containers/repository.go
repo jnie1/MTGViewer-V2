@@ -245,10 +245,11 @@ func UpdateContainer(ctx context.Context, containerId int, container ContainerEn
 func UpdateDeposits(ctx context.Context, changes []ContainerChanges) error {
 	db := database.Instance()
 
-	vals := make([]string, len(changes))
+	vals := []string{}
 	for _, change := range changes {
-		for i, request := range change.Requests {
-			vals[i] = fmt.Sprintf("(%d, '%s'::uuid, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.OracleId, request.Delta)
+		for _, request := range change.Requests {
+			val := fmt.Sprintf("(%d, '%s'::uuid, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.OracleId, request.Delta)
+			vals = append(vals, val)
 		}
 	}
 
