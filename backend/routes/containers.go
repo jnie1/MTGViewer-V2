@@ -105,8 +105,8 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
-	scryfallIds := containers.ToScryfallIds(excess)
 	ctx := c.Request.Context()
+	scryfallIds := containers.ToScryfallIds(excess)
 	matches, err := cards.FetchCollection(ctx, scryfallIds)
 
 	if err != nil {
@@ -157,15 +157,16 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
 	deposits, err := containers.FindExcessDeposits(maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
+	ctx := c.Request.Context()
 	scryfallIds := containers.ToScryfallIds(deposits)
 	matches, err := cards.FetchCollection(ctx, scryfallIds)
+
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return

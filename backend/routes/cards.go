@@ -206,7 +206,6 @@ func searchCards(c *gin.Context) {
 }
 
 func refreshOracle(c *gin.Context) {
-	ctx := c.Request.Context()
 	ids, err := containers.FindMissingOracleIds()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -218,6 +217,7 @@ func refreshOracle(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	matches, err := cards.FetchCollection(ctx, ids)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
