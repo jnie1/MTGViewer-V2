@@ -1,7 +1,6 @@
 package transactions
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -12,10 +11,10 @@ import (
 	"github.com/jnie1/MTGViewer-V2/database"
 )
 
-func GetTimeRange(ctx context.Context, group1, group2 uuid.UUID) (LogRange, error) {
+func GetTimeRange(group1, group2 uuid.UUID) (LogRange, error) {
 	db := database.Instance()
 
-	row := db.QueryRowContext(ctx, `
+	row := db.QueryRow(`
 		SELECT MIN(time) AS start, MAX(time) AS end
 		FROM transactions
 		WHERE group_id = $1 OR group_id = $2;`, group1, group2)
@@ -26,9 +25,9 @@ func GetTimeRange(ctx context.Context, group1, group2 uuid.UUID) (LogRange, erro
 	return logRange, err
 }
 
-func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
+func GetTransactions() ([]CardTransaction, error) {
 	db := database.Instance()
-	row, err := db.QueryContext(ctx, `
+	row, err := db.Query(`
 		SELECT group_id, time, SUM(amount) AS total
 		FROM transactions
 		GROUP BY group_id, time
@@ -54,9 +53,9 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 	return transactions, nil
 }
 
-func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
+func GetLogs(groupId uuid.UUID) ([]CardLogPreview, error) {
 	db := database.Instance()
-	row, err := db.QueryContext(ctx, `
+	row, err := db.Query(`
 		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
 		FROM transactions
 		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
@@ -71,9 +70,9 @@ func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
 	return getLogsFromQuery(row)
 }
 
-func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview, error) {
+func GetLogsFromRange(logRange LogRange) ([]CardLogPreview, error) {
 	db := database.Instance()
-	row, err := db.QueryContext(ctx, `
+	row, err := db.Query(`
 		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
 		FROM transactions
 		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
@@ -118,7 +117,7 @@ func getLogsFromQuery(row *sql.Rows) ([]CardLogPreview, error) {
 	return logs, nil
 }
 
-func LogCollectionChanges(ctx context.Context, changes []containers.ContainerChanges) error {
+func LogCollectionChanges(changes []containers.ContainerChanges) error {
 	groupId, err := uuid.NewRandom()
 	if err != nil {
 		return err
@@ -145,9 +144,9 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 	}
 	allValues := strings.Join(valueStatements, ", ")
 
-	_, err = db.ExecContext(ctx, `
+	_, err = db.Exec(`
 		INSERT INTO transactions (group_id, from_container_id, to_container_id, scryfall_id, amount, time)
-		VALUES `+allValues+`;`)
+		VALUES ` + allValues + `;`)
 
 	return err
 }

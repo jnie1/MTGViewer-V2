@@ -97,7 +97,7 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	allocations, err := containers.GetAllocations(ctx)
+	allocations, err := containers.GetAllocations()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -109,12 +109,12 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	if err := containers.UpdateDeposits(ctx, changes); err != nil {
+	if err := containers.UpdateDeposits(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := transactions.LogCollectionChanges(ctx, changes); err != nil {
+	if err := transactions.LogCollectionChanges(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -136,7 +136,7 @@ func withdrawCards(c *gin.Context) {
 	}
 
 	scryfallIds := containers.FindScryfallIds(withdrawals)
-	deposits, err := containers.SearchDeposits(ctx, scryfallIds)
+	deposits, err := containers.SearchDeposits(scryfallIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -148,12 +148,12 @@ func withdrawCards(c *gin.Context) {
 		return
 	}
 
-	if err := containers.UpdateDeposits(ctx, changes); err != nil {
+	if err := containers.UpdateDeposits(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := transactions.LogCollectionChanges(ctx, changes); err != nil {
+	if err := transactions.LogCollectionChanges(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
