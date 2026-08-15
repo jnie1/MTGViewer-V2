@@ -122,7 +122,7 @@ func FindExcessDeposits(count int) ([]CardDepositPreview, error) {
 			SELECT DISTINCT cd2.oracle_id
 			FROM card_deposits cd2
 			GROUP BY cd2.oracle_id
-			HAVING SUM(cd2.amount) > $1;`, count)
+			HAVING SUM(cd2.amount) > $1);`, count)
 
 	if err != nil {
 		return nil, err

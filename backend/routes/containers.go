@@ -88,13 +88,13 @@ func checkPrune(c *gin.Context) {
 	}
 
 	price := c.Query("price")
-	maxPrice, err := strconv.ParseFloat(price, 64)
+	minPrice, err := strconv.ParseFloat(price, 64)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if maxPrice <= 0.0 {
+	if minPrice <= 0.0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -114,20 +114,14 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
-	prices, err := cards.FetchPrices(ctx, scryfallIds, maxPrice)
+	prices, err := cards.FetchPrices(ctx, scryfallIds, minPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cheapCards := containers.FindCheapCandidates(excess, matches, prices, maxPrice)
-	changes := containers.TranslatePrune(cheapCards, maxCopies)
-	preview, err := containers.PreviewPrune(changes, matches, prices)
-
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
+	changes := containers.TranslatePrune(excess, matches, prices, maxCopies, minPrice)
+	preview := containers.PreviewPrune(changes, matches, prices)
 
 	c.JSON(http.StatusOK, preview)
 }
@@ -146,13 +140,13 @@ func applyPrune(c *gin.Context) {
 	}
 
 	price := c.Query("price")
-	maxPrice, err := strconv.ParseFloat(price, 64)
+	minPrice, err := strconv.ParseFloat(price, 64)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if maxPrice <= 0.0 {
+	if minPrice <= 0.0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -172,14 +166,13 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	prices, err := cards.FetchPrices(ctx, scryfallIds, maxPrice)
+	prices, err := cards.FetchPrices(ctx, scryfallIds, minPrice)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cheapCards := containers.FindCheapCandidates(deposits, matches, prices, maxPrice)
-	changes := containers.TranslatePrune(cheapCards, maxCopies)
+	changes := containers.TranslatePrune(deposits, matches, prices, maxCopies, minPrice)
 
 	if err := containers.UpdateDeposits(changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)

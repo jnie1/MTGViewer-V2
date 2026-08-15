@@ -2,7 +2,6 @@ package containers
 
 import (
 	"cmp"
-	"fmt"
 	"slices"
 	"strings"
 
@@ -10,7 +9,11 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func FindCheapCandidates(options []CardDepositPreview, fullCards []cards.Card, prices []cards.CardPricePreview, price float64) []CardDepositPreview {
+func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
+	if targetCopies < 0 {
+		return nil
+	}
+
 	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
 	for _, card := range fullCards {
 		cardsById[card.ScryfallId] = card
@@ -21,7 +24,8 @@ func FindCheapCandidates(options []CardDepositPreview, fullCards []cards.Card, p
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	belowPrice := []CardDepositPreview{}
+	belowPrice := map[uuid.UUID]CardDepositPreview{}
+	cheapOracles := map[uuid.UUID]any{}
 
 	for _, deposit := range options {
 		card, ok := cardsById[deposit.ScryfallId]
@@ -38,46 +42,56 @@ func FindCheapCandidates(options []CardDepositPreview, fullCards []cards.Card, p
 			continue
 		}
 
-		if cardPrice <= price {
-			belowPrice = append(belowPrice, deposit)
+		if cardPrice < minPrice {
+			belowPrice[deposit.ScryfallId] = deposit
+			cheapOracles[deposit.OracleId] = nil
 		}
 	}
 
-	return belowPrice
-}
+	depositsByOracle := map[uuid.UUID][]CardDepositPreview{}
 
-func TranslatePrune(matches []CardDepositPreview, targetCopies int) []ContainerChanges {
-	if targetCopies < 0 {
-		return nil
-	}
-
-	depositsByCard := map[uuid.UUID][]CardDepositPreview{}
-	for _, deposit := range matches {
-		scryfallId := deposit.ScryfallId
-		depositsByCard[scryfallId] = append(depositsByCard[scryfallId], deposit)
+	for _, deposit := range options {
+		oracleId := deposit.OracleId
+		if _, ok := belowPrice[deposit.ScryfallId]; ok {
+			depositsByOracle[oracleId] = append(depositsByOracle[oracleId], deposit)
+		} else if _, ok := cheapOracles[oracleId]; ok {
+			depositsByOracle[oracleId] = append(depositsByOracle[oracleId], deposit)
+		}
 	}
 
 	changesByContainer := map[int][]CardRequest{}
 
-	for _, deposits := range depositsByCard {
+	for _, deposits := range depositsByOracle {
 		remainingCopies := targetCopies
 
 		slices.SortFunc(deposits, func(a, b CardDepositPreview) int {
+			priceCmp := cmp.Compare(pricesByCard[a.ScryfallId], pricesByCard[b.ScryfallId])
+			if priceCmp != 0 {
+				return -priceCmp
+			}
 			// negative to sort in desc order
 			return -cmp.Compare(a.Amount, b.Amount)
 		})
 
 		for _, deposit := range deposits {
-			keepAmount := min(deposit.Amount, remainingCopies)
-			pruneAmount := deposit.Amount - keepAmount
+			cardPrice := pricesByCard[deposit.ScryfallId]
 
-			if pruneAmount > 0 {
+			if cardPrice >= minPrice {
+				replacing := min(deposit.Amount, remainingCopies)
+				remainingCopies -= replacing
+				continue
+			}
+
+			keeping := min(deposit.Amount, remainingCopies)
+			removing := deposit.Amount - keeping
+
+			if removing > 0 {
 				containerId := deposit.ContainerId
-				request := CardRequest{deposit.ScryfallId, deposit.OracleId, -pruneAmount}
+				request := CardRequest{deposit.ScryfallId, deposit.OracleId, -removing}
 				changesByContainer[containerId] = append(changesByContainer[containerId], request)
 			}
 
-			remainingCopies -= keepAmount
+			remainingCopies -= keeping
 		}
 	}
 
@@ -91,7 +105,7 @@ func TranslatePrune(matches []CardDepositPreview, targetCopies int) []ContainerC
 	return changes
 }
 
-func PreviewPrune(changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) (CardPrunePreview, error) {
+func PreviewPrune(changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) CardPrunePreview {
 	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
 	for _, card := range fullCards {
 		cardsById[card.ScryfallId] = card
@@ -121,12 +135,12 @@ func PreviewPrune(changes []ContainerChanges, fullCards []cards.Card, prices []c
 
 		card, ok := cardsById[cardId]
 		if !ok {
-			return CardPrunePreview{}, fmt.Errorf("unknown scryfall id found: %s", cardId)
+			continue
 		}
 
 		price, ok := pricesByCard[cardId]
 		if !ok {
-			return CardPrunePreview{}, fmt.Errorf("unknown scryfall id found: %s", cardId)
+			continue
 		}
 
 		cardPrice := cards.CardPriceAmount{
@@ -150,5 +164,5 @@ func PreviewPrune(changes []ContainerChanges, fullCards []cards.Card, prices []c
 		return cmp.Compare(a.Price, b.Price)
 	})
 
-	return CardPrunePreview{total, previewCards}, nil
+	return CardPrunePreview{total, previewCards}
 }
