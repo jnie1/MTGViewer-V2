@@ -5,7 +5,7 @@ async function fetchApi<T = unknown>(path: string, init?: RequestInit): Promise<
   fullPath.pathname = '/api' + fullPath.pathname;
 
   const headers: HeadersInit = { ...init?.headers, ['Accept']: 'application/json' };
-  const fullInit: RequestInit = { ...init, headers, credentials: 'omit' };
+  const fullInit: RequestInit = { ...init, headers, credentials: 'include' };
 
   const response = await fetch(fullPath, fullInit);
   if (!response.ok) {

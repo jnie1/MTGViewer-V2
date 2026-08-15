@@ -8,6 +8,8 @@ import ContainerView from '@/views/ContainerView.vue';
 import CollectionView from '@/views/CollectionView.vue';
 import SearchView from '@/views/SearchView.vue';
 import CartView from '@/views/CartView.vue';
+import LoginView from '@/views/LoginView.vue';
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -63,6 +65,11 @@ const router = createRouter({
       path: '/cart',
       name: 'cart',
       component: CartView,
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView,
     }
   ],
 });

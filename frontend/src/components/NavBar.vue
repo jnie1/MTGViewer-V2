@@ -30,6 +30,10 @@ const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0
           <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
         </router-link>
       </li>
+      <li class="auth-links">
+        <router-link to="/login">Login</router-link>
+        <router-link to="/signup">Sign up</router-link>
+      </li>
     </ul>
   </nav>
 </template>
@@ -56,5 +60,11 @@ li {
   width: 24px;
   height: 24px;
   object-fit: contain;
+}
+
+.auth-links {
+  margin-left: auto;
+  display: flex;
+  gap: 1rem;
 }
 </style>
