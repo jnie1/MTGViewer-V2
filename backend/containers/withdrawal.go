@@ -15,10 +15,11 @@ var ErrExpectedScryfallId = errors.New("expected scryfall id uuid")
 var ErrInsufficientDeposits = errors.New("unsufficient cards in containers to fullfill request")
 
 func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) error {
-	scryfallIds := map[uuid.UUID]uuid.UUID{}
 	var unknownOracle cards.ScryfallOracleObj
 
+	scryfallIds := map[uuid.UUID]cards.ScryfallOracleObj{}
 	multiverseIds := map[int]cards.ScryfallOracleObj{}
+
 	setCollectors := map[cards.SetCollectorNumber]cards.ScryfallOracleObj{}
 	nameSets := map[cards.NameSet]cards.ScryfallOracleObj{}
 
@@ -26,7 +27,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 		for i := range targets {
 			switch t := targets[i].Card.(type) {
 			case cards.ScryfallIdObj:
-				scryfallIds[t.ScryfallId] = uuid.Nil
+				scryfallIds[t.ScryfallId] = unknownOracle
 
 			case cards.MultiverseIdObj:
 				multiverseIds[t.MultiverseId] = unknownOracle
@@ -37,6 +38,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 			case cards.NameSet:
 				nameSets[t] = unknownOracle
 
+			case cards.ScryfallOracleObj:
 			default:
 				return cards.ErrUnknownCardIdentifier
 			}
@@ -50,7 +52,10 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 			return err
 		}
 		for _, card := range fullCards {
-			scryfallIds[card.ScryfallId] = card.OracleId
+			scryfallIds[card.ScryfallId] = cards.ScryfallOracleObj{
+				ScryfallId: card.ScryfallId,
+				OracleId:   card.OracleId,
+			}
 		}
 	}
 
@@ -101,8 +106,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 		for i, target := range targets {
 			switch t := target.Card.(type) {
 			case cards.ScryfallIdObj:
-				if oracleId := scryfallIds[t.ScryfallId]; oracleId != uuid.Nil {
-					obj := cards.ScryfallOracleObj{ScryfallId: t.ScryfallId, OracleId: oracleId}
+				if obj := scryfallIds[t.ScryfallId]; obj != unknownOracle {
 					targets[i] = CardIdentifierAmount{obj, target.Amount}
 				}
 			case cards.MultiverseIdObj:
@@ -117,6 +121,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 				if obj := nameSets[t]; obj != unknownOracle {
 					targets[i] = CardIdentifierAmount{obj, target.Amount}
 				}
+			case cards.ScryfallOracleObj:
 			default:
 				return cards.ErrUnknownCardIdentifier
 			}
@@ -168,8 +173,6 @@ func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
 	for _, targets := range withdrawals {
 		for _, target := range targets {
 			switch t := target.Card.(type) {
-			case uuid.UUID:
-				uniqIds[t] = nil
 			case cards.ScryfallIdObj:
 				uniqIds[t.ScryfallId] = nil
 			case cards.ScryfallOracleObj:
