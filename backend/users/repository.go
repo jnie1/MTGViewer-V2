@@ -1,10 +1,14 @@
 package users
 
-import "github.com/jnie1/MTGViewer-V2/database"
+import (
+	"context"
 
-func GetUser(email string) (UserInfo, error) {
+	"github.com/jnie1/MTGViewer-V2/database"
+)
+
+func GetUser(ctx context.Context, email string) (UserInfo, error) {
 	db := database.Instance()
-	row := db.QueryRow(`
+	row := db.QueryRowContext(ctx, `
 		SELECT name, password_hash, role
 		FROM users
 		WHERE email = $1`, email)
@@ -18,9 +22,9 @@ func GetUser(email string) (UserInfo, error) {
 	return user, nil
 }
 
-func CreateUser(user UserInfo) error {
+func CreateUser(ctx context.Context, user UserInfo) error {
 	db := database.Instance()
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		INSERT INTO users (name, email, password_hash, role)
 		VALUES ($1, $2, $3, $4)`,
 		user.Name, user.Email, user.PasswordHash, user.Role)
