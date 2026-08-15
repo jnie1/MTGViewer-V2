@@ -1,6 +1,7 @@
 package containers
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -11,10 +12,10 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func GetAllocations() ([]ContainerAllocation, error) {
+func GetAllocations(ctx context.Context) ([]ContainerAllocation, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT c.container_id, COALESCE(SUM(cd.amount), 0) AS used, c.capacity
 		FROM containers c
 		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
@@ -39,10 +40,10 @@ func GetAllocations() ([]ContainerAllocation, error) {
 	return allocations, nil
 }
 
-func GetContainers() ([]Container, error) {
+func GetContainers(ctx context.Context) ([]Container, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT c.container_id, c.container_name,  COALESCE(SUM(cd.amount), 0) AS used, c.capacity
 		FROM containers c
 		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
@@ -67,10 +68,10 @@ func GetContainers() ([]Container, error) {
 	return containers, nil
 }
 
-func GetContainer(containerId int) (ContainerEntry, error) {
+func GetContainer(ctx context.Context, containerId int) (ContainerEntry, error) {
 	db := database.Instance()
 
-	row := db.QueryRow(`
+	row := db.QueryRowContext(ctx, `
 		SELECT c.container_name, COALESCE(SUM(cd.amount), 0) AS used, c.capacity, c.deletion_mark
 		FROM containers c
 		LEFT JOIN card_deposits cd ON c.container_id = cd.container_id
@@ -84,10 +85,10 @@ func GetContainer(containerId int) (ContainerEntry, error) {
 	return container, err
 }
 
-func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
+func GetAmounts(ctx context.Context, containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT scryfall_id, oracle_id, amount
 		FROM card_deposits
 		WHERE container_id = $1`, containerId)
@@ -111,10 +112,10 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	return amounts, nil
 }
 
-func FindExcessDeposits(count int) ([]CardDepositPreview, error) {
+func FindExcessDeposits(ctx context.Context, count int) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits cd
 		JOIN containers AS c ON cd.container_id = c.container_id
@@ -142,10 +143,10 @@ func FindExcessDeposits(count int) ([]CardDepositPreview, error) {
 	return deposits, nil
 }
 
-func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
+func SearchDeposits(ctx context.Context, scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
@@ -169,10 +170,10 @@ func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	return deposits, nil
 }
 
-func SearchDepositsByOracleId(oracleIds uuid.UUIDs) ([]CardDepositPreview, error) {
+func SearchDepositsByOracleId(ctx context.Context, oracleIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
@@ -196,20 +197,20 @@ func SearchDepositsByOracleId(oracleIds uuid.UUIDs) ([]CardDepositPreview, error
 	return deposits, nil
 }
 
-func AddContainer(container ContainerEntry) error {
+func AddContainer(ctx context.Context, container ContainerEntry) error {
 	db := database.Instance()
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		INSERT INTO containers (container_name, capacity, deletion_mark) 
 		VALUES ($1, $2, FALSE);`, container.Name, container.Capacity)
 
 	return err
 }
 
-func UpdateContainer(containerId int, container ContainerEntry) error {
+func UpdateContainer(ctx context.Context, containerId int, container ContainerEntry) error {
 	db := database.Instance()
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		UPDATE containers
 		SET container_name = $2, capacity = $3, deletion_mark = $4
 		WHERE container_id = $1;`, containerId, container.Name, container.Capacity, container.IsDeleted)
@@ -217,7 +218,7 @@ func UpdateContainer(containerId int, container ContainerEntry) error {
 	return err
 }
 
-func UpdateDeposits(changes []ContainerChanges) error {
+func UpdateDeposits(ctx context.Context, changes []ContainerChanges) error {
 	db := database.Instance()
 
 	vals := make([]string, len(changes))
@@ -229,9 +230,9 @@ func UpdateDeposits(changes []ContainerChanges) error {
 
 	values := strings.Join(vals, ", ")
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		MERGE INTO card_deposits AS cd
-		USING (VALUES ` + values + `) AS ds (container_id, scryfall_id, oracle_id, delta)
+		USING (VALUES `+values+`) AS ds (container_id, scryfall_id, oracle_id, delta)
 		ON cd.container_id = ds.container_id AND cd.scryfall_id = ds.scryfall_id
 		WHEN NOT MATCHED THEN
 			INSERT (container_id, scryfall_id, oracle_id, amount) VALUES (ds.container_id, ds.scryfall_id, ds.oracle_id, ds.delta)
@@ -243,20 +244,20 @@ func UpdateDeposits(changes []ContainerChanges) error {
 	return err
 }
 
-func DeleteContainer(containerId int) error {
+func DeleteContainer(ctx context.Context, containerId int) error {
 	db := database.Instance()
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		DELETE FROM containers
 		WHERE container_id = $1;`, containerId)
 
 	return err
 }
 
-func FindMissingOracleIds() (uuid.UUIDs, error) {
+func FindMissingOracleIds(ctx context.Context) (uuid.UUIDs, error) {
 	db := database.Instance()
 
-	row, err := db.Query(`
+	row, err := db.QueryContext(ctx, `
 		SELECT DISTINCT cd.scryfall_id
 		FROM card_deposits cd
 		WHERE cd.oracle_id = $1;`, uuid.Nil)
@@ -279,7 +280,7 @@ func FindMissingOracleIds() (uuid.UUIDs, error) {
 	return ids, nil
 }
 
-func UpdateOracleIds(oracleIds []cards.ScryfallOracleObj) error {
+func UpdateOracleIds(ctx context.Context, oracleIds []cards.ScryfallOracleObj) error {
 	db := database.Instance()
 
 	vals := make([]string, len(oracleIds))
@@ -288,9 +289,9 @@ func UpdateOracleIds(oracleIds []cards.ScryfallOracleObj) error {
 	}
 	values := strings.Join(vals, ", ")
 
-	_, err := db.Exec(`
+	_, err := db.ExecContext(ctx, `
 		MERGE INTO card_deposits AS cd
-		USING (VALUES ` + values + `) AS os (scryfall_id, oracle_id)
+		USING (VALUES `+values+`) AS os (scryfall_id, oracle_id)
 		ON cd.scryfall_id = os.scryfall_id
 		WHEN MATCHED THEN
 			UPDATE SET oracle_id = os.oracle_id;`)

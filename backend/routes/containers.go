@@ -11,7 +11,8 @@ import (
 )
 
 func fetchContainerPreviews(c *gin.Context) {
-	result, err := containers.GetContainers()
+	ctx := c.Request.Context()
+	result, err := containers.GetContainers(ctx)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -28,7 +29,8 @@ func fetchContainer(c *gin.Context) {
 		return
 	}
 
-	result, err := containers.GetContainer(containerId)
+	ctx := c.Request.Context()
+	result, err := containers.GetContainer(ctx, containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -45,7 +47,8 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
-	amounts, err := containers.GetAmounts(containerId)
+	ctx := c.Request.Context()
+	amounts, err := containers.GetAmounts(ctx, containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -56,7 +59,6 @@ func fetchContainerCards(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
 	scryfallIds := cards.ToScryfallIds(amounts)
 	matches, err := cards.FetchCollection(ctx, scryfallIds)
 
@@ -99,13 +101,13 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
-	excess, err := containers.FindExcessDeposits(maxCopies)
+	ctx := c.Request.Context()
+	excess, err := containers.FindExcessDeposits(ctx, maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	ctx := c.Request.Context()
 	scryfallIds := containers.ToScryfallIds(excess)
 	matches, err := cards.FetchCollection(ctx, scryfallIds)
 
@@ -151,13 +153,13 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	deposits, err := containers.FindExcessDeposits(maxCopies)
+	ctx := c.Request.Context()
+	deposits, err := containers.FindExcessDeposits(ctx, maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	ctx := c.Request.Context()
 	scryfallIds := containers.ToScryfallIds(deposits)
 	matches, err := cards.FetchCollection(ctx, scryfallIds)
 
@@ -174,12 +176,12 @@ func applyPrune(c *gin.Context) {
 
 	changes := containers.TranslatePrune(deposits, matches, prices, maxCopies, minPrice)
 
-	if err := containers.UpdateDeposits(changes); err != nil {
+	if err := containers.UpdateDeposits(ctx, changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := transactions.LogCollectionChanges(changes); err != nil {
+	if err := transactions.LogCollectionChanges(ctx, changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

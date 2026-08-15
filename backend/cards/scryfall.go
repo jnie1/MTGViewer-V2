@@ -1,6 +1,7 @@
 package cards
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -76,7 +77,7 @@ func imageURL(scryfallId uuid.UUID, size, face, ext string) (string, error) {
 	return url.JoinPath(scryfallImageUrl, size, face, string(fileName[0]), string(fileName[1]), fileName)
 }
 
-func SearchCards(query string, page int) (SearchCardPage, error) {
+func SearchCards(ctx context.Context, query string, page int) (SearchCardPage, error) {
 	query, err := url.QueryUnescape(query)
 	if err != nil {
 		return SearchCardPage{}, err
@@ -97,7 +98,7 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	searchParams.Add("q", query)
 
 	searchUrl.RawQuery = searchParams.Encode()
-	req, err := http.NewRequest("GET", searchUrl.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", searchUrl.String(), nil)
 
 	if err != nil {
 		return SearchCardPage{}, err
