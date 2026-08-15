@@ -11,6 +11,11 @@ type ScryfallIdObj struct {
 	ScryfallId uuid.UUID `json:"scryfallId"`
 }
 
+type ScryfallOracleObj struct {
+	ScryfallId uuid.UUID `json:"scryfallId"`
+	OracleId   uuid.UUID `json:"oracleId"`
+}
+
 type MultiverseIdObj struct {
 	MultiverseId int `json:"multiverseId"`
 }
@@ -27,7 +32,8 @@ type NameSet struct {
 
 type CardId struct {
 	ScryfallId      uuid.UUID `json:"scryfallId"`
-	Name            string    `json:"name" `
+	OracleId        uuid.UUID `json:"oracleId"`
+	Name            string    `json:"name"`
 	SetCode         string    `json:"setCode"`
 	CollectorNumber string    `json:"collectorNumber"`
 	MultiverseId    int       `json:"multiverseId,omitempty"`

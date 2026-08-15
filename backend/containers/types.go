@@ -72,6 +72,7 @@ type CardPrunePreview struct {
 
 type CardRequest struct {
 	ScryfallId uuid.UUID
+	OracleId   uuid.UUID
 	Delta      int
 }
 
@@ -128,8 +129,10 @@ func CompareRemaining(a, b ContainerAllocation) int {
 
 func mergeCardRequestsChecked(requests []CardRequest) ([]CardRequest, bool) {
 	cardCounter := map[uuid.UUID]int{}
+	oracleIds := map[uuid.UUID]uuid.UUID{}
 	for _, request := range requests {
 		cardCounter[request.ScryfallId] = cardCounter[request.ScryfallId] + request.Delta
+		oracleIds[request.ScryfallId] = request.OracleId
 	}
 
 	if len(cardCounter) == len(requests) {
@@ -141,7 +144,7 @@ func mergeCardRequestsChecked(requests []CardRequest) ([]CardRequest, bool) {
 	i := 0
 
 	for cardId, delta := range cardCounter {
-		mergedRequests[i] = CardRequest{cardId, delta}
+		mergedRequests[i] = CardRequest{cardId, oracleIds[cardId], delta}
 		i += 1
 	}
 
@@ -226,6 +229,51 @@ func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDep
 	}
 
 	return boxDeposits
+}
+
+func FilterCards(fullCards []cards.Card, deposits []CardDepositPreview) []cards.Card {
+	oracleIds := map[uuid.UUID]any{}
+	for _, deposit := range deposits {
+		oracleIds[deposit.OracleId] = nil
+	}
+
+	matches := make([]cards.Card, len(oracleIds))
+	i := 0
+
+	for _, card := range fullCards {
+		if _, ok := oracleIds[card.OracleId]; ok {
+			matches[i] = card
+			i += 1
+		}
+	}
+
+	slices.SortFunc(matches, func(a, b cards.Card) int {
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare == 0 {
+			return strings.Compare(a.Set, b.Set)
+		}
+		return nameCompare
+	})
+
+	return matches
+}
+
+func ToScryfallIds(deposits []CardDepositPreview) uuid.UUIDs {
+	uniqIds := map[uuid.UUID]any{}
+
+	for _, deposit := range deposits {
+		uniqIds[deposit.ScryfallId] = nil
+	}
+
+	ids := make(uuid.UUIDs, len(uniqIds))
+	i := 0
+
+	for id := range uniqIds {
+		ids[i] = id
+		i += 1
+	}
+
+	return ids
 }
 
 func JoinCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {

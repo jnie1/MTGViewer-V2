@@ -28,8 +28,8 @@ func FetchRandomCard(ctx context.Context) (Card, error) {
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 	q.Join("JOIN sets AS s ON s.code = c.setCode")
 	q.Select(
-		"c.uuid",
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.manaCost",
 		"c.name",
 		"s.name AS set",
@@ -72,9 +72,12 @@ func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 	q.Join("JOIN sets AS s ON s.code = c.setCode")
+	// hack for now, just get the first side only
+	q.Where("(c.side = $1 OR c.side IS NULL)", "a")
 	q.WhereEq("ci.scryfallId", scryfallId)
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.manaCost",
 		"c.name",
 		"s.name AS set",
@@ -122,6 +125,9 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 	q.Join("JOIN sets AS s ON s.code = c.setCode")
 
+	// hack for now, just get the first side only
+	q.Where("(c.side = $1 OR c.side IS NULL)", "a")
+
 	// TODO: maybe chunking?
 	vals := make([]any, len(scryfallIds))
 	for i, id := range scryfallIds {
@@ -131,6 +137,7 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.manaCost",
 		"c.name",
 		"s.name AS set",
@@ -160,7 +167,6 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 	}
 
 	return rows, nil
-
 }
 
 func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId, error) {
@@ -175,14 +181,18 @@ func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId,
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 
-	vals := make([]string, len(multiverseIds))
+	// hack for now, just get the first side only
+	q.Where("(c.side = $1 OR c.side IS NULL)", "a")
+
+	vals := make([]any, len(multiverseIds))
 	for i, id := range multiverseIds {
 		vals[i] = fmt.Sprintf("%d", id)
 	}
-	whereValues(q, "ci.multiverseId", vals)
+	q.WhereIn("ci.multiverseId", vals)
 
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.name",
 		"c.setCode",
 		"c.number AS collectorNumber",
@@ -208,6 +218,9 @@ func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNum
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 
+	// hack for now, just get the first side only
+	q.Where("(c.side = $1 OR c.side IS NULL)", "a")
+
 	tups := make([][2]string, len(setCollectors))
 	for i, sn := range setCollectors {
 		tups[i] = [2]string{sn.Set, sn.CollectorNumber}
@@ -216,6 +229,7 @@ func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNum
 
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.name",
 		"c.setCode",
 		"c.number AS collectorNumber",
@@ -241,6 +255,9 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 	q := db.NewSQLBuilder("cards AS c")
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
 
+	// hack for now, just get the first side only
+	q.Where("(c.side = $1 OR c.side IS NULL)", "a")
+
 	tups := make([][2]string, len(nameSets))
 	for i, ns := range nameSets {
 		tups[i] = [2]string{ns.Name, ns.Set}
@@ -249,6 +266,7 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 
 	q.Select(
 		"ci.scryfallId",
+		"ci.scryfallOracleId AS oracleId",
 		"c.name",
 		"c.setCode",
 		"c.number AS collectorNumber",
@@ -256,23 +274,6 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 	)
 
 	var rows []CardId
-	sql, params := q.Build()
-	err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...)
-
-	return rows, err
-}
-
-func FetchScryfallIds(ctx context.Context, name string) ([]ScryfallIdObj, error) {
-	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers"); err != nil {
-		return nil, err
-	}
-
-	q := db.NewSQLBuilder("cards AS c")
-	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-	q.WhereEq("c.name", name)
-	q.Select("ci.scryfallId")
-
-	var rows []ScryfallIdObj
 	sql, params := q.Build()
 	err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...)
 
@@ -288,11 +289,6 @@ func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]
 		return nil, err
 	}
 
-	// TODO: check if needed
-	// if _, err := sdk.Refresh(ctx); err != nil {
-	// 	return nil, err
-	// }
-
 	q := priceDBQuery("p", price)
 	q.Join("JOIN card_identifiers AS ci ON ci.uuid = p.uuid")
 
@@ -306,7 +302,7 @@ func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]
 
 	q.Where(fmt.Sprintf("p.date = (%s)", maxDate))
 	q.WhereIn("ci.scryfallId", vals)
-	q.Select("ci.scryfallId", "p.price AS price")
+	q.Select("ci.scryfallId", "p.price")
 
 	var rows []CardPricePreview
 	sql, params := q.Build()

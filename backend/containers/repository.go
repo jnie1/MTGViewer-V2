@@ -88,7 +88,7 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT scryfall_id, amount
+		SELECT scryfall_id, oracle_id, amount
 		FROM card_deposits
 		WHERE container_id = $1`, containerId)
 
@@ -101,7 +101,7 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 
 	for row.Next() {
 		amount := cards.CardAmountPreview{}
-		if err := row.Scan(&amount.ScryfallId, &amount.Amount); err != nil {
+		if err := row.Scan(&amount.ScryfallId, &amount.OracleId, &amount.Amount); err != nil {
 			return nil, err
 		}
 
@@ -111,40 +111,44 @@ func GetAmounts(containerId int) ([]cards.CardAmountPreview, error) {
 	return amounts, nil
 }
 
-func FindExcessAmounts(count int) ([]cards.CardAmountPreview, error) {
+func FindExcessDeposits(count int) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT cd.scryfall_id, SUM(cd.amount)
-		FROM card_deposits cd 
-		GROUP BY cd.scryfall_id 
-		HAVING SUM(cd.amount) > $1;`, count)
+		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
+		FROM card_deposits cd
+		JOIN containers AS c ON cd.container_id = c.container_id
+		WHERE cd.oracle_id IN (
+			SELECT DISTINCT cd2.oracle_id
+			FROM card_deposits cd2
+			GROUP BY cd2.oracle_id
+			HAVING SUM(cd2.amount) > $1);`, count)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-	deposits := []cards.CardAmountPreview{}
+	deposits := []CardDepositPreview{}
 
 	for row.Next() {
-		deposit := cards.CardAmountPreview{}
-		if err := row.Scan(&deposit.ScryfallId, &deposit.Amount); err != nil {
+		deposit := CardDepositPreview{}
+		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
-
 		deposits = append(deposits, deposit)
 	}
 
 	return deposits, nil
 }
 
-func MatchCards(scryfallIds uuid.UUIDs) (uuid.UUIDs, error) {
+func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT DISTINCT cd.scryfall_id
+		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
+		JOIN containers AS c ON cd.container_id = c.container_id
 		WHERE cd.scryfall_id = ANY($1);`, pq.Array(scryfallIds))
 
 	if err != nil {
@@ -152,44 +156,40 @@ func MatchCards(scryfallIds uuid.UUIDs) (uuid.UUIDs, error) {
 	}
 
 	defer row.Close()
-	matches := uuid.UUIDs{}
+	deposits := []CardDepositPreview{}
 
 	for row.Next() {
-		var cardId uuid.UUID
-		if err := row.Scan(&cardId); err != nil {
+		deposit := CardDepositPreview{}
+		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
-
-		matches = append(matches, cardId)
+		deposits = append(deposits, deposit)
 	}
 
-	return matches, nil
+	return deposits, nil
 }
 
-func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
+func SearchDepositsByOracleId(oracleIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
 	row, err := db.Query(`
-		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.amount
+		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
-		WHERE cd.scryfall_id = ANY($1)
-		ORDER BY c.sort_order;`, pq.Array(scryfallIds))
+		WHERE cd.oracle_id = ANY($1);`, pq.Array(oracleIds))
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-
 	deposits := []CardDepositPreview{}
 
 	for row.Next() {
 		deposit := CardDepositPreview{}
-		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.Amount); err != nil {
+		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
-
 		deposits = append(deposits, deposit)
 	}
 
@@ -201,7 +201,7 @@ func AddContainer(container ContainerEntry) error {
 
 	_, err := db.Exec(`
 		INSERT INTO containers (container_name, capacity, deletion_mark) 
-		VALUES ($1, $2, FALSE)`, container.Name, container.Capacity)
+		VALUES ($1, $2, FALSE);`, container.Name, container.Capacity)
 
 	return err
 }
@@ -219,27 +219,26 @@ func UpdateContainer(containerId int, container ContainerEntry) error {
 
 func UpdateDeposits(changes []ContainerChanges) error {
 	db := database.Instance()
-	valueStatements := []string{}
 
+	vals := make([]string, len(changes))
 	for _, change := range changes {
-		for _, request := range change.Requests {
-			valueRow := fmt.Sprintf("(%d, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.Delta)
-			valueStatements = append(valueStatements, valueRow)
+		for i, request := range change.Requests {
+			vals[i] = fmt.Sprintf("(%d, '%s'::uuid, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.OracleId, request.Delta)
 		}
 	}
 
-	allValues := strings.Join(valueStatements, ", ")
+	values := strings.Join(vals, ", ")
 
 	_, err := db.Exec(`
 		MERGE INTO card_deposits AS cd
-		USING (VALUES ` + allValues + `) AS ds (container_id, scryfall_id, delta)
+		USING (VALUES ` + values + `) AS ds (container_id, scryfall_id, oracle_id, delta)
 		ON cd.container_id = ds.container_id AND cd.scryfall_id = ds.scryfall_id
 		WHEN NOT MATCHED THEN
-			INSERT (container_id, scryfall_id, amount) VALUES (ds.container_id, ds.scryfall_id, ds.delta)
+			INSERT (container_id, scryfall_id, oracle_id, amount) VALUES (ds.container_id, ds.scryfall_id, ds.oracle_id, ds.delta)
 		WHEN MATCHED AND cd.amount + ds.delta > 0 THEN
 			UPDATE SET amount = cd.amount + ds.delta
 		WHEN MATCHED THEN
-			DELETE`)
+			DELETE;`)
 
 	return err
 }
@@ -249,7 +248,52 @@ func DeleteContainer(containerId int) error {
 
 	_, err := db.Exec(`
 		DELETE FROM containers
-		WHERE container_id = $1`, containerId)
+		WHERE container_id = $1;`, containerId)
+
+	return err
+}
+
+func FindMissingOracleIds() (uuid.UUIDs, error) {
+	db := database.Instance()
+
+	row, err := db.Query(`
+		SELECT DISTINCT cd.scryfall_id
+		FROM card_deposits cd
+		WHERE cd.oracle_id = $1;`, uuid.Nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	ids := uuid.UUIDs{}
+
+	for row.Next() {
+		id := uuid.UUID{}
+		if err := row.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
+func UpdateOracleIds(oracleIds []cards.ScryfallOracleObj) error {
+	db := database.Instance()
+
+	vals := make([]string, len(oracleIds))
+	for i, id := range oracleIds {
+		vals[i] = fmt.Sprintf("('%s'::uuid,'%s'::uuid)", id.ScryfallId, id.OracleId)
+	}
+	values := strings.Join(vals, ", ")
+
+	_, err := db.Exec(`
+		MERGE INTO card_deposits AS cd
+		USING (VALUES ` + values + `) AS os (scryfall_id, oracle_id)
+		ON cd.scryfall_id = os.scryfall_id
+		WHEN MATCHED THEN
+			UPDATE SET oracle_id = os.oracle_id;`)
 
 	return err
 }

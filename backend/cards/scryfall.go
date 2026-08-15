@@ -34,6 +34,7 @@ type scryfallCardFace struct {
 
 type scryfallCard struct {
 	ScryfallId      uuid.UUID          `json:"id"`
+	OracleId        uuid.UUID          `json:"oracle_id"`
 	ManaCost        string             `json:"mana_cost,omitempty"`
 	Name            string             `json:"name"`
 	SetName         string             `json:"set_name"`
@@ -95,7 +96,6 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	}
 
 	searchParams := url.Values{}
-	searchParams.Add("unique", "prints")
 	searchParams.Add("page", strconv.Itoa(page))
 	searchParams.Add("q", query)
 
@@ -137,10 +137,9 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	}
 
 	searchPage := SearchCardPage{
-		TotalCards: result.TotalCards,
-		Cards:      toCards(result.Cards),
-		Page:       page,
-		HasMore:    result.HasMore,
+		Cards:   toCards(result.Cards),
+		Page:    page,
+		HasMore: result.HasMore,
 	}
 
 	return searchPage, nil
@@ -159,6 +158,7 @@ func toCard(card scryfallCard) Card {
 
 	return Card{
 		card.ScryfallId,
+		card.OracleId,
 		card.Name,
 		card.ManaCost,
 		card.SetName,
