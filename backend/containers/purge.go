@@ -65,18 +65,29 @@ func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices
 		remainingCopies := targetCopies
 
 		slices.SortFunc(deposits, func(a, b CardDepositPreview) int {
-			priceCmp := cmp.Compare(pricesByCard[a.ScryfallId], pricesByCard[b.ScryfallId])
+			priceA, ok := pricesByCard[a.ScryfallId]
+			if !ok {
+				priceA = minPrice
+			}
+			priceB, ok := pricesByCard[b.ScryfallId]
+			if !ok {
+				priceB = minPrice
+			}
+
+			priceCmp := cmp.Compare(priceA, priceB)
 			if priceCmp != 0 {
 				return -priceCmp
 			}
+
 			// negative to sort in desc order
 			return -cmp.Compare(a.Amount, b.Amount)
 		})
 
 		for _, deposit := range deposits {
-			cardPrice := pricesByCard[deposit.ScryfallId]
+			cardPrice, ok := pricesByCard[deposit.ScryfallId]
 
-			if cardPrice >= minPrice {
+			// assume missing cards are above price, so keep them all
+			if cardPrice >= minPrice || !ok {
 				replacing := min(deposit.Amount, remainingCopies)
 				remainingCopies -= replacing
 				continue
