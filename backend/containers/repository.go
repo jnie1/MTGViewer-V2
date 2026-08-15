@@ -37,6 +37,10 @@ func GetAllocations(ctx context.Context) ([]ContainerAllocation, error) {
 		allocations = append(allocations, allocation)
 	}
 
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
 	return allocations, nil
 }
 
@@ -63,6 +67,10 @@ func GetContainers(ctx context.Context) ([]Container, error) {
 			return nil, err
 		}
 		containers = append(containers, container)
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
 	}
 
 	return containers, nil
@@ -109,6 +117,10 @@ func GetAmounts(ctx context.Context, containerId int) ([]cards.CardAmountPreview
 		amounts = append(amounts, amount)
 	}
 
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
 	return amounts, nil
 }
 
@@ -140,6 +152,10 @@ func FindExcessDeposits(ctx context.Context, count int) ([]CardDepositPreview, e
 		deposits = append(deposits, deposit)
 	}
 
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
 	return deposits, nil
 }
 
@@ -167,6 +183,10 @@ func SearchDeposits(ctx context.Context, scryfallIds uuid.UUIDs) ([]CardDepositP
 		deposits = append(deposits, deposit)
 	}
 
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
 	return deposits, nil
 }
 
@@ -192,6 +212,10 @@ func SearchDepositsByOracleId(ctx context.Context, oracleIds uuid.UUIDs) ([]Card
 			return nil, err
 		}
 		deposits = append(deposits, deposit)
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
 	}
 
 	return deposits, nil
@@ -275,6 +299,10 @@ func FindMissingOracleIds(ctx context.Context) (uuid.UUIDs, error) {
 			return nil, err
 		}
 		ids = append(ids, id)
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
 	}
 
 	return ids, nil

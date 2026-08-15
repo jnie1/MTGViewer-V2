@@ -51,6 +51,10 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 		transactions = append(transactions, transaction)
 	}
 
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
 	return transactions, nil
 }
 
