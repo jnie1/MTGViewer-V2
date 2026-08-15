@@ -1,7 +1,6 @@
 package containers
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -170,10 +169,10 @@ func SearchDeposits(scryfallIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	return deposits, nil
 }
 
-func SearchDepositsByOracleId(ctx context.Context, oracleIds uuid.UUIDs) ([]CardDepositPreview, error) {
+func SearchDepositsByOracleId(oracleIds uuid.UUIDs) ([]CardDepositPreview, error) {
 	db := database.Instance()
 
-	row, err := db.QueryContext(ctx, `
+	row, err := db.Query(`
 		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
@@ -254,10 +253,10 @@ func DeleteContainer(containerId int) error {
 	return err
 }
 
-func FindMissingOracleIds(ctx context.Context) (uuid.UUIDs, error) {
+func FindMissingOracleIds() (uuid.UUIDs, error) {
 	db := database.Instance()
 
-	row, err := db.QueryContext(ctx, `
+	row, err := db.Query(`
 		SELECT DISTINCT cd.scryfall_id
 		FROM card_deposits cd
 		WHERE cd.oracle_id = $1;`, uuid.Nil)
@@ -280,7 +279,7 @@ func FindMissingOracleIds(ctx context.Context) (uuid.UUIDs, error) {
 	return ids, nil
 }
 
-func UpdateOracleIds(ctx context.Context, oracleIds []cards.ScryfallOracleObj) error {
+func UpdateOracleIds(oracleIds []cards.ScryfallOracleObj) error {
 	db := database.Instance()
 
 	vals := make([]string, len(oracleIds))
@@ -289,9 +288,9 @@ func UpdateOracleIds(ctx context.Context, oracleIds []cards.ScryfallOracleObj) e
 	}
 	values := strings.Join(vals, ", ")
 
-	_, err := db.ExecContext(ctx, `
+	_, err := db.Exec(`
 		MERGE INTO card_deposits AS cd
-		USING (VALUES `+values+`) AS os (scryfall_id, oracle_id)
+		USING (VALUES ` + values + `) AS os (scryfall_id, oracle_id)
 		ON cd.scryfall_id = os.scryfall_id
 		WHEN MATCHED THEN
 			UPDATE SET oracle_id = os.oracle_id;`)

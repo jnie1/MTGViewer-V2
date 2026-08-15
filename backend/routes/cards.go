@@ -52,7 +52,7 @@ func fetchCard(c *gin.Context) {
 	}
 
 	oracleId := []uuid.UUID{cardFound.OracleId}
-	deposits, err := containers.SearchDepositsByOracleId(ctx, oracleId)
+	deposits, err := containers.SearchDepositsByOracleId(oracleId)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -174,7 +174,6 @@ func searchCards(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
 	cardPage, err := cards.SearchCards(cardQuery, pageNum)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -191,7 +190,7 @@ func searchCards(c *gin.Context) {
 		oracleIds[i] = card.OracleId
 	}
 
-	cardMatches, err := containers.SearchDepositsByOracleId(ctx, oracleIds)
+	cardMatches, err := containers.SearchDepositsByOracleId(oracleIds)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -208,8 +207,7 @@ func searchCards(c *gin.Context) {
 
 func refreshOracle(c *gin.Context) {
 	ctx := c.Request.Context()
-
-	ids, err := containers.FindMissingOracleIds(ctx)
+	ids, err := containers.FindMissingOracleIds()
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -236,7 +234,7 @@ func refreshOracle(c *gin.Context) {
 		return
 	}
 
-	err = containers.UpdateOracleIds(ctx, objs)
+	err = containers.UpdateOracleIds(objs)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
