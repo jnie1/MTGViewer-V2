@@ -158,7 +158,7 @@ func withdrawCards(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.Status(http.StatusNoContent)
 }
 
 func searchCards(c *gin.Context) {
