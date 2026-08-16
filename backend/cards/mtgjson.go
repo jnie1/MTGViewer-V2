@@ -64,54 +64,6 @@ func FetchRandomCard(ctx context.Context) (Card, error) {
 	return row, nil
 }
 
-func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
-	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
-		return Card{}, err
-	}
-
-	q := db.NewSQLBuilder("cards AS c")
-	q.Join("JOIN card_identifiers AS ci ON ci.uuid = c.uuid")
-	q.Join("JOIN sets AS s ON s.code = c.setCode")
-	// hack for now, just get the first side only
-	q.Where("(c.side = $1 OR c.side IS NULL)", "a")
-	q.WhereEq("ci.scryfallId", scryfallId)
-	q.Select(
-		"ci.scryfallId",
-		"ci.scryfallOracleId AS oracleId",
-		"c.manaCost",
-		"c.name",
-		"s.name AS set",
-		"c.setCode",
-		"c.number AS collectorNumber",
-		"CAST(ci.multiverseId AS INTEGER) AS multiverseId",
-		"c.power",
-		"c.toughness",
-		"c.type",
-		"c.rarity",
-	)
-	q.Limit(1)
-
-	var rows []Card
-	sql, params := q.Build()
-
-	if err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...); err != nil {
-		return Card{}, err
-	}
-
-	if len(rows) == 0 {
-		return Card{}, fmt.Errorf("no matching card found for %s", scryfallId)
-	}
-
-	row := rows[0]
-	images, err := ImageURLs(row.ScryfallId)
-	if err != nil {
-		return Card{}, err
-	}
-
-	row.Images = images
-	return row, nil
-}
-
 func FetchCollection(ctx context.Context, scryfallIds ...uuid.UUID) ([]Card, error) {
 	if len(scryfallIds) == 0 {
 		return nil, nil

@@ -45,14 +45,20 @@ func fetchCard(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	cardFound, err := cards.FetchCard(ctx, scryfallId)
-	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
+	matches, err := cards.FetchCollection(ctx, scryfallId)
+
+	if len(matches) == 0 {
+		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	oracleId := []uuid.UUID{cardFound.OracleId}
-	deposits, err := containers.SearchDepositsByOracleId(ctx, oracleId)
+	if len(matches) > 1 {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	cardFound := matches[0]
+	deposits, err := containers.SearchDepositsByOracleId(ctx, []uuid.UUID{cardFound.OracleId})
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
