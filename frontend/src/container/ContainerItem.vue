@@ -68,6 +68,7 @@ watch(
             <card-image :card />
           </router-link>
           <v-card-title>{{ card.name }}</v-card-title>
+          <v-card-title>Amount: {{ card.amount }}</v-card-title>
         </v-card>
       </v-slide-group-item>
     </v-slide-group>
