@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import type { ICard } from '@/cards/types';
 import CardImage from '@/cards/CardImage.vue';
-import { ref, computed } from 'vue';
 
 interface ICardProps {
   cards: ICard[];
 }
 const { cards } = defineProps<ICardProps>();
-const searchQuery = ref('');
-const filteredCards = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase();
-  if (!query) return cards;
-  return cards.filter((card) => card.name.toLowerCase().includes(query));
-});
 </script>
 
 <template>
@@ -20,7 +13,7 @@ const filteredCards = computed(() => {
     <v-container>
       <div class="grid-table">
         <router-link
-          v-for="card in filteredCards"
+          v-for="card in cards"
           :key="card.scryfallId"
           :to="{ name: 'card', params: { scryfallId: card.scryfallId } }"
           class="grid-card-link"
@@ -31,17 +24,7 @@ const filteredCards = computed(() => {
           </v-card>
         </router-link>
       </div>
-      <div v-if="filteredCards.length === 0" class="no-results">No cards match your filter.</div>
     </v-container>
-    <v-text-field
-      v-model="searchQuery"
-      class="bottom-field"
-      label="Filter items..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      clearable
-    >
-    </v-text-field>
   </main>
 </template>
 
