@@ -81,7 +81,7 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
-	if maxCopies <= 0 {
+	if maxCopies < 0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -131,7 +131,7 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	if maxCopies <= 0 {
+	if maxCopies < 0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
