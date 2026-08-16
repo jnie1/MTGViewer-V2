@@ -27,7 +27,7 @@ func fetchCollection(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	result, err := cards.FetchCollection(ctx, scryfallIds)
+	result, err := cards.FetchCollection(ctx, scryfallIds...)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -219,7 +219,7 @@ func refreshOracle(c *gin.Context) {
 		return
 	}
 
-	matches, err := cards.FetchCollection(ctx, ids)
+	matches, err := cards.FetchCollection(ctx, ids...)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

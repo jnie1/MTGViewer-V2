@@ -60,7 +60,7 @@ func fetchContainerCards(c *gin.Context) {
 	}
 
 	scryfallIds := cards.ToScryfallIds(amounts)
-	matches, err := cards.FetchCollection(ctx, scryfallIds)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -109,14 +109,14 @@ func checkPrune(c *gin.Context) {
 	}
 
 	scryfallIds := containers.ToScryfallIds(excess)
-	matches, err := cards.FetchCollection(ctx, scryfallIds)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
 
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	prices, err := cards.FetchPrices(ctx, scryfallIds, minPrice)
+	prices, err := cards.FetchPrices(ctx, minPrice, scryfallIds...)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -154,27 +154,27 @@ func applyPrune(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	deposits, err := containers.FindExcessDeposits(ctx, maxCopies)
+	excess, err := containers.FindExcessDeposits(ctx, maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	scryfallIds := containers.ToScryfallIds(deposits)
-	matches, err := cards.FetchCollection(ctx, scryfallIds)
+	scryfallIds := containers.ToScryfallIds(excess)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
 
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	prices, err := cards.FetchPrices(ctx, scryfallIds, minPrice)
+	prices, err := cards.FetchPrices(ctx, minPrice, scryfallIds...)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	changes := containers.TranslatePrune(deposits, matches, prices, maxCopies, minPrice)
+	changes := containers.TranslatePrune(excess, matches, prices, maxCopies, minPrice)
 
 	if err := containers.UpdateDeposits(ctx, changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)

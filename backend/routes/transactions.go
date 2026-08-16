@@ -48,7 +48,7 @@ func fetchCardLogs(c *gin.Context) {
 
 	logs = transactions.MergeLogs(logs)
 	scryfallIds := transactions.ToScryfallIds(logs)
-	matches, err := cards.FetchCollection(ctx, scryfallIds)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)

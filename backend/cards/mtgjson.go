@@ -112,7 +112,7 @@ func FetchCard(ctx context.Context, scryfallId uuid.UUID) (Card, error) {
 	return row, nil
 }
 
-func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error) {
+func FetchCollection(ctx context.Context, scryfallIds ...uuid.UUID) ([]Card, error) {
 	if len(scryfallIds) == 0 {
 		return nil, nil
 	}
@@ -169,7 +169,7 @@ func FetchCollection(ctx context.Context, scryfallIds uuid.UUIDs) ([]Card, error
 	return rows, nil
 }
 
-func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId, error) {
+func FetchIdsByMultiverseId(ctx context.Context, multiverseIds ...int) ([]CardId, error) {
 	if len(multiverseIds) == 0 {
 		return nil, nil
 	}
@@ -206,7 +206,7 @@ func FetchIdsByMultiverseId(ctx context.Context, multiverseIds []int) ([]CardId,
 	return rows, err
 }
 
-func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNumber) ([]CardId, error) {
+func FetchIdsBySetCollector(ctx context.Context, setCollectors ...SetCollectorNumber) ([]CardId, error) {
 	if len(setCollectors) == 0 {
 		return nil, nil
 	}
@@ -243,7 +243,7 @@ func FetchIdsBySetCollector(ctx context.Context, setCollectors []SetCollectorNum
 	return rows, err
 }
 
-func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error) {
+func FetchIdsByNameSet(ctx context.Context, nameSets ...NameSet) ([]CardId, error) {
 	if len(nameSets) == 0 {
 		return nil, nil
 	}
@@ -280,7 +280,7 @@ func FetchIdsByNameSet(ctx context.Context, nameSets []NameSet) ([]CardId, error
 	return rows, err
 }
 
-func FetchPrices(ctx context.Context, scryfallIds uuid.UUIDs, price float64) ([]CardPricePreview, error) {
+func FetchPrices(ctx context.Context, price float64, scryfallIds ...uuid.UUID) ([]CardPricePreview, error) {
 	if len(scryfallIds) == 0 {
 		return nil, nil
 	}

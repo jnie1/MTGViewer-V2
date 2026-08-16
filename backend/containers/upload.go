@@ -80,7 +80,7 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 		return nil, err
 	}
 
-	cardIds, err := cards.FetchIdsBySetCollector(ctx, setCollectors)
+	cardIds, err := cards.FetchIdsBySetCollector(ctx, setCollectors...)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 
 	if len(scryfallIds) > 0 {
 		keys := slices.Collect(maps.Keys(scryfallIds))
-		fullCards, err := cards.FetchCollection(ctx, keys)
+		fullCards, err := cards.FetchCollection(ctx, keys...)
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +182,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 
 	if len(multiverseIds) > 0 {
 		keys := slices.Collect(maps.Keys(multiverseIds))
-		cardIds, err := cards.FetchIdsByMultiverseId(ctx, keys)
+		cardIds, err := cards.FetchIdsByMultiverseId(ctx, keys...)
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +195,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 
 	if len(setCollectors) > 0 {
 		keys := slices.Collect(maps.Keys(setCollectors))
-		cardIds, err := cards.FetchIdsBySetCollector(ctx, keys)
+		cardIds, err := cards.FetchIdsBySetCollector(ctx, keys...)
 		if err != nil {
 			return nil, err
 		}
@@ -208,7 +208,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 
 	if len(nameSets) > 0 {
 		keys := slices.Collect(maps.Keys(nameSets))
-		cardIds, err := cards.FetchIdsByNameSet(ctx, keys)
+		cardIds, err := cards.FetchIdsByNameSet(ctx, keys...)
 		if err != nil {
 			return nil, err
 		}
