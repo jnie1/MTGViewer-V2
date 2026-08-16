@@ -22,9 +22,7 @@ func fetchCardTransactions(c *gin.Context) {
 }
 
 func fetchCardLogs(c *gin.Context) {
-	group := c.Param("group")
-	group1, err := uuid.Parse(group)
-
+	group1, err := uuid.Parse(c.Param("group"))
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -48,7 +46,7 @@ func fetchCardLogs(c *gin.Context) {
 
 	logs = transactions.MergeLogs(logs)
 	scryfallIds := transactions.ToScryfallIds(logs)
-	matches, err := cards.FetchCollection(ctx, scryfallIds)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
