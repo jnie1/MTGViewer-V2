@@ -71,19 +71,19 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
           :key="container.containerId"
           class="grid-card-link"
         >
+          <router-link
+            class="grid-card-title"
+            :to="{
+              name: 'container',
+              params: { containerId: container.containerId },
+              query: { search: matches.card.name },
+            }"
+            >{{ container.name }}</router-link
+          >
           <v-expansion-panel-title>
-            <router-link
-                class="grid-card-title"
-                :to="{
-                  name: 'container',
-                  params: { containerId: container.containerId },
-                  query: { search: matches.card.name },
-                }"
-                >{{ container.name }}</router-link
-              >
-              <v-card-subtitle class="grid-card-subtitle"
-                >Amount: {{ container.amount }}</v-card-subtitle
-              >
+            <v-card-subtitle class="grid-card-title"
+              >Amount: {{ container.amount }}</v-card-subtitle
+            >
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <ul class="print-list">
@@ -95,9 +95,7 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
                     :src="print.images.full"
                     :lazy-src="print.images.preview"
                   />
-                  <v-card-subtitle class="grid-card-subtitle">
-                    — {{ print.amount }}
-                  </v-card-subtitle>
+                  <v-card-subtitle class="grid-card-title"> — {{ print.amount }} </v-card-subtitle>
                   <button
                     class="add-to-cart"
                     :disabled="isMaxed(print.scryfallId, container.containerId)"
@@ -134,13 +132,6 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
   padding: 12px 0;
 }
 
-.grid-table {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1rem;
-}
-
 .grid-card-link {
   display: block;
   text-decoration: none;
@@ -150,26 +141,9 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
   width: 100%;
 }
 
-.grid-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 100%;
-  width: 100%;
-  padding: 0 1rem;
-}
-
 .grid-card-title {
   text-align: center;
   font-weight: 300;
-}
-
-.grid-card-subtitle {
-  text-align: center;
-  font-weight: 300;
-  padding-bottom: 0.5rem;
   font-weight: bold;
 }
 
@@ -181,13 +155,6 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
   gap: 40px;
 }
 
-.grid-card-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-}
-
 .add-to-cart {
   color: #333;
   background-color: #f0f0f0;
@@ -197,10 +164,6 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
 
 .add-to-cart:hover {
   color: #ff5722;
-}
-
-.print-select {
-  margin-top: 12px;
 }
 
 .print-list {
