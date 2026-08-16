@@ -10,26 +10,14 @@ const router = useRouter();
 const route = useRoute();
 
 const querySearch = Array.isArray(route.query.q) ? route.query.q[0] : route.query.q;
-
 const searchQuery = ref(querySearch || '');
 const currentPage = ref(1);
-const isLoading = ref(false);
+
 const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
-
+const isLoading = ref(false);
 const isNextDisabled = computed(() => !hasNextPage.value || isLoading.value);
-const uniqueSearchResults = computed(() => {
-  const seenNames = new Set<string>();
 
-  return searchResults.value.filter((card) => {
-    if (seenNames.has(card.name)) {
-      return false;
-    }
-
-    seenNames.add(card.name);
-    return true;
-  });
-});
 const handleSearch = (value: string) => {
   searchQuery.value = value.trim();
   currentPage.value = 1;
@@ -50,13 +38,13 @@ watch(
       return;
     }
 
-    const isNewSearch = page === 1 && search !== prev?.[0];
-
     const abortController = new AbortController();
     onWatcherCleanup(() => abortController.abort());
 
     try {
       isLoading.value = true;
+
+      const isNewSearch = page === 1 && search !== prev?.[0];
       if (isNewSearch) {
         await timeout(500, abortController.signal);
       }
@@ -96,6 +84,6 @@ watch(
         <v-progress-circular indeterminate size="64" />
       </v-sheet>
     </v-overlay>
-    <search-item :cards="uniqueSearchResults" />
+    <search-item :cards="searchResults" />
   </main>
 </template>
