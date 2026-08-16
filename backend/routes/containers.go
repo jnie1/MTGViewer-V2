@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/auth"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
@@ -13,7 +12,8 @@ import (
 )
 
 func fetchContainerPreviews(c *gin.Context) {
-	result, err := containers.GetContainers()
+	ctx := c.Request.Context()
+	result, err := containers.GetContainers(ctx)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -23,14 +23,14 @@ func fetchContainerPreviews(c *gin.Context) {
 }
 
 func fetchContainer(c *gin.Context) {
-	id := c.Param("container")
-	containerId, err := strconv.Atoi(id)
+	containerId, err := strconv.Atoi(c.Param("container"))
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	result, err := containers.GetContainer(containerId)
+	ctx := c.Request.Context()
+	result, err := containers.GetContainer(ctx, containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
@@ -40,14 +40,14 @@ func fetchContainer(c *gin.Context) {
 }
 
 func fetchContainerCards(c *gin.Context) {
-	id := c.Param("container")
-	containerId, err := strconv.Atoi(id)
+	containerId, err := strconv.Atoi(c.Param("container"))
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	amounts, err := containers.GetAmounts(containerId)
+	ctx := c.Request.Context()
+	amounts, err := containers.GetAmounts(ctx, containerId)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -59,7 +59,8 @@ func fetchContainerCards(c *gin.Context) {
 	}
 
 	scryfallIds := cards.ToScryfallIds(amounts)
-	matches, err := cards.FetchCollection(scryfallIds)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
+
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -74,150 +75,108 @@ func fetchContainerCards(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func searchCards(c *gin.Context) {
-	cardQuery := c.Query("q")
-
-	cardPage, err := cards.SearchCards(cardQuery, 1)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	if len(cardPage.Cards) == 0 {
-		c.JSON(http.StatusOK, []containers.CardDeposit{})
-		return
-	}
-
-	cardIds := make(uuid.UUIDs, len(cardPage.Cards))
-	for i, card := range cardPage.Cards {
-		cardIds[i] = card.ScryfallId
-	}
-
-	deposits, err := containers.SearchDeposits(cardIds)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	result, err := containers.JoinCardDeposits(cardPage.Cards, deposits)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
-}
-
 func checkPrune(c *gin.Context) {
-	size := c.Query("size")
-	maxCopies, err := strconv.Atoi(size)
+	maxCopies, err := strconv.Atoi(c.Query("size"))
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if maxCopies <= 0 {
+	if maxCopies < 0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	price := c.Query("price")
-	maxPrice, err := strconv.ParseFloat(price, 64)
+	minPrice, err := strconv.ParseFloat(c.Query("price"), 64)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if maxPrice <= 0.0 {
+	if minPrice <= 0.0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	amounts, err := containers.FindExcessAmounts(maxCopies)
+	ctx := c.Request.Context()
+	excess, err := containers.FindExcessDeposits(ctx, maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	scryfallIds := cards.ToScryfallIds(amounts)
-	matches, err := cards.FetchCollection(scryfallIds)
+	scryfallIds := containers.ToScryfallIds(excess)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
+
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	result, err := cards.FindCheapCards(matches, amounts, maxPrice)
+	prices, err := cards.FetchPrices(ctx, minPrice, scryfallIds...)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	changes := containers.TranslatePrune(excess, matches, prices, maxCopies, minPrice)
+	preview := containers.PreviewPrune(changes, matches, prices)
+
+	c.JSON(http.StatusOK, preview)
 }
 
 func applyPrune(c *gin.Context) {
-	size := c.Query("size")
-	maxCopies, err := strconv.Atoi(size)
+	maxCopies, err := strconv.Atoi(c.Query("size"))
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if maxCopies <= 0 {
+	if maxCopies < 0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	price := c.Query("price")
-	maxPrice, err := strconv.ParseFloat(price, 64)
+	minPrice, err := strconv.ParseFloat(c.Query("price"), 64)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if maxPrice <= 0.0 {
+	if minPrice <= 0.0 {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	amounts, err := containers.FindExcessAmounts(maxCopies)
+	ctx := c.Request.Context()
+	excess, err := containers.FindExcessDeposits(ctx, maxCopies)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	scryfallIds := cards.ToScryfallIds(amounts)
-	results, err := cards.FetchCollection(scryfallIds)
+	scryfallIds := containers.ToScryfallIds(excess)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
+
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cheapCards, err := cards.FindCheapCards(results, amounts, maxPrice)
+	prices, err := cards.FetchPrices(ctx, minPrice, scryfallIds...)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	cheapIds := make(uuid.UUIDs, len(cheapCards))
-	for i, card := range cheapCards {
-		cheapIds[i] = card.ScryfallId
-	}
+	changes := containers.TranslatePrune(excess, matches, prices, maxCopies, minPrice)
 
-	matches, err := containers.SearchDeposits(cheapIds)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	changes := containers.TranslatePrune(matches, maxCopies)
-
-	if err := containers.UpdateDeposits(changes); err != nil {
+	if err := containers.UpdateDeposits(ctx, changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := transactions.LogCollectionChanges(changes); err != nil {
+	if err := transactions.LogCollectionChanges(ctx, changes); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -230,7 +189,6 @@ func AddContainerRoutes(router gin.IRouter) {
 	group.GET("", fetchContainerPreviews)
 	group.GET("/:container", fetchContainer)
 	group.GET("/:container/cards", fetchContainerCards)
-	group.GET("/cards", searchCards)
 	group.GET("/prune", checkPrune)
 	group.POST("/prune", auth.RequireAdmin, applyPrune)
 }

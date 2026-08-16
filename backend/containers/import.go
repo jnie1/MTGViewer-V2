@@ -209,7 +209,7 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 				currentAssignment.Capacity,
 			}
 		} else if currentRequest.Delta > assignmentRemaining {
-			remainingRequest := CardRequest{currentRequest.ScryfallId, assignmentRemaining}
+			remainingRequest := CardRequest{currentRequest.ScryfallId, currentRequest.OracleId, assignmentRemaining}
 			fullRequests := append(containerRequests, remainingRequest)
 
 			newChanges := ContainerChanges{currentAssignment.ContainerId, fullRequests}
@@ -217,7 +217,7 @@ func assignContainerChanges(additions []CardRequest, assignments []ContainerAllo
 
 			containerRequests = nil
 			leftover := currentRequest.Delta - assignmentRemaining
-			currentRequest = CardRequest{currentRequest.ScryfallId, leftover}
+			currentRequest = CardRequest{currentRequest.ScryfallId, currentRequest.OracleId, leftover}
 
 			assignmentIndex += 1
 			if assignmentIndex < len(assignments) {

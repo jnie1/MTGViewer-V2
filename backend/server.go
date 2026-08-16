@@ -5,19 +5,25 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jnie1/MTGViewer-V2/auth"
+	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/database"
 	"github.com/jnie1/MTGViewer-V2/routes"
 )
 
 func RegisterRouter() {
-	//Opening database connection
-	if err := database.Open(); err != nil {
+	db, err := database.Open()
+	if err != nil {
 		log.Fatal("Error opening database: ", err)
 	}
 
-	//Close database connection when RegisterRouter() returns
-	//Should only happen on shutdown
-	defer database.Close()
+	defer db.Close()
+
+	sdk, err := cards.OpenSDK()
+	if err != nil {
+		log.Fatal("Error open mtg json sdk: ", err)
+	}
+
+	defer sdk.Close()
 
 	r := gin.Default()
 	r.Use(auth.CorsMiddleware())

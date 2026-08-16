@@ -35,6 +35,14 @@ func (container *ContainerPreview) Container() ContainerPreview {
 	return *container
 }
 
+type PrintsPreview []cards.CardAmountImagePreview
+
+type ContainerDeposit struct {
+	ContainerPreview
+	Amount        int `json:"amount"`
+	PrintsPreview `json:"prints"`
+}
+
 type ContainerDelta struct {
 	ContainerId int
 	Delta       int
@@ -47,13 +55,24 @@ type CardDeposit struct {
 }
 
 type CardDepositPreview struct {
-	ContainerId   int
-	ContainerName string
+	ContainerId   int    `json:"containerId"`
+	ContainerName string `json:"containerName"`
 	cards.CardAmountPreview
+}
+
+type CardContainerMatch struct {
+	Card       cards.Card         `json:"card"`
+	Containers []ContainerDeposit `json:"containers"`
+}
+
+type CardPrunePreview struct {
+	Total int                     `json:"total"`
+	Cards []cards.CardPriceAmount `json:"cards"`
 }
 
 type CardRequest struct {
 	ScryfallId uuid.UUID
+	OracleId   uuid.UUID
 	Delta      int
 }
 
@@ -70,8 +89,8 @@ type ContainerChanges struct {
 type ContainerWithdrawals map[int][]CardIdentifierAmount
 
 type CardIdentifierAmount struct {
-	Card   CardIdentifier `json:"card"`
-	Amount int            `json:"amount"`
+	Card   any `json:"card"`
+	Amount int `json:"amount"`
 }
 
 func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
@@ -84,7 +103,7 @@ func (id *CardIdentifierAmount) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	card, err := FromObj(obj.Card)
+	card, err := cards.FromObj(obj.Card)
 	if err != nil {
 		return err
 	}
@@ -110,8 +129,10 @@ func CompareRemaining(a, b ContainerAllocation) int {
 
 func mergeCardRequestsChecked(requests []CardRequest) ([]CardRequest, bool) {
 	cardCounter := map[uuid.UUID]int{}
+	oracleIds := map[uuid.UUID]uuid.UUID{}
 	for _, request := range requests {
 		cardCounter[request.ScryfallId] = cardCounter[request.ScryfallId] + request.Delta
+		oracleIds[request.ScryfallId] = request.OracleId
 	}
 
 	if len(cardCounter) == len(requests) {
@@ -123,7 +144,7 @@ func mergeCardRequestsChecked(requests []CardRequest) ([]CardRequest, bool) {
 	i := 0
 
 	for cardId, delta := range cardCounter {
-		mergedRequests[i] = CardRequest{cardId, delta}
+		mergedRequests[i] = CardRequest{cardId, oracleIds[cardId], delta}
 		i += 1
 	}
 
@@ -156,6 +177,103 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 		return changes
 	}
 	return mergedChanges
+}
+
+func MergeDespositsByContainer(cardDeposits []CardDepositPreview) []ContainerDeposit {
+	boxAmounts := map[int]int{}
+	for _, deposit := range cardDeposits {
+		boxAmounts[deposit.ContainerId] = boxAmounts[deposit.ContainerId] + deposit.Amount
+	}
+
+	printsInBox := map[int][]cards.CardAmountImagePreview{}
+	for _, deposit := range cardDeposits {
+		image, err := cards.ImageURLs(deposit.ScryfallId)
+		if err != nil {
+			printsInBox[deposit.ContainerId] = append(printsInBox[deposit.ContainerId], cards.CardAmountImagePreview{
+				ScryfallId: deposit.ScryfallId,
+				Images:     cards.CardImageURLs{},
+				Amount:     deposit.Amount,
+			})
+		} else {
+			printsInBox[deposit.ContainerId] = append(printsInBox[deposit.ContainerId], cards.CardAmountImagePreview{
+				ScryfallId: deposit.ScryfallId,
+				Images:     image,
+				Amount:     deposit.Amount,
+			})
+		}
+	}
+
+	boxDeposits := make([]ContainerDeposit, len(boxAmounts))
+
+	for _, card := range cardDeposits {
+		if amount, ok := boxAmounts[card.ContainerId]; ok {
+			idx := len(boxDeposits) - len(boxAmounts)
+			if prints, ok := printsInBox[card.ContainerId]; ok {
+				deposit := ContainerDeposit{
+					ContainerPreview{card.ContainerId, card.ContainerName},
+					amount,
+					prints,
+				}
+				boxDeposits[idx] = deposit
+				delete(boxAmounts, card.ContainerId)
+			} else {
+				deposit := ContainerDeposit{
+					ContainerPreview{card.ContainerId, card.ContainerName},
+					amount,
+					[]cards.CardAmountImagePreview{},
+				}
+				boxDeposits[idx] = deposit
+				delete(boxAmounts, card.ContainerId)
+			}
+		}
+	}
+
+	return boxDeposits
+}
+
+func FilterCards(fullCards []cards.Card, deposits []CardDepositPreview) []cards.Card {
+	oracleIds := map[uuid.UUID]any{}
+	for _, deposit := range deposits {
+		oracleIds[deposit.OracleId] = nil
+	}
+
+	matches := make([]cards.Card, len(oracleIds))
+	i := 0
+
+	for _, card := range fullCards {
+		if _, ok := oracleIds[card.OracleId]; ok {
+			matches[i] = card
+			i += 1
+		}
+	}
+
+	slices.SortFunc(matches, func(a, b cards.Card) int {
+		nameCompare := strings.Compare(a.Name, b.Name)
+		if nameCompare == 0 {
+			return strings.Compare(a.Set, b.Set)
+		}
+		return nameCompare
+	})
+
+	return matches
+}
+
+func ToScryfallIds(deposits []CardDepositPreview) uuid.UUIDs {
+	uniqIds := map[uuid.UUID]any{}
+
+	for _, deposit := range deposits {
+		uniqIds[deposit.ScryfallId] = nil
+	}
+
+	ids := make(uuid.UUIDs, len(uniqIds))
+	i := 0
+
+	for id := range uniqIds {
+		ids[i] = id
+		i += 1
+	}
+
+	return ids
 }
 
 func JoinCardDeposits(fullCards []cards.Card, deposits []CardDepositPreview) ([]CardDeposit, error) {

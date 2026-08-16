@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/jnie1/MTGViewer-V2/auth"
 	"github.com/jnie1/MTGViewer-V2/users"
 )
@@ -20,7 +19,8 @@ func signup(c *gin.Context) {
 		return
 	}
 
-	if _, err := users.GetUser(request.Email); !errors.Is(err, sql.ErrNoRows) {
+	ctx := c.Request.Context()
+	if _, err := users.GetUser(ctx, request.Email); !errors.Is(err, sql.ErrNoRows) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -39,7 +39,7 @@ func signup(c *gin.Context) {
 		Role:         "user",
 	}
 
-	if err := users.CreateUser(newUser); err != nil {
+	if err := users.CreateUser(ctx, newUser); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -55,8 +55,8 @@ func login(c *gin.Context) {
 		return
 	}
 
-	user, err := users.GetUser(request.Email)
-
+	ctx := c.Request.Context()
+	user, err := users.GetUser(ctx, request.Email)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -68,16 +68,7 @@ func login(c *gin.Context) {
 	}
 
 	loginDuration := time.Now().Add(2 * time.Hour)
-
-	userClaims := auth.Claims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: loginDuration.Unix(),
-			Subject:   user.Email,
-		},
-		Role: user.Role,
-	}
-
-	token, err := auth.GenerateToken(&userClaims)
+	token, err := auth.GenerateToken(user, loginDuration)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)

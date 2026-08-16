@@ -1,22 +1,28 @@
 package cards
 
 import (
-	"fmt"
+	"errors"
+	"math"
 
 	"github.com/google/uuid"
 )
 
-type ScryfallIdentifier struct {
-	Id uuid.UUID `json:"id"`
+type ScryfallIdObj struct {
+	ScryfallId uuid.UUID `json:"scryfallId"`
 }
 
-type MultiverseIdentifier struct {
-	MultiverseId int `json:"multiverse_id"`
+type ScryfallOracleObj struct {
+	ScryfallId uuid.UUID `json:"scryfallId"`
+	OracleId   uuid.UUID `json:"oracleId"`
+}
+
+type MultiverseIdObj struct {
+	MultiverseId int `json:"multiverseId"`
 }
 
 type SetCollectorNumber struct {
 	Set             string `json:"set"`
-	CollectorNumber string `json:"collector_number"`
+	CollectorNumber string `json:"collectorNumber"`
 }
 
 type NameSet struct {
@@ -24,44 +30,59 @@ type NameSet struct {
 	Set  string `json:"set"`
 }
 
-type CardIdentifier interface {
-	Convert(card Card) (CardIdentifier, error)
+type CardId struct {
+	ScryfallId      uuid.UUID `json:"scryfallId"`
+	OracleId        uuid.UUID `json:"oracleId"`
+	Name            string    `json:"name"`
+	SetCode         string    `json:"setCode"`
+	CollectorNumber string    `json:"collectorNumber"`
+	MultiverseId    int       `json:"multiverseId,omitempty"`
 }
 
-func (si ScryfallIdentifier) Convert(card Card) (CardIdentifier, error) {
-	return ScryfallIdentifier{card.ScryfallId}, nil
+func (id CardId) SetCollectorNumber() SetCollectorNumber {
+	return SetCollectorNumber{id.SetCode, id.CollectorNumber}
 }
 
-func (mi MultiverseIdentifier) Convert(card Card) (CardIdentifier, error) {
-	if len(card.MultiverseIds) == 0 {
-		return nil, fmt.Errorf("card resolved with no multiverse id: %s, (%s) %s", card.Name, card.SetCode, card.CollectorNumber)
-	}
-	return MultiverseIdentifier{card.MultiverseIds[0]}, nil
+func (id CardId) NameSet() NameSet {
+	return NameSet{id.Name, id.SetCode}
 }
 
-func (sc SetCollectorNumber) Convert(card Card) (CardIdentifier, error) {
-	return SetCollectorNumber{card.SetCode, card.CollectorNumber}, nil
-}
+var ErrUnknownCardIdentifier = errors.New("unknown card identifier specified")
 
-func (ns NameSet) Convert(card Card) (CardIdentifier, error) {
-	return NameSet{card.Name, card.SetCode}, nil
-}
-
-type CollectionQuery[Id CardIdentifier] struct {
-	Identifiers []Id `json:"identifiers"`
-}
-
-func ParseScryfallIds(ids []string) ([]ScryfallIdentifier, error) {
-	scryfallIds := make([]ScryfallIdentifier, len(ids))
-
-	for i, id := range ids {
-		id, err := uuid.Parse(id)
+func FromObj(obj map[string]any) (any, error) {
+	if str, ok := obj["scryfallId"].(string); ok {
+		scryfallId, err := uuid.Parse(str)
 		if err != nil {
 			return nil, err
 		}
-
-		scryfallIds[i] = ScryfallIdentifier{Id: id}
+		if len(obj) == 1 {
+			return ScryfallIdObj{scryfallId}, nil
+		}
 	}
 
-	return scryfallIds, nil
+	if multiverseId, ok := obj["multiverseId"].(float64); ok {
+		if multiverseId == math.Trunc(multiverseId) {
+			if len(obj) == 1 {
+				return MultiverseIdObj{int(multiverseId)}, nil
+			}
+		}
+	}
+
+	if collectorNumber, ok := obj["collectorNumber"].(string); ok {
+		if set, ok := obj["set"].(string); ok {
+			if len(obj) == 2 {
+				return SetCollectorNumber{set, collectorNumber}, nil
+			}
+		}
+	}
+
+	if name, ok := obj["name"].(string); ok {
+		if set, ok := obj["set"].(string); ok {
+			if len(obj) == 2 {
+				return NameSet{name, set}, nil
+			}
+		}
+	}
+
+	return nil, ErrUnknownCardIdentifier
 }

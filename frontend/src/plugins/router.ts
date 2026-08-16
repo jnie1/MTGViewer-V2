@@ -6,7 +6,8 @@ import ChangeView from '@/views/ChangeView.vue';
 import TransactionView from '@/views/TransactionView.vue';
 import ContainerView from '@/views/ContainerView.vue';
 import CollectionView from '@/views/CollectionView.vue';
-
+import SearchView from '@/views/SearchView.vue';
+import CartView from '@/views/CartView.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -51,8 +52,18 @@ const router = createRouter({
     {
       path: '/collection',
       name: 'collection',
-      component: CollectionView
-    }
+      component: CollectionView,
+    },
+    {
+      path: '/search',
+      name: 'search',
+      component: SearchView,
+    },
+    {
+      path: '/cart',
+      name: 'cart',
+      component: CartView,
+    },
   ],
 });
 
