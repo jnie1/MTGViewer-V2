@@ -48,8 +48,7 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	setCollectors := []cards.SetCollectorNumber{}
-	amountMap := map[cards.SetCollectorNumber]int{}
+	setCollectors := map[cards.SetCollectorNumber]int{}
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -72,15 +71,16 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 		}
 
 		newEntry := cards.SetCollectorNumber{Set: setCode, CollectorNumber: collectorNumber}
-		setCollectors = append(setCollectors, newEntry)
-		amountMap[newEntry] = amount
+		setCollectors[newEntry] = amount
 	}
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 
-	cardIds, err := cards.FetchIdsBySetCollector(ctx, setCollectors...)
+	keys := slices.Collect(maps.Keys(setCollectors))
+	cardIds, err := cards.FetchIdsBySetCollector(ctx, keys...)
+
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 
 	for i, card := range cardIds {
 		source := cards.SetCollectorNumber{Set: card.SetCode, CollectorNumber: card.CollectorNumber}
-		newRequest := CardRequest{card.ScryfallId, card.OracleId, amountMap[source]}
+		newRequest := CardRequest{card.ScryfallId, card.OracleId, setCollectors[source]}
 		requests[i] = newRequest
 	}
 
