@@ -3,7 +3,6 @@ import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import type { ICard } from '@/cards/types';
 import ContainerItem from '@/container/ContainerItem.vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ref, watch } from 'vue';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
@@ -16,21 +15,21 @@ const router = useRouter();
 const route = useRoute();
 
 const cards = useRouteData<ICard[]>();
-const initialSearch = route.query.search?.toString() ?? '';
-const search = ref(initialSearch);
+const search = route.query.search?.toString() ?? '';
 
-watch(search, (search) => {
+const handleSearch = (search: string) => {
+  console.log('got search', search);
   // too reactive?
   router.replace({
     name: 'container',
     params: { containerId: route.params.containerId },
     query: search ? { search } : undefined,
   });
-});
+};
 </script>
 
 <template>
   <main>
-    <container-item v-model:search="search" :cards />
+    <container-item :cards :search @search="handleSearch" />
   </main>
 </template>
