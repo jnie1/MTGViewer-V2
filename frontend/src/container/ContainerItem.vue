@@ -18,26 +18,32 @@ const emits = defineEmits<IContainerItemEmits>();
 const search = ref(props.search);
 const matchId = ref('');
 
-watch(search, async (search) => {
-  const abortController = new AbortController();
-  onWatcherCleanup(() => abortController.abort());
+watch(
+  search,
+  async (search) => {
+    const abortController = new AbortController();
+    onWatcherCleanup(() => abortController.abort());
 
-  try {
-    await timeout(150, abortController.signal);
+    try {
+      await timeout(150, abortController.signal);
 
-    if (search) {
-      const target = search.toLowerCase();
-      const match = props.cards?.find((c) => c.name.toLowerCase().includes(target));
-      matchId.value = match?.scryfallId ?? '';
-    } else {
-      matchId.value = '';
+      if (search) {
+        const target = search.toLowerCase();
+        const match = props.cards?.find((c) => c.name.toLowerCase().includes(target));
+        matchId.value = match?.scryfallId ?? '';
+      } else {
+        matchId.value = '';
+      }
+
+      if (search !== props.search) {
+        emits('search', search);
+      }
+    } catch (e) {
+      if (!isAbortError(e)) throw e;
     }
-
-    emits('search', search);
-  } catch (e) {
-    if (!isAbortError(e)) throw e;
-  }
-});
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
