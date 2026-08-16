@@ -24,7 +24,7 @@ watch(search, (search) => {
   router.replace({
     name: 'container',
     params: { containerId: route.params.containerId },
-    query: { search },
+    query: search ? { search } : undefined,
   });
 });
 </script>

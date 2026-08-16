@@ -75,7 +75,11 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
             <div class="grid-card-text">
               <router-link
                 class="grid-card-title"
-                :to="{ name: 'container', params: { containerId: container.containerId } }"
+                :to="{
+                  name: 'container',
+                  params: { containerId: container.containerId },
+                  query: { search: matches.card.name },
+                }"
                 >{{ container.name }}</router-link
               >
               <v-card-subtitle class="grid-card-subtitle"

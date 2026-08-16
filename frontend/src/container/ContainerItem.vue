@@ -7,7 +7,7 @@ interface IContainerItemProps {
   cards: ICard[];
 }
 const { cards } = defineProps<IContainerItemProps>();
-const model = defineModel<string>('search', { default: '' });
+const model = defineModel<string>('search');
 
 const filteredItem = computed(() => {
   if (!model.value) return '';
