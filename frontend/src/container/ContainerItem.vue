@@ -1,32 +1,32 @@
 <script setup lang="ts">
 import type { ICard } from '@/cards/types';
 import CardImage from '@/cards/CardImage.vue';
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 
-interface ICardProps {
+interface IContainerItemProps {
   cards: ICard[];
-  search: string;
 }
+const { cards } = defineProps<IContainerItemProps>();
+const model = defineModel<string>('search', { default: '' });
 
-const { cards, search: initialSearch } = defineProps<ICardProps>();
-const searchQuery = ref(initialSearch);
-
-const filteredItems = computed(() => {
-  if (!searchQuery.value) return '';
-  for (const card of cards) {
-    if (card.name.toLowerCase().includes(searchQuery.value.toLowerCase())) {
-      return card.scryfallId;
-    }
-  }
-  return '';
+const filteredItem = computed(() => {
+  if (!model.value) return '';
+  const target = model.value.toLowerCase();
+  const match = cards?.find((c) => c.name.toLowerCase().includes(target));
+  return match?.scryfallId ?? '';
 });
 </script>
 
 <template>
   <v-container>
-    <v-text-field v-model="searchQuery" label="Search items..." prepend-inner-icon="mdi-magnify" variant="outlined"
-      clearable />
-    <v-slide-group v-model="filteredItems" class="slide-content" show-arrows>
+    <v-text-field
+      v-model="model"
+      label="Search items..."
+      prepend-inner-icon="mdi-magnify"
+      variant="outlined"
+      clearable
+    />
+    <v-slide-group v-model="filteredItem" class="slide-content" show-arrows>
       <template #next>
         <v-icon icon="$right" size="x-large" />
       </template>
