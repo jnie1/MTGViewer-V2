@@ -88,9 +88,10 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 	requests := make([]CardRequest, len(cardIds))
 
 	for i, card := range cardIds {
-		source := cards.SetCollectorNumber{Set: card.SetCode, CollectorNumber: card.CollectorNumber}
-		newRequest := CardRequest{card.ScryfallId, card.OracleId, setCollectors[source]}
-		requests[i] = newRequest
+		if amount, ok := setCollectors[card.SetCollectorNumber()]; ok {
+			newRequest := CardRequest{card.ScryfallId, card.OracleId, amount}
+			requests[i] = newRequest
+		}
 	}
 
 	return requests, nil
