@@ -65,15 +65,14 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
       </v-card>
     </div>
     <v-container>
-      <div class="grid-table">
-        <div
+      <v-expansion-panels>
+        <v-expansion-panel
           v-for="container in matches.containers"
           :key="container.containerId"
           class="grid-card-link"
         >
-          <v-card class="grid-card" elevation="2">
-            <div class="grid-card-text">
-              <router-link
+          <v-expansion-panel-title>
+            <router-link
                 class="grid-card-title"
                 :to="{
                   name: 'container',
@@ -85,36 +84,37 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
               <v-card-subtitle class="grid-card-subtitle"
                 >Amount: {{ container.amount }}</v-card-subtitle
               >
-              <ul class="print-list">
-                <li v-for="print in container.prints" :key="print.scryfallId" class="print-col">
-                  <v-container class="print-row">
-                    <v-img
-                      class="card-img"
-                      :alt="matches.card.name"
-                      :src="print.images.full"
-                      :lazy-src="print.images.preview"
-                    />
-                    <v-card-subtitle class="grid-card-subtitle">
-                      — {{ print.amount }}
-                    </v-card-subtitle>
-                    <button
-                      class="add-to-cart"
-                      :disabled="isMaxed(print.scryfallId, container.containerId)"
-                      @click="handleAddToCart(print.scryfallId, 1, container.containerId)"
-                    >
-                      {{
-                        amountInCart(print.scryfallId, container.containerId) > 0
-                          ? `${amountInCart(print.scryfallId, container.containerId)} in cart`
-                          : 'add to cart'
-                      }}
-                    </button>
-                  </v-container>
-                </li>
-              </ul>
-            </div>
-          </v-card>
-        </div>
-      </div>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <ul class="print-list">
+              <li v-for="print in container.prints" :key="print.scryfallId" class="print-col">
+                <v-container class="print-row">
+                  <v-img
+                    class="card-img"
+                    :alt="matches.card.name"
+                    :src="print.images.full"
+                    :lazy-src="print.images.preview"
+                  />
+                  <v-card-subtitle class="grid-card-subtitle">
+                    — {{ print.amount }}
+                  </v-card-subtitle>
+                  <button
+                    class="add-to-cart"
+                    :disabled="isMaxed(print.scryfallId, container.containerId)"
+                    @click="handleAddToCart(print.scryfallId, 1, container.containerId)"
+                  >
+                    {{
+                      amountInCart(print.scryfallId, container.containerId) > 0
+                        ? `${amountInCart(print.scryfallId, container.containerId)} in cart`
+                        : 'add to cart'
+                    }}
+                  </button>
+                </v-container>
+              </li>
+            </ul>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
     </v-container>
   </main>
 </template>
@@ -148,10 +148,6 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
   gap: 0.75rem;
   min-height: 100%;
   width: 100%;
-}
-
-.grid-card-link:hover .print-list {
-  display: flex;
 }
 
 .grid-card {
@@ -208,7 +204,7 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
 }
 
 .print-list {
-  display: none;
+  display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   gap: 1rem;
