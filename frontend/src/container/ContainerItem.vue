@@ -5,9 +5,11 @@ import { ref, computed } from 'vue';
 
 interface ICardProps {
   cards: ICard[];
+  search: string;
 }
-const { cards } = defineProps<ICardProps>();
-const searchQuery = ref('');
+
+const { cards, search: initialSearch } = defineProps<ICardProps>();
+const searchQuery = ref(initialSearch);
 
 const filteredItems = computed(() => {
   if (!searchQuery.value) return '';
@@ -22,13 +24,8 @@ const filteredItems = computed(() => {
 
 <template>
   <v-container>
-    <v-text-field
-      v-model="searchQuery"
-      label="Search items..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      clearable
-    />
+    <v-text-field v-model="searchQuery" label="Search items..." prepend-inner-icon="mdi-magnify" variant="outlined"
+      clearable />
     <v-slide-group v-model="filteredItems" class="slide-content" show-arrows>
       <template #next>
         <v-icon icon="$right" size="x-large" />
