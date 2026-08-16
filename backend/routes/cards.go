@@ -13,16 +13,14 @@ import (
 )
 
 func fetchCollection(c *gin.Context) {
-	ids := c.QueryArray("cards")
-
-	if len(ids) == 0 {
-		c.JSON(http.StatusOK, []cards.Card{})
+	scryfallIds, err := cards.ParseScryfallIds(c.QueryArray("cards"))
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	scryfallIds, err := cards.ParseScryfallIds(ids)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+	if len(scryfallIds) == 0 {
+		c.JSON(http.StatusOK, []cards.Card{})
 		return
 	}
 
@@ -37,8 +35,7 @@ func fetchCollection(c *gin.Context) {
 }
 
 func fetchCard(c *gin.Context) {
-	cardId := c.Param("card")
-	scryfallId, err := uuid.Parse(cardId)
+	scryfallId, err := uuid.Parse(c.Param("card"))
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -169,12 +166,7 @@ func withdrawCards(c *gin.Context) {
 
 func searchCards(c *gin.Context) {
 	cardQuery := c.Query("q")
-	cardPages := c.Query("page")
-	if cardPages == "" {
-		cardPages = "1"
-	}
-
-	pageNum, err := strconv.Atoi(cardPages)
+	pageNum, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return

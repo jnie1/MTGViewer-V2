@@ -22,8 +22,7 @@ func fetchContainerPreviews(c *gin.Context) {
 }
 
 func fetchContainer(c *gin.Context) {
-	id := c.Param("container")
-	containerId, err := strconv.Atoi(id)
+	containerId, err := strconv.Atoi(c.Param("container"))
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -40,8 +39,7 @@ func fetchContainer(c *gin.Context) {
 }
 
 func fetchContainerCards(c *gin.Context) {
-	id := c.Param("container")
-	containerId, err := strconv.Atoi(id)
+	containerId, err := strconv.Atoi(c.Param("container"))
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -77,8 +75,7 @@ func fetchContainerCards(c *gin.Context) {
 }
 
 func checkPrune(c *gin.Context) {
-	size := c.Query("size")
-	maxCopies, err := strconv.Atoi(size)
+	maxCopies, err := strconv.Atoi(c.Query("size"))
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -89,8 +86,7 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
-	price := c.Query("price")
-	minPrice, err := strconv.ParseFloat(price, 64)
+	minPrice, err := strconv.ParseFloat(c.Query("price"), 64)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -129,8 +125,7 @@ func checkPrune(c *gin.Context) {
 }
 
 func applyPrune(c *gin.Context) {
-	size := c.Query("size")
-	maxCopies, err := strconv.Atoi(size)
+	maxCopies, err := strconv.Atoi(c.Query("size"))
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -141,8 +136,7 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	price := c.Query("price")
-	minPrice, err := strconv.ParseFloat(price, 64)
+	minPrice, err := strconv.ParseFloat(c.Query("price"), 64)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
