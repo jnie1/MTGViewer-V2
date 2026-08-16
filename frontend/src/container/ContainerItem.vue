@@ -8,6 +8,7 @@ interface ICardProps {
 }
 const { cards } = defineProps<ICardProps>();
 const searchQuery = ref('');
+
 const filteredItems = computed(() => {
   if (!searchQuery.value) return '';
   for (const card of cards) {
@@ -27,8 +28,7 @@ const filteredItems = computed(() => {
       prepend-inner-icon="mdi-magnify"
       variant="outlined"
       clearable
-    >
-    </v-text-field>
+    />
     <v-slide-group v-model="filteredItems" class="slide-content" show-arrows>
       <template #next>
         <v-icon icon="$right" size="x-large" />
