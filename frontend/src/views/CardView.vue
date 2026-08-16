@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import CardImage from '@/cards/CardImage.vue';
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
 import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/container/types';
 import { addToCart, cart } from '@/cart/CartContainer';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
@@ -44,7 +40,6 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
   if (max === 0 || isMaxed(scryfallId, containerId)) return;
   addToCart(scryfallId, containerId, matches.card.name, amount, max);
 }
-
 </script>
 
 <template>
@@ -78,12 +73,17 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
         >
           <v-expansion-panel-title>
             <router-link
-              :to="{ name: 'container', params: { containerId: container.containerId } }"
-              >{{ container.name }}</router-link
-            >
-            <v-card-subtitle class="grid-card-subtitle"
-              >Amount: {{ container.amount }}</v-card-subtitle
-            >
+                class="grid-card-title"
+                :to="{
+                  name: 'container',
+                  params: { containerId: container.containerId },
+                  query: { search: matches.card.name },
+                }"
+                >{{ container.name }}</router-link
+              >
+              <v-card-subtitle class="grid-card-subtitle"
+                >Amount: {{ container.amount }}</v-card-subtitle
+              >
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <ul class="print-list">

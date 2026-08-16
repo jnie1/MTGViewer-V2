@@ -1,35 +1,61 @@
 <script setup lang="ts">
 import type { ICard } from '@/cards/types';
 import CardImage from '@/cards/CardImage.vue';
-import { ref, computed } from 'vue';
+import { onWatcherCleanup, ref, watch } from 'vue';
+import { isAbortError, timeout } from '@/fetch/abort';
 
-interface ICardProps {
+interface IContainerItemProps {
   cards: ICard[];
+  search: string;
 }
-const { cards } = defineProps<ICardProps>();
-const searchQuery = ref('');
-const filteredItems = computed(() => {
-  if (!searchQuery.value) return '';
-  for (const card of cards) {
-    if (card.name.toLowerCase().includes(searchQuery.value.toLowerCase())) {
-      return card.scryfallId;
+interface IContainerItemEmits {
+  search: [search: string];
+}
+
+const props = defineProps<IContainerItemProps>();
+const emits = defineEmits<IContainerItemEmits>();
+
+const search = ref(props.search);
+const matchId = ref('');
+
+watch(
+  search,
+  async (search) => {
+    const abortController = new AbortController();
+    onWatcherCleanup(() => abortController.abort());
+
+    try {
+      await timeout(150, abortController.signal);
+
+      if (search) {
+        const target = search.toLowerCase();
+        const match = props.cards?.find((c) => c.name.toLowerCase().includes(target));
+        matchId.value = match?.scryfallId ?? '';
+      } else {
+        matchId.value = '';
+      }
+
+      if (search !== props.search) {
+        emits('search', search);
+      }
+    } catch (e) {
+      if (!isAbortError(e)) throw e;
     }
-  }
-  return '';
-});
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
   <v-container>
     <v-text-field
-      v-model="searchQuery"
+      v-model="search"
       label="Search items..."
       prepend-inner-icon="mdi-magnify"
       variant="outlined"
       clearable
-    >
-    </v-text-field>
-    <v-slide-group v-model="filteredItems" class="slide-content" show-arrows>
+    />
+    <v-slide-group v-model="matchId" class="slide-content" show-arrows>
       <template #next>
         <v-icon icon="$right" size="x-large" />
       </template>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { updateAmount, cart, removeFromCart, removeAllCards, submitAllCards } from '@/cart/CartContainer';
-
 </script>
 
 <template>
@@ -14,7 +13,9 @@ import { updateAmount, cart, removeFromCart, removeAllCards, submitAllCards } fr
         </router-link>
 
         <div class="qty-controls">
-          <button @click="updateAmount(item.scryfallId, item.containerId, item.amount - 1)">−</button>
+          <button @click="updateAmount(item.scryfallId, item.containerId, item.amount - 1)">
+            −
+          </button>
           <span>{{ item.amount }}</span>
           <button
             :disabled="item.amount >= item.max"
