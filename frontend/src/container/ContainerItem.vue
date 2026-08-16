@@ -23,7 +23,7 @@ watch(search, async (search) => {
   onWatcherCleanup(() => abortController.abort());
 
   try {
-    await timeout(200, abortController.signal);
+    await timeout(150, abortController.signal);
 
     if (search) {
       const target = search.toLowerCase();

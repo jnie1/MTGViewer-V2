@@ -18,8 +18,6 @@ const cards = useRouteData<ICard[]>();
 const search = route.query.search?.toString() ?? '';
 
 const handleSearch = (search: string) => {
-  console.log('got search', search);
-  // too reactive?
   router.replace({
     name: 'container',
     params: { containerId: route.params.containerId },
