@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 
 	"github.com/google/uuid"
@@ -9,37 +10,113 @@ import (
 	"github.com/jnie1/MTGViewer-V2/containers"
 )
 
-func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullCard []cards.Card) ([]ContainerTransfers, error) {
+func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullCards []cards.Card) ([]ContainerTransfers, error) {
+	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
+	for _, card := range fullCards {
+		cardsById[card.ScryfallId] = card
+	}
+
+	deltas := groupDeltasByCard(logs)
+	transfersByBox, err := combineTransfersByBox(deltas, boxes, cardsById)
+	if err != nil {
+		return nil, err
+	}
+
+	slices.SortFunc(boxes, func(a, b containers.ContainerPreview) int {
+		return cmp.Compare(a.SortOrder, b.SortOrder)
+	})
+
+	boxSorts := make(map[int]int, len(boxes))
+	for _, box := range boxes {
+		boxSorts[box.ContainerId] = box.SortOrder
+	}
+
+	transfers := make([]ContainerTransfers, len(boxes))
+
+	for i, box := range boxes {
+		logs, ok := transfersByBox[box.ContainerId]
+		if !ok {
+			return nil, fmt.Errorf("unknown box %d", box.ContainerId)
+		}
+
+		total := 0
+		for _, transfer := range logs {
+			total += transfer.Delta
+		}
+
+		slices.SortFunc(logs, func(a, b CardTransfer) int {
+			cardA := cardsById[a.ScryfallId]
+			cardB := cardsById[b.ScryfallId]
+
+			cardCmp := cmp.Compare(cardA.Name, cardB.Name)
+			if cardCmp != 0 {
+				return cardCmp
+			}
+
+			var boxA, boxB int
+			if a.WithContainerId != nil {
+				boxA = boxSorts[*a.WithContainerId]
+			}
+			if b.WithContainerId != nil {
+				boxB = boxSorts[*b.WithContainerId]
+			}
+
+			return cmp.Compare(boxA, boxB)
+		})
+
+		transfers[i] = ContainerTransfers{
+			ContainerId:   box.ContainerId,
+			ContainerName: box.Name,
+			Total:         total,
+			Transfers:     logs,
+		}
+	}
+
+	return transfers, nil
+}
+
+func groupDeltasByCard(logs []CardLogPreview) map[uuid.UUID][]containers.ContainerDelta {
 	changesByContainer := map[containers.ContainerCard]int{}
-	containersById := map[int]*containers.ContainerPreview{}
 
 	for _, log := range logs {
-		if log.FromContainer != nil {
-			containerId := log.FromContainer.ContainerId
+		if log.FromContainerId != nil {
+			containerId := *log.FromContainerId
 			key := containers.ContainerCard{ContainerId: containerId, ScryfallId: log.ScryfallId}
-
 			changesByContainer[key] = changesByContainer[key] - log.Amount
-			containersById[containerId] = log.FromContainer
 		}
-		if log.ToContainer != nil {
-			containerId := log.ToContainer.ContainerId
+		if log.ToContainerId != nil {
+			containerId := *log.ToContainerId
 			key := containers.ContainerCard{ContainerId: containerId, ScryfallId: log.ScryfallId}
-
 			changesByContainer[key] = changesByContainer[key] + log.Amount
-			containersById[containerId] = log.ToContainer
 		}
 	}
 
 	changesByCard := map[uuid.UUID][]containers.ContainerDelta{}
+
 	for cardKey, delta := range changesByContainer {
 		cardId := cardKey.ScryfallId
 		newChange := containers.ContainerDelta{ContainerId: cardKey.ContainerId, Delta: delta}
 		changesByCard[cardId] = append(changesByCard[cardId], newChange)
 	}
 
-	updatedLogs := []CardLogPreview{}
+	return changesByCard
+}
 
-	for cardId, changes := range changesByCard {
+func combineTransfersByBox(deltas map[uuid.UUID][]containers.ContainerDelta, boxes []containers.ContainerPreview, cardsById map[uuid.UUID]cards.Card) (map[int][]CardTransfer, error) {
+	transfersByBox := make(map[int][]CardTransfer, len(boxes))
+
+	for cardId, changes := range deltas {
+		fullCard, ok := cardsById[cardId]
+		if !ok {
+			return nil, fmt.Errorf("unknown card %s", cardId)
+		}
+
+		card := cards.CardImagePreview{
+			ScryfallId: fullCard.ScryfallId,
+			Name:       fullCard.Name,
+			Images:     fullCard.Images,
+		}
+
 		adds := []containers.ContainerDelta{}
 		dels := []containers.ContainerDelta{}
 
@@ -60,26 +137,28 @@ func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullC
 			return cmp.Compare(a.Delta, b.Delta)
 		})
 
-		var currentAdd, currentDelete containers.ContainerDelta
+		var currentAdd, currentDel containers.ContainerDelta
 		addIndex, deleteIndex := 0, 0
 
 		if addIndex < len(adds) {
 			currentAdd = adds[addIndex]
 		}
 		if deleteIndex < len(dels) {
-			currentDelete = dels[deleteIndex]
+			currentDel = dels[deleteIndex]
 		}
 
-		for currentAdd.Delta > 0 && currentDelete.Delta < 0 {
-			add, del := currentAdd.Delta, -currentDelete.Delta
-			newLog := CardLogPreview{
-				FromContainer: containersById[currentDelete.ContainerId],
-				ToContainer:   containersById[currentAdd.ContainerId],
-				ScryfallId:    cardId,
-			}
+		for currentAdd.Delta > 0 && currentDel.Delta < 0 {
+			add, del := currentAdd.Delta, -currentDel.Delta
+
+			addContainer := currentAdd.ContainerId
+			addTransfer := CardTransfer{card, 0, &currentDel.ContainerId}
+
+			delContainer := currentDel.ContainerId
+			delTransfer := CardTransfer{card, 0, &currentAdd.ContainerId}
 
 			if add < del {
-				newLog.Amount = add
+				addTransfer.Delta = add
+				delTransfer.Delta = -add
 
 				addIndex += 1
 				if addIndex < len(adds) {
@@ -88,18 +167,19 @@ func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullC
 					currentAdd = containers.ContainerDelta{}
 				}
 
-				currentDelete = containers.ContainerDelta{
-					ContainerId: currentDelete.ContainerId,
-					Delta:       currentDelete.Delta + add,
+				currentDel = containers.ContainerDelta{
+					ContainerId: currentDel.ContainerId,
+					Delta:       currentDel.Delta + add,
 				}
 			} else if add > del {
-				newLog.Amount = del
+				addTransfer.Delta = del
+				delTransfer.Delta = -del
 
 				deleteIndex += 1
 				if deleteIndex < len(dels) {
-					currentDelete = dels[deleteIndex]
+					currentDel = dels[deleteIndex]
 				} else {
-					currentDelete = containers.ContainerDelta{}
+					currentDel = containers.ContainerDelta{}
 				}
 
 				currentAdd = containers.ContainerDelta{
@@ -107,7 +187,8 @@ func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullC
 					Delta:       currentAdd.Delta - del,
 				}
 			} else {
-				newLog.Amount = add
+				addTransfer.Delta = add
+				delTransfer.Delta = -add
 
 				addIndex += 1
 				if addIndex < len(adds) {
@@ -118,51 +199,40 @@ func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullC
 
 				deleteIndex += 1
 				if deleteIndex < len(dels) {
-					currentDelete = dels[deleteIndex]
+					currentDel = dels[deleteIndex]
 				} else {
-					currentDelete = containers.ContainerDelta{}
+					currentDel = containers.ContainerDelta{}
 				}
 			}
 
-			updatedLogs = append(updatedLogs, newLog)
+			transfersByBox[addContainer] = append(transfersByBox[addContainer], addTransfer)
+			transfersByBox[delContainer] = append(transfersByBox[delContainer], delTransfer)
 		}
 
 		if currentAdd.Delta > 0 {
-			updatedLogs = append(updatedLogs, CardLogPreview{
-				ToContainer: containersById[currentAdd.ContainerId],
-				ScryfallId:  cardId,
-				Amount:      currentAdd.Delta,
-			})
+			id := currentAdd.ContainerId
+			transfersByBox[id] = append(transfersByBox[id], CardTransfer{card, currentAdd.Delta, nil})
 
 			if addIndex+1 < len(adds) {
 				for _, extra := range adds[addIndex+1:] {
-					updatedLogs = append(updatedLogs, CardLogPreview{
-						ToContainer: containersById[extra.ContainerId],
-						ScryfallId:  cardId,
-						Amount:      extra.Delta,
-					})
+					id := extra.ContainerId
+					transfersByBox[id] = append(transfersByBox[id], CardTransfer{card, extra.Delta, nil})
 				}
 			}
 		}
 
-		if currentDelete.Delta < 0 {
-			updatedLogs = append(updatedLogs, CardLogPreview{
-				FromContainer: containersById[currentDelete.ContainerId],
-				ScryfallId:    cardId,
-				Amount:        -currentDelete.Delta,
-			})
+		if currentDel.Delta < 0 {
+			id := currentDel.ContainerId
+			transfersByBox[id] = append(transfersByBox[id], CardTransfer{card, currentDel.Delta, nil})
 
 			if deleteIndex+1 < len(dels) {
 				for _, extra := range dels[deleteIndex+1:] {
-					updatedLogs = append(updatedLogs, CardLogPreview{
-						FromContainer: containersById[extra.ContainerId],
-						ScryfallId:    cardId,
-						Amount:        -extra.Delta,
-					})
+					id := extra.ContainerId
+					transfersByBox[id] = append(transfersByBox[id], CardTransfer{card, currentAdd.Delta, nil})
 				}
 			}
 		}
 	}
 
-	return updatedLogs
+	return transfersByBox, nil
 }

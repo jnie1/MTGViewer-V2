@@ -25,17 +25,17 @@ type CardLogPreview struct {
 	Amount          int
 }
 
-type CardLog struct {
-	Card            []cards.CardImagePreview `json:"card"`
-	Delta           int                      `json:"delta"`
-	WithContainerId *int                     `json:"withContainerId"`
+type CardTransfer struct {
+	cards.CardImagePreview
+	Delta           int  `json:"delta"`
+	WithContainerId *int `json:"withContainerId,omitempty"`
 }
 
 type ContainerTransfers struct {
-	ContainerId   int       `json:"containerId"`
-	ContainerName string    `json:"containerName"`
-	Total         int       `json:"total"`
-	Transfers     []CardLog `json:"transfers"`
+	ContainerId   int            `json:"containerId"`
+	ContainerName string         `json:"containerName"`
+	Total         int            `json:"total"`
+	Transfers     []CardTransfer `json:"transfers"`
 }
 
 func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
