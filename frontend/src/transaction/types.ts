@@ -13,3 +13,18 @@ export interface ICardLog {
   card: ICard;
   amount: number;
 }
+
+export interface IContainerTransfers {
+  containerId: number;
+  containerName: string;
+  total: number;
+  cards: ICardTransfer[];
+}
+
+export interface ICardTransfer {
+  scryfallId: string;
+  name: string;
+  imageUrls: ICard['imageUrls'];
+  delta: number;
+  withContainerId?: number;
+}

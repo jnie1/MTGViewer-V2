@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
+	"github.com/jnie1/MTGViewer-V2/containers"
 	"github.com/jnie1/MTGViewer-V2/transactions"
 )
 
@@ -44,22 +45,28 @@ func fetchCardLogs(c *gin.Context) {
 		return
 	}
 
-	logs = transactions.MergeLogs(logs)
+	containerIds := transactions.ToContainerIds(logs)
+	boxes, err := containers.GetContainerPreviews(ctx, containerIds)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
 	scryfallIds := transactions.ToScryfallIds(logs)
-	matches, err := cards.FetchCollection(ctx, scryfallIds...)
+	cardMatches, err := cards.FetchCollection(ctx, scryfallIds...)
 
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	result, err := transactions.JoinCardLogs(matches, logs)
+	transfers, err := transactions.MergeLogs(logs, boxes, cardMatches)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, transfers)
 }
 
 func getLogs(ctx context.Context, group1, group2 uuid.UUID) ([]transactions.CardLogPreview, error) {
