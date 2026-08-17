@@ -2,7 +2,7 @@ import type { ICard } from '@/cards/types';
 
 export interface IPrints {
   scryfallId: string;
-  imagesUrls: ICard['imageUrls'];
+  imageUrls: ICard['imageUrls'];
   amount: number;
 }
 
