@@ -16,8 +16,7 @@ func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullC
 		cardsById[card.ScryfallId] = card
 	}
 
-	deltas := groupDeltasByCard(logs)
-	transfersByBox, err := combineTransfersByBox(deltas, boxes, cardsById)
+	transfersByBox, err := combineTransfersByBox(logs, boxes, cardsById)
 	if err != nil {
 		return nil, err
 	}
@@ -102,10 +101,10 @@ func groupDeltasByCard(logs []CardLogPreview) map[uuid.UUID][]containers.Contain
 	return changesByCard
 }
 
-func combineTransfersByBox(deltas map[uuid.UUID][]containers.ContainerDelta, boxes []containers.ContainerPreview, cardsById map[uuid.UUID]cards.Card) (map[int][]CardTransfer, error) {
+func combineTransfersByBox(logs []CardLogPreview, boxes []containers.ContainerPreview, cardsById map[uuid.UUID]cards.Card) (map[int][]CardTransfer, error) {
 	transfersByBox := make(map[int][]CardTransfer, len(boxes))
 
-	for cardId, changes := range deltas {
+	for cardId, changes := range groupDeltasByCard(logs) {
 		fullCard, ok := cardsById[cardId]
 		if !ok {
 			return nil, fmt.Errorf("unknown card %s", cardId)
