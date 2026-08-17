@@ -167,7 +167,6 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 
 func JoinContainerDeposits(boxes []ContainerPreview, deposits []CardDeposit) ([]ContainerDeposit, error) {
 	boxPrints := map[int][]cards.CardImageAmount{}
-	printTotals := map[int]int{}
 
 	for _, deposit := range deposits {
 		image, err := cards.ImageURLs(deposit.ScryfallId)
@@ -182,7 +181,6 @@ func JoinContainerDeposits(boxes []ContainerPreview, deposits []CardDeposit) ([]
 		}
 
 		boxPrints[deposit.ContainerId] = append(boxPrints[deposit.ContainerId], cardImage)
-		printTotals[deposit.ContainerId] = printTotals[deposit.ContainerId] + deposit.Amount
 	}
 
 	boxDeposits := make([]ContainerDeposit, len(boxes))
@@ -193,15 +191,15 @@ func JoinContainerDeposits(boxes []ContainerPreview, deposits []CardDeposit) ([]
 			return nil, fmt.Errorf("unknown box %d", box.ContainerId)
 		}
 
-		amount, ok := printTotals[box.ContainerId]
-		if !ok {
-			return nil, fmt.Errorf("unknown box %d", box.ContainerId)
+		total := 0
+		for _, card := range prints {
+			total += card.Amount
 		}
 
 		boxDeposits[i] = ContainerDeposit{
 			box.ContainerId,
 			box.Name,
-			amount,
+			total,
 			prints,
 		}
 	}
