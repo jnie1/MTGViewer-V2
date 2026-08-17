@@ -44,7 +44,7 @@ type CardAmountPreview struct {
 type CardImagePreview struct {
 	ScryfallId uuid.UUID     `json:"scryfallId"`
 	Name       string        `json:"name"`
-	Images     CardImageURLs `json:"images"`
+	Images     CardImageURLs `json:"imageUrls"`
 }
 
 type CardImageAmount struct {

@@ -67,7 +67,7 @@ func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullC
 			ContainerId:   box.ContainerId,
 			ContainerName: box.Name,
 			Total:         total,
-			Transfers:     logs,
+			Cards:         logs,
 		}
 	}
 

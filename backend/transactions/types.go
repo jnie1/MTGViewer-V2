@@ -35,7 +35,7 @@ type ContainerTransfers struct {
 	ContainerId   int            `json:"containerId"`
 	ContainerName string         `json:"containerName"`
 	Total         int            `json:"total"`
-	Transfers     []CardTransfer `json:"transfers"`
+	Cards         []CardTransfer `json:"cards"`
 }
 
 func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
