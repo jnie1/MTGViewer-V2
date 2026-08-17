@@ -165,7 +165,7 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 	return mergedChanges
 }
 
-func MergeDespositsByContainer(boxes []ContainerPreview, deposits []CardDeposit) ([]ContainerDeposit, error) {
+func JoinContainerDeposits(boxes []ContainerPreview, deposits []CardDeposit) ([]ContainerDeposit, error) {
 	boxPrints := map[int][]cards.CardImageAmount{}
 	printTotals := map[int]int{}
 
@@ -205,6 +205,15 @@ func MergeDespositsByContainer(boxes []ContainerPreview, deposits []CardDeposit)
 			prints,
 		}
 	}
+
+	boxesByOrder := make(map[int]int, len(boxes))
+	for _, box := range boxes {
+		boxesByOrder[box.ContainerId] = box.SortOrder
+	}
+
+	slices.SortFunc(boxDeposits, func(a, b ContainerDeposit) int {
+		return cmp.Compare(boxesByOrder[a.ContainerId], boxesByOrder[b.ContainerId])
+	})
 
 	return boxDeposits, nil
 }

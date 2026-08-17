@@ -68,7 +68,7 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
-	boxDeposits, err := containers.MergeDespositsByContainer(boxes, deposits)
+	boxDeposits, err := containers.JoinContainerDeposits(boxes, deposits)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
