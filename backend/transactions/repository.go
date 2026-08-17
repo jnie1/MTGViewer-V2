@@ -2,7 +2,6 @@ package transactions
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -70,7 +69,23 @@ func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
 	}
 
 	defer row.Close()
-	return getLogsFromQuery(row)
+	logs := []CardLogPreview{}
+
+	for row.Next() {
+		log := CardLogPreview{}
+
+		if err := row.Scan(&log.ScryfallId, &log.FromContainerId, &log.ToContainerId, &log.Amount); err != nil {
+			return nil, err
+		}
+
+		logs = append(logs, log)
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
+	return logs, nil
 }
 
 func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview, error) {
@@ -85,20 +100,20 @@ func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview,
 	}
 
 	defer row.Close()
-	return getLogsFromQuery(row)
-}
-
-func getLogsFromQuery(row *sql.Rows) ([]CardLogPreview, error) {
 	logs := []CardLogPreview{}
 
 	for row.Next() {
 		log := CardLogPreview{}
 
-		if err := row.Scan(&log.ScryfallId, log.FromContainerId, log.ToContainerId, &log.Amount); err != nil {
+		if err := row.Scan(&log.ScryfallId, &log.FromContainerId, &log.ToContainerId, &log.Amount); err != nil {
 			return nil, err
 		}
 
 		logs = append(logs, log)
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
 	}
 
 	return logs, nil
