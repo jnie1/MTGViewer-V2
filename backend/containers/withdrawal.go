@@ -132,7 +132,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 	return nil
 }
 
-func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDepositPreview) ([]ContainerChanges, error) {
+func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDeposit) ([]ContainerChanges, error) {
 	changes := []ContainerChanges{}
 	amountsByContainers := map[ContainerCard]int{}
 

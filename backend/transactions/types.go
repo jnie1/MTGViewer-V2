@@ -26,9 +26,9 @@ type CardLogPreview struct {
 }
 
 type CardLog struct {
-	Card            cards.CardAmountImagePreview `json:"card"`
-	Delta           int                          `json:"delta"`
-	WithContainerId *int                         `json:"withContainerId"`
+	Card            []cards.CardImagePreview `json:"card"`
+	Delta           int                      `json:"delta"`
+	WithContainerId *int                     `json:"withContainerId"`
 }
 
 type ContainerTransfers struct {

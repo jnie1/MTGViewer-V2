@@ -61,9 +61,22 @@ func fetchCard(c *gin.Context) {
 		return
 	}
 
+	containerIds := containers.ToContainerIds(deposits)
+	boxes, err := containers.GetContainerPreviews(ctx, containerIds)
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	boxDeposits, err := containers.MergeDespositsByContainer(boxes, deposits)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
 	result := containers.CardContainerMatch{
 		Card:       cardFound,
-		Containers: containers.MergeDespositsByContainer(deposits),
+		Containers: boxDeposits,
 	}
 
 	c.JSON(http.StatusOK, result)
