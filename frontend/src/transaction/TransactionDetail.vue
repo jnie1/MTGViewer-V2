@@ -1,102 +1,82 @@
 <script setup lang="ts">
-import type { ICardLog } from './types';
+import type { IContainerTransfers } from './types';
 
 interface ITransactionProps {
-  changes: ICardLog[];
+  transfers: IContainerTransfers[];
 }
 
-const { changes } = defineProps<ITransactionProps>();
+const { transfers } = defineProps<ITransactionProps>();
+const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.containerName]));
 </script>
 
 <template>
-  <div v-if="changes && changes.length > 0">
-    <v-row class="header">
-      <v-col class="header-item">Card Image</v-col>
-      <v-col class="header-item">Card Name</v-col>
-      <v-col class="header-item">From Container</v-col>
-      <v-col class="header-item">To Container</v-col>
-      <v-col class="header-item">Quantity</v-col>
-    </v-row>
-    <div v-for="(change, index) in changes" :key="index" class="table">
-      <v-row>
-        <v-col>
-          <img
-            v-if="change.card.imageUrls?.preview"
-            :src="change.card.imageUrls.preview"
-            alt="Card Image"
-            class="card-image"
-          />
-        </v-col>
-        <v-col>
-          <router-link
-            :to="{
-              name: 'card',
-              params: { scryfallId: change.card.scryfallId },
-            }"
-          >
-            {{ change.card.name }}
-          </router-link>
-        </v-col>
-        <v-col>
-          <router-link
-            v-if="change.fromContainer"
-            :to="{
-              name: 'container',
-              params: { containerId: change.fromContainer.containerId },
-            }"
-          >
-            {{ change.fromContainer.name }}
-          </router-link>
-        </v-col>
-        <v-col>
-          <router-link
-            v-if="change.toContainer"
-            :to="{
-              name: 'container',
-              params: { containerId: change.toContainer.containerId },
-            }"
-          >
-            {{ change.toContainer.name }}
-          </router-link>
-        </v-col>
-        <v-col>{{ change.amount }}</v-col>
-      </v-row>
-    </div>
+  <div v-if="transfers && transfers.length > 0">
+    <v-expansion-panels variant="popout" multiple>
+      <v-expansion-panel v-for="transfer in transfers" :key="transfer.containerId">
+        <v-expansion-panel-title>
+          {{ transfer.containerName }}
+        </v-expansion-panel-title>
+        <v-expansion-panel-text class="log-table">
+          <v-table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Card</th>
+                <th>Exchanged With</th>
+                <th class="text-right">Changes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="card in transfer.cards" :key="card.scryfallId">
+                <td>
+                  <router-link
+                    :to="{
+                      name: 'card',
+                      params: { scryfallId: card.scryfallId },
+                    }"
+                  >
+                    {{ card.name }}
+                  </router-link>
+                </td>
+                <td>
+                  <img
+                    v-if="card.imageUrls.preview"
+                    :src="card.imageUrls.preview"
+                    alt="Card Image"
+                    class="card-image"
+                  />
+                </td>
+                <td>
+                  <router-link
+                    v-if="card.withContainerId && containersById.has(card.withContainerId)"
+                    :to="{
+                      name: 'container',
+                      params: { containerId: card.withContainerId },
+                    }"
+                  >
+                    {{ containersById.get(card.withContainerId) }}
+                  </router-link>
+                  <i v-else-if="!card.withContainerId && card.delta < 0">Removed</i>
+                  <i v-else-if="!card.withContainerId && card.delta > 0">Added</i>
+                </td>
+                <td class="text-right">{{ card.delta }}</td>
+              </tr>
+              <tr>
+                <td>Total</td>
+                <td></td>
+                <td></td>
+                <td class="text-right">{{ transfer.total }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+    </v-expansion-panels>
   </div>
 </template>
 
 <style lang="css" scoped>
-.header {
-  font-weight: bold;
-  color: white;
-  display: flex;
-}
-
-.header-item {
-  border: 1em solid white;
-  border-width: 0.1em;
-  width: 100%;
-  height: 100%;
-  border-spacing: 1em;
-  cursor: pointer;
-}
-
-.v-row {
-  padding: 20px;
-  text-align: center;
-}
-
-.v-col {
-  display: grid;
-  border: 1px solid white;
-  justify-content: center;
-  align-items: center;
-  padding-top: 0.5em;
-}
-
-.table {
-  width: 100%;
-  height: 100%;
-  display: flex;
+.card-image {
+  padding: 8px 0;
 }
 </style>

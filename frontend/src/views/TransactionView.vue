@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
-import type { ICardLog } from '@/transaction/types';
+import type { IContainerTransfers } from '@/transaction/types';
 import TransactionDetail from '@/transaction/TransactionDetail.vue';
 
 defineOptions({
@@ -10,10 +10,10 @@ defineOptions({
   },
 });
 
-const changes = useRouteData<ICardLog[]>();
+const transfers = useRouteData<IContainerTransfers[]>();
 </script>
 <template>
   <main>
-    <transaction-detail :changes />
+    <transaction-detail :transfers />
   </main>
 </template>
