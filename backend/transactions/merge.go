@@ -74,33 +74,6 @@ func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullC
 	return transfers, nil
 }
 
-func groupDeltasByCard(logs []CardLogPreview) map[uuid.UUID][]containers.ContainerDelta {
-	changesByContainer := map[containers.ContainerCard]int{}
-
-	for _, log := range logs {
-		if log.FromContainerId != nil {
-			containerId := *log.FromContainerId
-			key := containers.ContainerCard{ContainerId: containerId, ScryfallId: log.ScryfallId}
-			changesByContainer[key] = changesByContainer[key] - log.Amount
-		}
-		if log.ToContainerId != nil {
-			containerId := *log.ToContainerId
-			key := containers.ContainerCard{ContainerId: containerId, ScryfallId: log.ScryfallId}
-			changesByContainer[key] = changesByContainer[key] + log.Amount
-		}
-	}
-
-	changesByCard := map[uuid.UUID][]containers.ContainerDelta{}
-
-	for cardKey, delta := range changesByContainer {
-		cardId := cardKey.ScryfallId
-		newChange := containers.ContainerDelta{ContainerId: cardKey.ContainerId, Delta: delta}
-		changesByCard[cardId] = append(changesByCard[cardId], newChange)
-	}
-
-	return changesByCard
-}
-
 func combineTransfersByBox(logs []CardLogPreview, boxes []containers.ContainerPreview, cardsById map[uuid.UUID]cards.Card) (map[int][]CardTransfer, error) {
 	transfersByBox := make(map[int][]CardTransfer, len(boxes))
 
@@ -234,4 +207,31 @@ func combineTransfersByBox(logs []CardLogPreview, boxes []containers.ContainerPr
 	}
 
 	return transfersByBox, nil
+}
+
+func groupDeltasByCard(logs []CardLogPreview) map[uuid.UUID][]containers.ContainerDelta {
+	changesByContainer := map[containers.ContainerCard]int{}
+
+	for _, log := range logs {
+		if log.FromContainerId != nil {
+			containerId := *log.FromContainerId
+			key := containers.ContainerCard{ContainerId: containerId, ScryfallId: log.ScryfallId}
+			changesByContainer[key] = changesByContainer[key] - log.Amount
+		}
+		if log.ToContainerId != nil {
+			containerId := *log.ToContainerId
+			key := containers.ContainerCard{ContainerId: containerId, ScryfallId: log.ScryfallId}
+			changesByContainer[key] = changesByContainer[key] + log.Amount
+		}
+	}
+
+	changesByCard := map[uuid.UUID][]containers.ContainerDelta{}
+
+	for cardKey, delta := range changesByContainer {
+		cardId := cardKey.ScryfallId
+		newChange := containers.ContainerDelta{ContainerId: cardKey.ContainerId, Delta: delta}
+		changesByCard[cardId] = append(changesByCard[cardId], newChange)
+	}
+
+	return changesByCard
 }
