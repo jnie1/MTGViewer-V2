@@ -227,7 +227,7 @@ func combineTransfersByBox(logs []CardLogPreview, boxes []containers.ContainerPr
 			if deleteIndex+1 < len(dels) {
 				for _, extra := range dels[deleteIndex+1:] {
 					id := extra.ContainerId
-					transfersByBox[id] = append(transfersByBox[id], CardTransfer{card, currentAdd.Delta, nil})
+					transfersByBox[id] = append(transfersByBox[id], CardTransfer{card, extra.Delta, nil})
 				}
 			}
 		}
