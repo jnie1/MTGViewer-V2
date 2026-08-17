@@ -5,10 +5,11 @@ import (
 	"slices"
 
 	"github.com/google/uuid"
+	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
 )
 
-func MergeLogs(logs []CardLogPreview) []CardLogPreview {
+func MergeLogs(logs []CardLogPreview, boxes []containers.ContainerPreview, fullCard []cards.Card) ([]ContainerTransfers, error) {
 	changesByContainer := map[containers.ContainerCard]int{}
 	containersById := map[int]*containers.ContainerPreview{}
 

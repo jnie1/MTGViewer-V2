@@ -61,10 +61,8 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
 	db := database.Instance()
 	row, err := db.QueryContext(ctx, `
-		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
+		SELECT scryfall_id, from_container_id, to_container_id, amount
 		FROM transactions
-		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
-		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
 		WHERE group_id = $1;`, groupId)
 
 	if err != nil {
@@ -78,10 +76,8 @@ func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
 func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview, error) {
 	db := database.Instance()
 	row, err := db.QueryContext(ctx, `
-		SELECT fc.container_id, fc.container_name, tc.container_id, tc.container_name, scryfall_id, amount
+		SELECT scryfall_id, from_container_id, to_container_id, amount
 		FROM transactions
-		LEFT JOIN containers AS fc ON from_container_id = fc.container_id
-		LEFT JOIN containers AS tc ON to_container_id = tc.container_id
 		WHERE time >= $1 AND time <= $2;`, logRange.Start, logRange.End)
 
 	if err != nil {
@@ -98,22 +94,8 @@ func getLogsFromQuery(row *sql.Rows) ([]CardLogPreview, error) {
 	for row.Next() {
 		log := CardLogPreview{}
 
-		var fromMaybeBoxId sql.Null[int]
-		var fromMaybeBoxName sql.NullString
-
-		var toMaybeBoxId sql.Null[int]
-		var toMaybeBoxName sql.NullString
-
-		if err := row.Scan(&fromMaybeBoxId, &fromMaybeBoxName, &toMaybeBoxId, &toMaybeBoxName, &log.ScryfallId, &log.Amount); err != nil {
+		if err := row.Scan(&log.ScryfallId, log.FromContainerId, log.ToContainerId, &log.Amount); err != nil {
 			return nil, err
-		}
-
-		if fromMaybeBoxId.Valid && fromMaybeBoxName.Valid {
-			log.FromContainer = &containers.ContainerPreview{ContainerId: fromMaybeBoxId.V, Name: fromMaybeBoxName.String}
-		}
-
-		if toMaybeBoxId.Valid && toMaybeBoxName.Valid {
-			log.ToContainer = &containers.ContainerPreview{ContainerId: toMaybeBoxId.V, Name: toMaybeBoxName.String}
 		}
 
 		logs = append(logs, log)

@@ -93,6 +93,36 @@ func GetContainer(ctx context.Context, containerId int) (ContainerEntry, error) 
 	return container, err
 }
 
+func GetContainerPreviews(ctx context.Context, containerIds []int) ([]ContainerPreview, error) {
+	db := database.Instance()
+
+	row, err := db.QueryContext(ctx, `
+		SELECT c.container_id, c.container_name, c.sort_order
+		FROM containers c
+		WHERE c.container_id = ANY($1);`, pq.Array(containerIds))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	containers := []ContainerPreview{}
+
+	for row.Next() {
+		container := ContainerPreview{}
+		if err := row.Scan(&container.ContainerId, &container.Name, &container.SortOrder); err != nil {
+			return nil, err
+		}
+		containers = append(containers, container)
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
+	return containers, err
+}
+
 func GetAmounts(ctx context.Context, containerId int) ([]cards.CardAmountPreview, error) {
 	db := database.Instance()
 
@@ -128,7 +158,7 @@ func FindExcessDeposits(ctx context.Context, count int) ([]CardDepositPreview, e
 	db := database.Instance()
 
 	row, err := db.QueryContext(ctx, `
-		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
+		SELECT cd.container_id, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits cd
 		JOIN containers AS c ON cd.container_id = c.container_id
 		WHERE cd.oracle_id IN (
@@ -146,7 +176,7 @@ func FindExcessDeposits(ctx context.Context, count int) ([]CardDepositPreview, e
 
 	for row.Next() {
 		deposit := CardDepositPreview{}
-		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
+		if err := row.Scan(&deposit.ContainerId, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
 		deposits = append(deposits, deposit)
@@ -163,7 +193,7 @@ func SearchDeposits(ctx context.Context, scryfallIds uuid.UUIDs) ([]CardDepositP
 	db := database.Instance()
 
 	row, err := db.QueryContext(ctx, `
-		SELECT cd.container_id, c.container_name, cd.scryfall_id, cd.oracle_id, cd.amount
+		SELECT cd.container_id, cd.scryfall_id, cd.oracle_id, cd.amount
 		FROM card_deposits AS cd
 		JOIN containers AS c ON cd.container_id = c.container_id
 		WHERE cd.scryfall_id = ANY($1);`, pq.Array(scryfallIds))
@@ -177,7 +207,7 @@ func SearchDeposits(ctx context.Context, scryfallIds uuid.UUIDs) ([]CardDepositP
 
 	for row.Next() {
 		deposit := CardDepositPreview{}
-		if err := row.Scan(&deposit.ContainerId, &deposit.ContainerName, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
+		if err := row.Scan(&deposit.ContainerId, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
 		deposits = append(deposits, deposit)
