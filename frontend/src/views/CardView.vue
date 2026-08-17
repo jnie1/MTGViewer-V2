@@ -73,17 +73,17 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
         >
           <v-expansion-panel-title>
             <router-link
-                class="grid-card-title"
-                :to="{
-                  name: 'container',
-                  params: { containerId: container.containerId },
-                  query: { search: matches.card.name },
-                }"
-                >{{ container.name }}</router-link
-              >
-              <v-card-subtitle class="grid-card-subtitle"
-                >Amount: {{ container.amount }}</v-card-subtitle
-              >
+              class="grid-card-title"
+              :to="{
+                name: 'container',
+                params: { containerId: container.containerId },
+                query: { search: matches.card.name },
+              }"
+              >{{ container.name }}</router-link
+            >
+            <v-card-subtitle class="grid-card-subtitle"
+              >Amount: {{ container.amount }}</v-card-subtitle
+            >
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <ul class="print-list">
