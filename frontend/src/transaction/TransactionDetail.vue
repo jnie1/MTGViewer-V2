@@ -34,7 +34,6 @@ const { changes } = defineProps<ITransactionProps>();
               params: { scryfallId: change.card.scryfallId },
             }"
           >
-            asdasd
             {{ change.card.name }}
           </router-link>
         </v-col>
