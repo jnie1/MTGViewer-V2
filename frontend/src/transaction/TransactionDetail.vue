@@ -20,15 +20,15 @@ const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.contain
           <v-table>
             <thead>
               <tr>
-                <th>Name</th>
+                <th class="name-col">Name</th>
                 <th>Card</th>
-                <th>Exchanged With</th>
-                <th class="text-right">Changes</th>
+                <th>Action</th>
+                <th class="text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="card in transfer.cards" :key="card.scryfallId">
-                <td>
+                <td class="name-col">
                   <router-link
                     :to="{
                       name: 'card',
@@ -48,24 +48,29 @@ const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.contain
                 </td>
                 <td>
                   <router-link
-                    v-if="card.withContainerId && containersById.has(card.withContainerId)"
-                    :to="{
-                      name: 'container',
-                      params: { containerId: card.withContainerId },
-                    }"
+                    v-if="
+                      card.withContainerId &&
+                      containersById.has(card.withContainerId) &&
+                      card.delta > 0
+                    "
+                    :to="{ name: 'container', params: { containerId: card.withContainerId } }"
                   >
-                    {{ containersById.get(card.withContainerId) }}
+                    From {{ containersById.get(card.withContainerId) }}
+                  </router-link>
+                  <router-link
+                    v-else-if="
+                      card.withContainerId &&
+                      containersById.has(card.withContainerId) &&
+                      card.delta < 0
+                    "
+                    :to="{ name: 'container', params: { containerId: card.withContainerId } }"
+                  >
+                    To {{ containersById.get(card.withContainerId) }}
                   </router-link>
                   <i v-else-if="!card.withContainerId && card.delta < 0">Removed</i>
                   <i v-else-if="!card.withContainerId && card.delta > 0">Added</i>
                 </td>
-                <td class="text-right">{{ card.delta }}</td>
-              </tr>
-              <tr>
-                <td>Total</td>
-                <td></td>
-                <td></td>
-                <td class="text-right">{{ transfer.total }}</td>
+                <td class="text-right">{{ Math.abs(card.delta) }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -76,6 +81,10 @@ const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.contain
 </template>
 
 <style lang="css" scoped>
+.name-col {
+  width: 300px;
+}
+
 .card-image {
   padding: 8px 0;
 }
