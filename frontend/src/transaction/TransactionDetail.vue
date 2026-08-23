@@ -11,7 +11,7 @@ const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.contain
 
 <template>
   <div v-if="transfers && transfers.length > 0">
-    <v-expansion-panels variant="popout" multiple>
+    <v-expansion-panels variant="default" multiple>
       <v-expansion-panel v-for="transfer in transfers" :key="transfer.containerId">
         <v-expansion-panel-title>
           {{ transfer.containerName }}
