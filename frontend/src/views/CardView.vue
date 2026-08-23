@@ -73,17 +73,17 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
         >
           <v-expansion-panel-title>
             <router-link
-                class="grid-card-title"
-                :to="{
-                  name: 'container',
-                  params: { containerId: container.containerId },
-                  query: { search: matches.card.name },
-                }"
-                >{{ container.name }}</router-link
-              >
-              <v-card-subtitle class="grid-card-subtitle"
-                >Amount: {{ container.amount }}</v-card-subtitle
-              >
+              class="grid-card-title"
+              :to="{
+                name: 'container',
+                params: { containerId: container.containerId },
+                query: { search: matches.card.name },
+              }"
+              >{{ container.name }}</router-link
+            >
+            <v-card-subtitle class="grid-card-subtitle"
+              >Amount: {{ container.amount }}</v-card-subtitle
+            >
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <ul class="print-list">
@@ -92,8 +92,8 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
                   <v-img
                     class="card-img"
                     :alt="matches.card.name"
-                    :src="print.images.full"
-                    :lazy-src="print.images.preview"
+                    :src="print.imageUrls.full"
+                    :lazy-src="print.imageUrls.preview"
                   />
                   <v-card-subtitle class="grid-card-subtitle">
                     — {{ print.amount }}

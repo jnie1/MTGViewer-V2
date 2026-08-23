@@ -9,7 +9,7 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
+func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
 	if targetCopies < 0 {
 		return nil
 	}
@@ -24,7 +24,7 @@ func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	belowPrice := map[uuid.UUID]CardDepositPreview{}
+	belowPrice := map[uuid.UUID]CardDeposit{}
 	cheapOracles := map[uuid.UUID]any{}
 
 	for _, deposit := range options {
@@ -48,7 +48,7 @@ func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices
 		}
 	}
 
-	depositsByOracle := map[uuid.UUID][]CardDepositPreview{}
+	depositsByOracle := map[uuid.UUID][]CardDeposit{}
 
 	for _, deposit := range options {
 		oracleId := deposit.OracleId
@@ -64,7 +64,7 @@ func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices
 	for _, deposits := range depositsByOracle {
 		remainingCopies := targetCopies
 
-		slices.SortFunc(deposits, func(a, b CardDepositPreview) int {
+		slices.SortFunc(deposits, func(a, b CardDeposit) int {
 			priceA, ok := pricesByCard[a.ScryfallId]
 			if !ok {
 				priceA = minPrice
