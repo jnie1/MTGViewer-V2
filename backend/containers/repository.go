@@ -26,14 +26,13 @@ func GetAllocations(ctx context.Context) ([]ContainerAllocation, error) {
 	}
 
 	defer row.Close()
-	allocations := []ContainerAllocation{}
+	var allocations []ContainerAllocation
 
 	for row.Next() {
-		allocation := ContainerAllocation{}
+		var allocation ContainerAllocation
 		if err := row.Scan(&allocation.ContainerId, &allocation.Used, &allocation.Capacity); err != nil {
 			return nil, err
 		}
-
 		allocations = append(allocations, allocation)
 	}
 
@@ -59,10 +58,10 @@ func GetContainers(ctx context.Context) ([]Container, error) {
 	}
 
 	defer row.Close()
-	containers := []Container{}
+	var containers []Container
 
 	for row.Next() {
-		container := Container{}
+		var container Container
 		if err := row.Scan(&container.ContainerId, &container.Name, &container.Used, &container.Capacity); err != nil {
 			return nil, err
 		}
@@ -87,7 +86,7 @@ func GetContainer(ctx context.Context, containerId int) (ContainerEntry, error) 
 		GROUP BY c.container_id
 		LIMIT 1;`, containerId)
 
-	container := ContainerEntry{}
+	var container ContainerEntry
 	err := row.Scan(&container.Name, &container.Used, &container.Capacity, &container.IsDeleted)
 
 	return container, err
@@ -106,10 +105,10 @@ func GetContainerPreviews(ctx context.Context, containerIds []int) ([]ContainerP
 	}
 
 	defer row.Close()
-	containers := []ContainerPreview{}
+	var containers []ContainerPreview
 
 	for row.Next() {
-		container := ContainerPreview{}
+		var container ContainerPreview
 		if err := row.Scan(&container.ContainerId, &container.Name, &container.SortOrder); err != nil {
 			return nil, err
 		}
@@ -136,14 +135,13 @@ func GetAmounts(ctx context.Context, containerId int) ([]cards.CardAmountPreview
 	}
 
 	defer row.Close()
-	amounts := []cards.CardAmountPreview{}
+	var amounts []cards.CardAmountPreview
 
 	for row.Next() {
-		amount := cards.CardAmountPreview{}
+		var amount cards.CardAmountPreview
 		if err := row.Scan(&amount.ScryfallId, &amount.OracleId, &amount.Amount); err != nil {
 			return nil, err
 		}
-
 		amounts = append(amounts, amount)
 	}
 
@@ -171,10 +169,10 @@ func FindExcessDeposits(ctx context.Context, count int) ([]CardDeposit, error) {
 	}
 
 	defer row.Close()
-	deposits := []CardDeposit{}
+	var deposits []CardDeposit
 
 	for row.Next() {
-		deposit := CardDeposit{}
+		var deposit CardDeposit
 		if err := row.Scan(&deposit.ContainerId, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
@@ -201,10 +199,10 @@ func SearchDeposits(ctx context.Context, scryfallIds uuid.UUIDs) ([]CardDeposit,
 	}
 
 	defer row.Close()
-	deposits := []CardDeposit{}
+	var deposits []CardDeposit
 
 	for row.Next() {
-		deposit := CardDeposit{}
+		var deposit CardDeposit
 		if err := row.Scan(&deposit.ContainerId, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
@@ -231,10 +229,10 @@ func SearchDepositsByOracleId(ctx context.Context, oracleIds uuid.UUIDs) ([]Card
 	}
 
 	defer row.Close()
-	deposits := []CardDeposit{}
+	var deposits []CardDeposit
 
 	for row.Next() {
-		deposit := CardDeposit{}
+		var deposit CardDeposit
 		if err := row.Scan(&deposit.ContainerId, &deposit.ScryfallId, &deposit.OracleId, &deposit.Amount); err != nil {
 			return nil, err
 		}
@@ -272,7 +270,7 @@ func UpdateContainer(ctx context.Context, containerId int, container ContainerEn
 func UpdateDeposits(ctx context.Context, changes []ContainerChanges) error {
 	db := database.Instance()
 
-	vals := []string{}
+	var vals []string
 	for _, change := range changes {
 		for _, request := range change.Requests {
 			val := fmt.Sprintf("(%d, '%s'::uuid, '%s'::uuid, %d)", change.ContainerId, request.ScryfallId, request.OracleId, request.Delta)
@@ -319,10 +317,10 @@ func FindMissingOracleIds(ctx context.Context) (uuid.UUIDs, error) {
 	}
 
 	defer row.Close()
-	ids := uuid.UUIDs{}
+	var ids uuid.UUIDs
 
 	for row.Next() {
-		id := uuid.UUID{}
+		var id uuid.UUID
 		if err := row.Scan(&id); err != nil {
 			return nil, err
 		}

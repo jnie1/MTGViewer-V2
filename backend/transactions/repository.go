@@ -19,7 +19,7 @@ func GetTimeRange(ctx context.Context, group1, group2 uuid.UUID) (LogRange, erro
 		FROM transactions
 		WHERE group_id = $1 OR group_id = $2;`, group1, group2)
 
-	logRange := LogRange{}
+	var logRange LogRange
 	err := row.Scan(&logRange.Start, &logRange.End)
 
 	return logRange, err
@@ -38,15 +38,13 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 	}
 
 	defer row.Close()
-	transactions := []CardTransaction{}
+	var transactions []CardTransaction
 
 	for row.Next() {
-		transaction := CardTransaction{}
-
+		var transaction CardTransaction
 		if err := row.Scan(&transaction.GroupId, &transaction.Time, &transaction.Total); err != nil {
 			return nil, err
 		}
-
 		transactions = append(transactions, transaction)
 	}
 
@@ -69,15 +67,13 @@ func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
 	}
 
 	defer row.Close()
-	logs := []CardLogPreview{}
+	var logs []CardLogPreview
 
 	for row.Next() {
-		log := CardLogPreview{}
-
+		var log CardLogPreview
 		if err := row.Scan(&log.ScryfallId, &log.FromContainerId, &log.ToContainerId, &log.Amount); err != nil {
 			return nil, err
 		}
-
 		logs = append(logs, log)
 	}
 
@@ -100,15 +96,13 @@ func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview,
 	}
 
 	defer row.Close()
-	logs := []CardLogPreview{}
+	var logs []CardLogPreview
 
 	for row.Next() {
-		log := CardLogPreview{}
-
+		var log CardLogPreview
 		if err := row.Scan(&log.ScryfallId, &log.FromContainerId, &log.ToContainerId, &log.Amount); err != nil {
 			return nil, err
 		}
-
 		logs = append(logs, log)
 	}
 
@@ -120,16 +114,13 @@ func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview,
 }
 
 func LogCollectionChanges(ctx context.Context, changes []containers.ContainerChanges) error {
+	now := time.Now().UTC()
 	groupId, err := uuid.NewRandom()
 	if err != nil {
 		return err
 	}
 
-	db := database.Instance()
-	now := time.Now().UTC()
-
-	valueStatements := []string{}
-
+	var valueStatements []string
 	for _, change := range changes {
 		for _, request := range change.Requests {
 
@@ -144,6 +135,8 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 			}
 		}
 	}
+
+	db := database.Instance()
 	allValues := strings.Join(valueStatements, ", ")
 
 	_, err = db.ExecContext(ctx, `

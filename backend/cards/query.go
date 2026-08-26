@@ -13,7 +13,7 @@ import (
 func whereTuples2[C ~[2]string, T ~[2]V, V any](b *db.SQLBuilder, columns C, tuples []T) *db.SQLBuilder {
 	placeholders := make([]string, len(tuples))
 	for i, tup := range tuples {
-		group := [2]string{}
+		var group [2]string
 		for j, val := range tup {
 			param := b.AddParam(val)
 			group[j] = fmt.Sprintf("$%d", param)

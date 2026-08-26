@@ -148,8 +148,8 @@ func MergeContainerChanges(changes []ContainerChanges) []ContainerChanges {
 		requestsById[change.ContainerId] = append(requestsById[change.ContainerId], change.Requests...)
 	}
 
+	var mergedChanges []ContainerChanges
 	hasChanges := false
-	mergedChanges := []ContainerChanges{}
 
 	for containerId, requests := range requestsById {
 		mergedRequests, requestsChanged := mergeCardRequestsChecked(requests)
@@ -217,14 +217,13 @@ func JoinContainerDeposits(boxes []ContainerPreview, deposits []CardDeposit) ([]
 }
 
 func FilterCards(fullCards []cards.Card, deposits []CardDeposit) []cards.Card {
-	oracleIds := map[uuid.UUID]any{}
+	oracleIds := map[uuid.UUID]bool{}
 	for _, deposit := range deposits {
-		oracleIds[deposit.OracleId] = nil
+		oracleIds[deposit.OracleId] = true
 	}
 
 	matches := make([]cards.Card, len(oracleIds))
 	i := 0
-
 	for _, card := range fullCards {
 		if _, ok := oracleIds[card.OracleId]; ok {
 			matches[i] = card
@@ -244,15 +243,13 @@ func FilterCards(fullCards []cards.Card, deposits []CardDeposit) []cards.Card {
 }
 
 func ToScryfallIds(deposits []CardDeposit) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]any{}
-
+	uniqIds := map[uuid.UUID]bool{}
 	for _, deposit := range deposits {
-		uniqIds[deposit.ScryfallId] = nil
+		uniqIds[deposit.ScryfallId] = true
 	}
 
 	ids := make(uuid.UUIDs, len(uniqIds))
 	i := 0
-
 	for id := range uniqIds {
 		ids[i] = id
 		i += 1
@@ -262,15 +259,13 @@ func ToScryfallIds(deposits []CardDeposit) uuid.UUIDs {
 }
 
 func ToContainerIds(deposits []CardDeposit) []int {
-	uniqIds := map[int]any{}
-
+	uniqIds := map[int]bool{}
 	for _, deposit := range deposits {
-		uniqIds[deposit.ContainerId] = nil
+		uniqIds[deposit.ContainerId] = true
 	}
 
 	ids := make([]int, len(uniqIds))
 	i := 0
-
 	for id := range uniqIds {
 		ids[i] = id
 		i += 1

@@ -89,9 +89,7 @@ func combineTransfersByBox(logs []CardLogPreview, boxes []containers.ContainerPr
 			Images:     fullCard.Images,
 		}
 
-		adds := []containers.ContainerDelta{}
-		dels := []containers.ContainerDelta{}
-
+		var adds, dels []containers.ContainerDelta
 		for _, change := range changes {
 			if change.Delta > 0 {
 				adds = append(adds, change)

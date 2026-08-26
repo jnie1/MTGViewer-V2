@@ -13,7 +13,7 @@ func GetUser(ctx context.Context, email string) (UserInfo, error) {
 		FROM users
 		WHERE email = $1`, email)
 
-	user := UserInfo{}
+	var user UserInfo
 	if err := row.Scan(&user.Name, &user.PasswordHash, &user.Role); err != nil {
 		return user, err
 	}
