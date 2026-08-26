@@ -18,7 +18,7 @@ func GetContainerAdditions(requests []CardRequest, allocations []ContainerAlloca
 	}
 
 	if len(additions) == 0 {
-		return []ContainerChanges{}, nil
+		return nil, nil
 	}
 
 	totalAdds := 0
