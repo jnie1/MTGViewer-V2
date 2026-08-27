@@ -225,7 +225,7 @@ func FilterCards(fullCards []cards.Card, deposits []CardDeposit) []cards.Card {
 	matches := make([]cards.Card, len(oracleIds))
 	i := 0
 	for _, card := range fullCards {
-		if _, ok := oracleIds[card.OracleId]; ok {
+		if oracleIds[card.OracleId] {
 			matches[i] = card
 			i += 1
 		}
@@ -243,9 +243,10 @@ func FilterCards(fullCards []cards.Card, deposits []CardDeposit) []cards.Card {
 }
 
 func ToScryfallIds(deposits []CardDeposit) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]bool{}
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
 	for _, deposit := range deposits {
-		uniqIds[deposit.ScryfallId] = true
+		uniqIds[deposit.ScryfallId] = v
 	}
 
 	ids := make(uuid.UUIDs, len(uniqIds))
@@ -259,9 +260,10 @@ func ToScryfallIds(deposits []CardDeposit) uuid.UUIDs {
 }
 
 func ToContainerIds(deposits []CardDeposit) []int {
-	uniqIds := map[int]bool{}
+	uniqIds := make(map[int]struct{})
+	var v struct{}
 	for _, deposit := range deposits {
-		uniqIds[deposit.ContainerId] = true
+		uniqIds[deposit.ContainerId] = v
 	}
 
 	ids := make([]int, len(uniqIds))

@@ -85,15 +85,14 @@ func ParseScryfallIds(ids []string) (uuid.UUIDs, error) {
 }
 
 func ToScryfallIds(amounts []CardAmountPreview) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]bool{}
-
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
 	for _, deposit := range amounts {
-		uniqIds[deposit.ScryfallId] = true
+		uniqIds[deposit.ScryfallId] = v
 	}
 
 	ids := make(uuid.UUIDs, len(uniqIds))
 	i := 0
-
 	for id := range uniqIds {
 		ids[i] = id
 		i += 1

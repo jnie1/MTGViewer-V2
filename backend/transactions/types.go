@@ -39,9 +39,10 @@ type ContainerTransfers struct {
 }
 
 func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]bool{}
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
 	for _, log := range transactionLogs {
-		uniqIds[log.ScryfallId] = true
+		uniqIds[log.ScryfallId] = v
 	}
 
 	ids := make(uuid.UUIDs, len(uniqIds))
@@ -55,13 +56,14 @@ func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
 }
 
 func ToContainerIds(transactionLogs []CardLogPreview) []int {
-	uniqIds := map[int]bool{}
+	uniqIds := make(map[int]struct{})
+	var v struct{}
 	for _, log := range transactionLogs {
 		if log.FromContainerId != nil {
-			uniqIds[*log.FromContainerId] = true
+			uniqIds[*log.FromContainerId] = v
 		}
 		if log.ToContainerId != nil {
-			uniqIds[*log.ToContainerId] = true
+			uniqIds[*log.ToContainerId] = v
 		}
 	}
 

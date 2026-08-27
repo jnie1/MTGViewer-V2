@@ -171,14 +171,15 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 }
 
 func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]bool{}
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
 	for _, targets := range withdrawals {
 		for _, target := range targets {
 			switch t := target.Card.(type) {
 			case cards.ScryfallIdObj:
-				uniqIds[t.ScryfallId] = true
+				uniqIds[t.ScryfallId] = v
 			case cards.ScryfallOracleObj:
-				uniqIds[t.ScryfallId] = true
+				uniqIds[t.ScryfallId] = v
 			}
 		}
 	}
