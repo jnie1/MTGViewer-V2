@@ -10,8 +10,8 @@ import (
 )
 
 func CorsMiddleware() gin.HandlerFunc {
+	var allowedOrigins []string
 	originsEnv := os.Getenv("CLIENT_ORIGINS")
-	allowedOrigins := []string{}
 
 	for origin := range strings.SplitSeq(originsEnv, ",") {
 		trimmedOrigin := strings.TrimSpace(origin)

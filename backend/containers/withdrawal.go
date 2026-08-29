@@ -133,16 +133,17 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 }
 
 func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDeposit) ([]ContainerChanges, error) {
-	changes := []ContainerChanges{}
-	amountsByContainers := map[ContainerCard]int{}
-
+	amountsByContainers := make(map[ContainerCard]int, len(deposits))
 	for _, deposit := range deposits {
 		key := ContainerCard{deposit.ContainerId, deposit.ScryfallId}
 		amountsByContainers[key] = deposit.Amount
 	}
 
+	changes := make([]ContainerChanges, len(withdrawals))
+	i := 0
+
 	for containerId, targets := range withdrawals {
-		requests := []CardRequest{}
+		var requests []CardRequest
 
 		for _, withdrawal := range targets {
 			if withdrawal.Amount < 0 {
@@ -162,21 +163,23 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 			requests = append(requests, CardRequest{obj.ScryfallId, obj.OracleId, -withdrawal.Amount})
 		}
 
-		changes = append(changes, ContainerChanges{containerId, requests})
+		changes[i] = ContainerChanges{containerId, requests}
+		i += 1
 	}
 
 	return changes, nil
 }
 
 func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]any{}
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
 	for _, targets := range withdrawals {
 		for _, target := range targets {
 			switch t := target.Card.(type) {
 			case cards.ScryfallIdObj:
-				uniqIds[t.ScryfallId] = nil
+				uniqIds[t.ScryfallId] = v
 			case cards.ScryfallOracleObj:
-				uniqIds[t.ScryfallId] = nil
+				uniqIds[t.ScryfallId] = v
 			}
 		}
 	}

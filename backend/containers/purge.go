@@ -24,8 +24,8 @@ func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []card
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	belowPrice := map[uuid.UUID]CardDeposit{}
-	cheapOracles := map[uuid.UUID]any{}
+	belowPrice := map[uuid.UUID]bool{}
+	cheapOracles := map[uuid.UUID]bool{}
 
 	for _, deposit := range options {
 		card, ok := cardsById[deposit.ScryfallId]
@@ -43,8 +43,8 @@ func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []card
 		}
 
 		if cardPrice < minPrice {
-			belowPrice[deposit.ScryfallId] = deposit
-			cheapOracles[deposit.OracleId] = nil
+			belowPrice[deposit.ScryfallId] = true
+			cheapOracles[deposit.OracleId] = true
 		}
 	}
 
@@ -52,9 +52,7 @@ func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []card
 
 	for _, deposit := range options {
 		oracleId := deposit.OracleId
-		if _, ok := belowPrice[deposit.ScryfallId]; ok {
-			depositsByOracle[oracleId] = append(depositsByOracle[oracleId], deposit)
-		} else if _, ok := cheapOracles[oracleId]; ok {
+		if belowPrice[deposit.ScryfallId] || cheapOracles[oracleId] {
 			depositsByOracle[oracleId] = append(depositsByOracle[oracleId], deposit)
 		}
 	}
@@ -127,14 +125,14 @@ func PreviewPrune(changes []ContainerChanges, fullCards []cards.Card, prices []c
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	allRequests := []CardRequest{}
+	var allRequests []CardRequest
 	for _, container := range changes {
 		for _, req := range container.Requests {
 			allRequests = append(allRequests, req)
 		}
 	}
 
-	previewCards := []cards.CardPriceAmount{}
+	var previewCards []cards.CardPriceAmount
 	total := 0
 
 	for _, req := range MergeCardRequests(allRequests) {

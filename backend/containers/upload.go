@@ -166,7 +166,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		}
 	}
 
-	requests := []CardRequest{}
+	var requests []CardRequest
 
 	if len(scryfallIds) > 0 {
 		keys := slices.Collect(maps.Keys(scryfallIds))

@@ -20,8 +20,10 @@ func OpenSDK() (*mtgjson.SDK, error) {
 }
 
 func FetchRandomCard(ctx context.Context) (Card, error) {
+	var row Card
+
 	if err := sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets"); err != nil {
-		return Card{}, err
+		return row, err
 	}
 
 	q := db.NewSQLBuilder("cards AS c")
@@ -47,17 +49,17 @@ func FetchRandomCard(ctx context.Context) (Card, error) {
 	sql += " USING SAMPLE 1"
 
 	if err := sdk.Connection().ExecuteInto(ctx, &rows, sql, params...); err != nil {
-		return Card{}, err
+		return row, err
 	}
 
 	if len(rows) == 0 {
-		return Card{}, ErrMissingCards
+		return row, ErrMissingCards
 	}
 
-	row := rows[0]
+	row = rows[0]
 	images, err := ImageURLs(row.ScryfallId)
 	if err != nil {
-		return Card{}, err
+		return row, err
 	}
 
 	row.Images = images

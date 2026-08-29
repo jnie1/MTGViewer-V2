@@ -15,11 +15,11 @@ func GetTimeRange(ctx context.Context, group1, group2 uuid.UUID) (LogRange, erro
 	db := database.Instance()
 
 	row := db.QueryRowContext(ctx, `
-		SELECT MIN(time) AS start, MAX(time) AS end
-		FROM transactions
-		WHERE group_id = $1 OR group_id = $2;`, group1, group2)
+		SELECT MIN(lg.time) AS start, MAX(lg.time) AS end
+		FROM log_groups AS lg
+		WHERE lg.log_group_id = $1 OR lg.log_group_id = $2;`, group1, group2)
 
-	logRange := LogRange{}
+	var logRange LogRange
 	err := row.Scan(&logRange.Start, &logRange.End)
 
 	return logRange, err
@@ -28,25 +28,24 @@ func GetTimeRange(ctx context.Context, group1, group2 uuid.UUID) (LogRange, erro
 func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 	db := database.Instance()
 	row, err := db.QueryContext(ctx, `
-		SELECT group_id, time, SUM(amount) AS total
-		FROM transactions
-		GROUP BY group_id, time
-		ORDER BY time DESC;`)
+		SELECT lg.log_group_id, lg.time, COALESCE(SUM(t.amount), 0) AS total
+		FROM log_groups AS lg
+		LEFT JOIN transactions AS t ON t.log_group_id = lg.log_group_id
+		GROUP BY lg.log_group_id
+		ORDER BY lg.time DESC;`)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-	transactions := []CardTransaction{}
+	var transactions []CardTransaction
 
 	for row.Next() {
-		transaction := CardTransaction{}
-
+		var transaction CardTransaction
 		if err := row.Scan(&transaction.GroupId, &transaction.Time, &transaction.Total); err != nil {
 			return nil, err
 		}
-
 		transactions = append(transactions, transaction)
 	}
 
@@ -60,24 +59,22 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
 	db := database.Instance()
 	row, err := db.QueryContext(ctx, `
-		SELECT scryfall_id, from_container_id, to_container_id, amount
-		FROM transactions
-		WHERE group_id = $1;`, groupId)
+		SELECT t.scryfall_id, t.from_container_id, t.to_container_id, t.amount
+		FROM transactions AS t
+		WHERE t.log_group_id = $1;`, groupId)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-	logs := []CardLogPreview{}
+	var logs []CardLogPreview
 
 	for row.Next() {
-		log := CardLogPreview{}
-
+		var log CardLogPreview
 		if err := row.Scan(&log.ScryfallId, &log.FromContainerId, &log.ToContainerId, &log.Amount); err != nil {
 			return nil, err
 		}
-
 		logs = append(logs, log)
 	}
 
@@ -91,24 +88,23 @@ func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
 func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview, error) {
 	db := database.Instance()
 	row, err := db.QueryContext(ctx, `
-		SELECT scryfall_id, from_container_id, to_container_id, amount
-		FROM transactions
-		WHERE time >= $1 AND time <= $2;`, logRange.Start, logRange.End)
+		SELECT t.scryfall_id, t.from_container_id, t.to_container_id, t.amount
+		FROM transactions AS t
+		JOIN log_groups AS lg ON lg.log_group_id = t.log_group_id
+		WHERE lg.time >= $1 AND lg.time <= $2;`, logRange.Start, logRange.End)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer row.Close()
-	logs := []CardLogPreview{}
+	var logs []CardLogPreview
 
 	for row.Next() {
-		log := CardLogPreview{}
-
+		var log CardLogPreview
 		if err := row.Scan(&log.ScryfallId, &log.FromContainerId, &log.ToContainerId, &log.Amount); err != nil {
 			return nil, err
 		}
-
 		logs = append(logs, log)
 	}
 
@@ -120,35 +116,54 @@ func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview,
 }
 
 func LogCollectionChanges(ctx context.Context, changes []containers.ContainerChanges) error {
+	now := time.Now().UTC()
 	groupId, err := uuid.NewRandom()
 	if err != nil {
 		return err
 	}
 
 	db := database.Instance()
-	now := time.Now().UTC()
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
 
-	valueStatements := []string{}
+	defer tx.Rollback()
 
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO log_groups (log_group_id, time)
+		VALUES ($1, $2);`, groupId, now)
+
+	if err != nil {
+		return err
+	}
+
+	var vals []string
+	var args []any
+	i := 0
 	for _, change := range changes {
 		for _, request := range change.Requests {
-
+			if request.Delta == 0 {
+				continue
+			}
+			vals = append(vals, fmt.Sprintf("($%d::uuid, $%d, $%d, $%d::uuid, $%d)", i+1, i+2, i+3, i+4, i+5))
+			i += 5
 			switch {
 			case request.Delta > 0:
-				valueRow := fmt.Sprintf("('%s'::uuid, NULL, %d, '%s'::uuid, %d, '%s')", groupId, change.ContainerId, request.ScryfallId, request.Delta, now.Format(time.RFC3339))
-				valueStatements = append(valueStatements, valueRow)
-
+				args = append(args, groupId, nil, change.ContainerId, request.ScryfallId, request.Delta)
 			case request.Delta < 0:
-				valueRow := fmt.Sprintf("('%s'::uuid, %d, NULL, '%s'::uuid, %d, '%s')", groupId, change.ContainerId, request.ScryfallId, -request.Delta, now.Format(time.RFC3339))
-				valueStatements = append(valueStatements, valueRow)
+				args = append(args, groupId, change.ContainerId, nil, request.ScryfallId, -request.Delta)
 			}
 		}
 	}
-	allValues := strings.Join(valueStatements, ", ")
 
-	_, err = db.ExecContext(ctx, `
-		INSERT INTO transactions (group_id, from_container_id, to_container_id, scryfall_id, amount, time)
-		VALUES `+allValues+`;`)
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO transactions (log_group_id, from_container_id, to_container_id, scryfall_id, amount)
+		VALUES `+strings.Join(vals, ", ")+`;`, args...)
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
