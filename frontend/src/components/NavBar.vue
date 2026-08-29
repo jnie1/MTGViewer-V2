@@ -23,10 +23,10 @@ const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0
       <li>
         <router-link to="/search">Search</router-link>
       </li>
-      <li class="cart-item">
-        <router-link v-if="cartCount > 0" to="/cart" class="cart-wrapper">
-          <img class="cart-icon" src="@/assets/cart.svg" alt="My Icon" />
-          <span v-if="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+      <li v-if="cartCount > 0" class="cart-item">
+        <router-link to="/cart" class="cart-wrapper">
+          <v-icon size="24" icon="$cart" />
+          <span class="cart-badge">{{ cartCount }}</span>
         </router-link>
       </li>
     </ul>
@@ -51,9 +51,7 @@ li {
   margin-left: auto;
 }
 
-.cart-icon {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
+.cart-badge {
+  padding-left: 4px;
 }
 </style>
