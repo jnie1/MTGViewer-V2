@@ -6,8 +6,9 @@ export interface ICartItem {
   name: string;
   amount: number;
   max: number;
-  containerId: string;
+  containerId: number;
 }
+
 interface IScryfallId {
   scryfallId: string;
 }
@@ -17,9 +18,6 @@ interface IScryfallAmount {
   amount: number;
 }
 
-interface IWithDrawItem {
-  containerId: Map<number, IScryfallAmount[]>;
-}
 const STORAGE_KEY: string = 'shoppingCardCart';
 
 function isCartItem(value: unknown): value is ICartItem {
@@ -58,11 +56,11 @@ watch(
   { deep: true },
 );
 
-function findItem(scryfallId: string, containerId: string) {
+function findItem(scryfallId: string, containerId: number) {
   return cart.find((item) => item.scryfallId === scryfallId && item.containerId === containerId);
 }
 
-export function removeFromCart(scryfallId: string, containerId: string) {
+export function removeFromCart(scryfallId: string, containerId: number) {
   const index = cart.findIndex(
     (item) => item.scryfallId === scryfallId && item.containerId === containerId,
   );
@@ -71,7 +69,7 @@ export function removeFromCart(scryfallId: string, containerId: string) {
 
 export function addToCart(
   scryfallId: string,
-  containerId: string,
+  containerId: number,
   name: string,
   amount: number,
   max: number,
@@ -91,7 +89,7 @@ export function addToCart(
   }
 }
 
-export function updateAmount(scryfallId: string, containerId: string, newAmount: number) {
+export function updateAmount(scryfallId: string, containerId: number, newAmount: number) {
   const existing = findItem(scryfallId, containerId);
   if (!existing) return;
 
@@ -108,28 +106,24 @@ export function removeAllCards() {
 
 export async function submitAllCards() {
   const grouped = new Map<number, IScryfallAmount[]>();
-  for (const item of cart) {
-    const containerId = Number(item.containerId);
-    const entry: IScryfallAmount = {
-      card: { scryfallId: item.scryfallId },
-      amount: item.amount,
-    };
 
-    const existing = grouped.get(containerId);
-    if (existing) {
-      existing.push(entry);
-    } else {
-      grouped.set(containerId, [entry]);
+  for (const { scryfallId, containerId, amount } of cart) {
+    let amounts = grouped.get(containerId);
+    if (!amounts) {
+      amounts = [];
+      grouped.set(containerId, amounts);
     }
+    const card: IScryfallId = { scryfallId };
+    amounts.push({ card, amount });
   }
 
-  const payload: IWithDrawItem = { containerId: grouped };
+  const payload = Object.fromEntries(grouped);
 
-  const body = Object.fromEntries(payload.containerId);
   await fetchApi('/cards/withdraw', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+    body: JSON.stringify(payload),
+  });
+
   removeAllCards();
 }
