@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { loadRouteData, routeData } from '@/fetch/routeData';
-import CollectionContainer from '@/collection/CollectionContainer.vue';
-import type { IContainer } from '@/collection/types';
 import { useRoute } from 'vue-router';
+import CollectionContainer from '@/container/CollectionContainer.vue';
+import type { IContainer } from '@/container/types';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {

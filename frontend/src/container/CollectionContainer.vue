@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IContainer } from '@/collection/types';
+import type { IContainer } from './types';
 
 interface IContainerProps {
   containers: IContainer[];

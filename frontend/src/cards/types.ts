@@ -15,3 +15,10 @@ export interface ICard {
   };
   amount?: number;
 }
+
+export interface ISearchResult {
+  totalCards: boolean;
+  cards: ICard[];
+  page: number;
+  hasMore: boolean;
+}
