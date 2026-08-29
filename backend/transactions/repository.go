@@ -28,7 +28,7 @@ func GetTimeRange(ctx context.Context, group1, group2 uuid.UUID) (LogRange, erro
 func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 	db := database.Instance()
 	row, err := db.QueryContext(ctx, `
-		SELECT lg.log_group_id, lg.time, COALESCE(SUM(t.amount), 0) AS total
+		SELECT lg.log_group_id, lg.time, COALESCE(SUM(t.amount), 0) AS total, lg.description
 		FROM log_groups AS lg
 		LEFT JOIN transactions AS t ON t.log_group_id = lg.log_group_id
 		GROUP BY lg.log_group_id
@@ -43,7 +43,7 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 
 	for row.Next() {
 		var transaction CardTransaction
-		if err := row.Scan(&transaction.GroupId, &transaction.Time, &transaction.Total); err != nil {
+		if err := row.Scan(&transaction.GroupId, &transaction.Time, &transaction.Total, &transaction.Description); err != nil {
 			return nil, err
 		}
 		transactions = append(transactions, transaction)
