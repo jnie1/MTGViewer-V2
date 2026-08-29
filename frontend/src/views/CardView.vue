@@ -3,7 +3,7 @@ import CardImage from '@/cards/CardImage.vue';
 import { loadRouteData, routeData } from '@/fetch/routeData';
 import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/container/types';
-import { addToCart, cart } from '@/cart/CartContainer';
+import { addToCart, cart, updateAmount } from '@/cart/CartContainer';
 import { useRoute } from 'vue-router';
 
 defineOptions({
@@ -17,22 +17,22 @@ const { params, meta } = useRoute();
 const { scryfallId } = params;
 const matches = routeData<ICardContainerMatch>(meta, `/cards/${scryfallId}`);
 
-const amountInContainer = (containerId: number, scryfallId: string) => {
-  const container = matches.containers.find((c) => c.containerId === containerId);
-  const print = container?.prints.find((p) => p.scryfallId === scryfallId);
-  return print?.amount ?? 0;
-};
-
 const amountInCart = (containerId: number, scryfallId: string) => {
   const existing = cart.find((i) => i.scryfallId === scryfallId && i.containerId === containerId);
   return existing?.amount ?? 0;
 };
 
-const handleAddToCart = (containerId: number, scryfallId: string) => {
+const handleAddToCart = (containerId: number, scryfallId: string, max: number) => {
   const cart = amountInCart(containerId, scryfallId);
-  const container = amountInContainer(containerId, scryfallId);
-  if (cart < container) {
-    addToCart(scryfallId, containerId, matches.card.name, 1, container);
+  if (cart < max) {
+    addToCart(scryfallId, containerId, matches.card.name, 1, max);
+  }
+};
+
+const handleRemoveFromCart = (containerId: number, scryfallId: string) => {
+  const cart = amountInCart(containerId, scryfallId);
+  if (cart > 0) {
+    updateAmount(scryfallId, containerId, cart - 1);
   }
 };
 </script>
@@ -73,9 +73,9 @@ const handleAddToCart = (containerId: number, scryfallId: string) => {
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <ul class="print-list">
-              <li v-for="print in container.prints" :key="print.scryfallId" class="print-col">
-                <v-container class="print-row">
+            <v-row dense>
+              <v-col v-for="print in container.prints" :key="print.scryfallId" cols="3">
+                <div class="print-row">
                   <v-tooltip class="tooltip" :text="'Go to ' + container.name" location="bottom">
                     <template #activator="{ props }">
                       <router-link
@@ -95,27 +95,35 @@ const handleAddToCart = (containerId: number, scryfallId: string) => {
                       </router-link>
                     </template>
                   </v-tooltip>
-                  <v-container>
-                    <v-card-subtitle class="grid-card-title">{{ print.amount }}x </v-card-subtitle>
-                    <v-btn
-                      size="x-small"
-                      class="add-to-cart"
-                      :disabled="
-                        amountInCart(container.containerId, print.scryfallId) >=
-                        amountInContainer(container.containerId, print.scryfallId)
-                      "
-                      @click="handleAddToCart(container.containerId, print.scryfallId)"
-                    >
-                      {{
-                        amountInCart(container.containerId, print.scryfallId) > 0
-                          ? `${amountInCart(container.containerId, print.scryfallId)} in cart`
-                          : 'add to cart'
-                      }}
-                    </v-btn>
-                  </v-container>
-                </v-container>
-              </li>
-            </ul>
+                  <div class="print-info">
+                    <v-card-title> {{ print.amount }}x </v-card-title>
+                    <v-card-actions class="cart-actions">
+                      <v-btn
+                        size="small"
+                        density="compact"
+                        icon="$cartAdd"
+                        class="cart-btn"
+                        :disabled="
+                          amountInCart(container.containerId, print.scryfallId) >= print.amount
+                        "
+                        @click="
+                          handleAddToCart(container.containerId, print.scryfallId, print.amount)
+                        "
+                      />
+                      <p>{{ amountInCart(container.containerId, print.scryfallId) }}x</p>
+                      <v-btn
+                        size="small"
+                        density="compact"
+                        icon="$trash"
+                        class="cart-btn"
+                        :disabled="amountInCart(container.containerId, print.scryfallId) <= 0"
+                        @click="handleRemoveFromCart(container.containerId, print.scryfallId)"
+                      />
+                    </v-card-actions>
+                  </div>
+                </div>
+              </v-col>
+            </v-row>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -147,12 +155,6 @@ const handleAddToCart = (containerId: number, scryfallId: string) => {
   width: 100%;
 }
 
-.grid-card-title {
-  text-align: center;
-  font-weight: 300;
-  font-weight: bold;
-}
-
 .card-top {
   display: flex;
   flex-direction: row;
@@ -161,36 +163,29 @@ const handleAddToCart = (containerId: number, scryfallId: string) => {
   gap: 40px;
 }
 
-.add-to-cart {
-  color: black;
-  border-radius: 4px;
-  border-color: black;
-  border-width: 2px;
-  background-color: white;
+.cart-btn {
+  color: var(--color-primary);
   transition: color 0.2s ease;
-  margin-left: auto;
-  padding: 0 4px;
 }
 
-.add-to-cart:hover {
-  color: #ff5722;
+.cart-btn:hover {
+  color: var(--color-secondary);
 }
 
-.print-list {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 1rem;
-  list-style: none;
-  padding: 0;
-  font-size: 0.75rem;
-}
 .print-row {
   display: flex;
-  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: start;
   align-items: center;
-  padding: 1rem;
+}
+
+.print-info {
+  justify-content: start;
   width: 100%;
+}
+
+.print-info .cart-actions {
+  padding: 0 1rem;
 }
 
 .panel-title {
@@ -198,6 +193,7 @@ const handleAddToCart = (containerId: number, scryfallId: string) => {
   padding-bottom: 8px;
   font-size: 1.25rem;
 }
+
 .parent-panel-title {
   display: flex;
   flex-direction: column;
