@@ -31,6 +31,7 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 		SELECT lg.log_group_id, lg.time, COALESCE(SUM(t.amount), 0) AS total
 		FROM log_groups AS lg
 		LEFT JOIN transactions AS t ON t.log_group_id = lg.log_group_id
+		GROUP BY lg.log_group_id
 		ORDER BY lg.time DESC;`)
 
 	if err != nil {
