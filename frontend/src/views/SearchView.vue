@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onWatcherCleanup } from 'vue';
-import type { ICard } from '@/cards/types';
-import { isAbortError, timeout } from '@/fetch/abort';
-import SearchItem from '@/search/SearchItem.vue';
-import { searchCards } from '@/search/fetches';
 import { useRoute, useRouter } from 'vue-router';
+import { isAbortError, timeout } from '@/fetch/abort';
+import type { ICard } from '@/cards/types';
+import { searchCards } from '@/cards/fetches';
+import SearchItem from '@/cards/SearchItem.vue';
 
 const router = useRouter();
 const route = useRoute();
