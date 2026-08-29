@@ -2,7 +2,7 @@
 import CardImage from '@/cards/CardImage.vue';
 import { loadRouteData, routeData } from '@/fetch/routeData';
 import { capitalize } from '@/utils';
-import type { ICardContainerMatch } from '@/container/types';
+import type { ICardContainerMatch } from '@/containers/types';
 import { addToCart, cart, updateAmount } from '@/cart/CartContainer';
 import { useRoute } from 'vue-router';
 

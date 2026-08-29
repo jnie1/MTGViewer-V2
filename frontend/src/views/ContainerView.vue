@@ -1,8 +1,8 @@
 <script setup lang="ts">
+import { useRoute, useRouter } from 'vue-router';
 import { loadRouteData, routeData } from '@/fetch/routeData';
 import type { ICard } from '@/cards/types';
-import ContainerItem from '@/container/ContainerItem.vue';
-import { useRoute, useRouter } from 'vue-router';
+import ContainerItem from '@/containers/ContainerItem.vue';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
