@@ -1,16 +1,10 @@
-import type { ICard } from '@/cards/types';
-
-export interface IPrints {
-  scryfallId: string;
-  imageUrls: ICard['imageUrls'];
-  amount: number;
-}
+import type { ICard, ICardPrint } from '@/cards/types';
 
 export interface ICardContainer {
   containerId: number;
   name: string;
   amount: number;
-  prints: IPrints[];
+  prints: ICardPrint[];
 }
 
 export interface ICardContainerMatch {
