@@ -335,20 +335,23 @@ func FindMissingOracleIds(ctx context.Context) (uuid.UUIDs, error) {
 }
 
 func UpdateOracleIds(ctx context.Context, oracleIds []cards.ScryfallOracleObj) error {
-	db := database.Instance()
-
 	vals := make([]string, len(oracleIds))
-	for i, id := range oracleIds {
-		vals[i] = fmt.Sprintf("('%s'::uuid,'%s'::uuid)", id.ScryfallId, id.OracleId)
+	args := make([]any, len(oracleIds)*2)
+	i := 0
+	for j, id := range oracleIds {
+		vals[j] = fmt.Sprintf("($%d::uuid, $%d::uuid)", i+1, i+2)
+		args[i] = id.ScryfallId
+		args[i+1] = id.OracleId
+		i += 2
 	}
-	values := strings.Join(vals, ", ")
 
+	db := database.Instance()
 	_, err := db.ExecContext(ctx, `
 		MERGE INTO card_deposits AS cd
-		USING (VALUES `+values+`) AS os (scryfall_id, oracle_id)
+		USING (VALUES `+strings.Join(vals, ", ")+`) AS os (scryfall_id, oracle_id)
 		ON cd.scryfall_id = os.scryfall_id
 		WHEN MATCHED THEN
-			UPDATE SET oracle_id = os.oracle_id;`)
+			UPDATE SET oracle_id = os.oracle_id;`, args...)
 
 	return err
 }
