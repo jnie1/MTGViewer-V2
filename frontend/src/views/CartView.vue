@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { updateAmount, cart, removeFromCart, removeAllCards, submitAllCards } from '@/cart/CartContainer';
+import {
+  updateAmount,
+  cart,
+  removeFromCart,
+  removeAllCards,
+  submitAllCards,
+} from '@/cart/CartContainer';
 </script>
 
 <template>

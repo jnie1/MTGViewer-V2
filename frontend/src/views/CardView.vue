@@ -1,45 +1,40 @@
 <script setup lang="ts">
 import CardImage from '@/cards/CardImage.vue';
-import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
+import { loadRouteData, routeData } from '@/fetch/routeData';
 import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/container/types';
 import { addToCart, cart } from '@/cart/CartContainer';
+import { useRoute } from 'vue-router';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     const { scryfallId } = to.params;
-    await loadRouteData(`/cards/${scryfallId}`, to.meta, next);
+    await loadRouteData(to.meta, next, `/cards/${scryfallId}`);
   },
 });
-const matches = useRouteData<ICardContainerMatch>();
 
-function amountInContainer(containerId: string) {
-  return matches.containers.find((container) => container.containerId === containerId);
-}
+const { params, meta } = useRoute();
+const { scryfallId } = params;
+const matches = routeData<ICardContainerMatch>(meta, `/cards/${scryfallId}`);
 
-function printAmountInContainer(containerId: string, scryfallId: string): number {
-  const container = amountInContainer(containerId);
+const amountInContainer = (containerId: number, scryfallId: string) => {
+  const container = matches.containers.find((c) => c.containerId === containerId);
   const print = container?.prints.find((p) => p.scryfallId === scryfallId);
-  return print ? print.amount : 0;
-}
+  return print?.amount ?? 0;
+};
 
-function amountInCart(scryfallId: string, containerId: string): number {
-  const existing = cart.find(
-    (item) => item.scryfallId === scryfallId && item.containerId === containerId,
-  );
-  return existing ? existing.amount : 0;
-}
+const amountInCart = (containerId: number, scryfallId: string) => {
+  const existing = cart.find((i) => i.scryfallId === scryfallId && i.containerId === containerId);
+  return existing?.amount ?? 0;
+};
 
-function isMaxed(scryfallId: string, containerId: string): boolean {
-  const max = printAmountInContainer(containerId, scryfallId);
-  return amountInCart(scryfallId, containerId) >= max;
-}
-
-function handleAddToCart(scryfallId: string, amount: number, containerId: string) {
-  const max = printAmountInContainer(containerId, scryfallId);
-  if (max === 0 || isMaxed(scryfallId, containerId)) return;
-  addToCart(scryfallId, containerId, matches.card.name, amount, max);
-}
+const handleAddToCart = (containerId: number, scryfallId: string) => {
+  const cart = amountInCart(containerId, scryfallId);
+  const container = amountInContainer(containerId, scryfallId);
+  if (cart < container) {
+    addToCart(scryfallId, containerId, matches.card.name, 1, container);
+  }
+};
 </script>
 
 <template>
@@ -105,12 +100,15 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
                     <v-btn
                       size="x-small"
                       class="add-to-cart"
-                      :disabled="isMaxed(print.scryfallId, container.containerId)"
-                      @click="handleAddToCart(print.scryfallId, 1, container.containerId)"
+                      :disabled="
+                        amountInCart(container.containerId, print.scryfallId) >=
+                        amountInContainer(container.containerId, print.scryfallId)
+                      "
+                      @click="handleAddToCart(container.containerId, print.scryfallId)"
                     >
                       {{
-                        amountInCart(print.scryfallId, container.containerId) > 0
-                          ? `${amountInCart(print.scryfallId, container.containerId)} in cart`
+                        amountInCart(container.containerId, print.scryfallId) > 0
+                          ? `${amountInCart(container.containerId, print.scryfallId)} in cart`
                           : 'add to cart'
                       }}
                     </v-btn>

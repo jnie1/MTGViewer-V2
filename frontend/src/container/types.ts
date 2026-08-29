@@ -7,7 +7,7 @@ export interface IPrints {
 }
 
 export interface ICardContainer {
-  containerId: string;
+  containerId: number;
   name: string;
   amount: number;
   prints: IPrints[];
