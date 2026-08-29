@@ -22,3 +22,9 @@ export interface ISearchResult {
   page: number;
   hasMore: boolean;
 }
+
+export interface ICardPrint {
+  scryfallId: string;
+  imageUrls: ICard['imageUrls'];
+  amount: number;
+}
