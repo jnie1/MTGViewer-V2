@@ -13,10 +13,9 @@ type LogRange struct {
 }
 
 type CardTransaction struct {
-	GroupId     uuid.UUID `json:"groupId"`
-	Time        time.Time `json:"time"`
-	Total       int       `json:"total"`
-	Description *string   `json:"description,omitempty"`
+	GroupId uuid.UUID `json:"groupId"`
+	Time    time.Time `json:"time"`
+	Total   int       `json:"total"`
 }
 
 type CardLogPreview struct {
