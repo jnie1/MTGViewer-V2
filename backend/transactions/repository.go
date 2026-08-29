@@ -146,7 +146,7 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 			if request.Delta == 0 {
 				continue
 			}
-			vals = append(vals, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d)", i+1, i+2, i+3, i+4, i+5))
+			vals = append(vals, fmt.Sprintf("($%d::uuid, $%d, $%d, $%d::uuid, $%d)", i+1, i+2, i+3, i+4, i+5))
 			i += 5
 			switch {
 			case request.Delta > 0:
