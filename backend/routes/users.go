@@ -15,7 +15,7 @@ func signup(c *gin.Context) {
 	var request users.SignupRequest
 
 	if err := c.ShouldBind(&request); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -33,8 +33,7 @@ func signup(c *gin.Context) {
 	}
 
 	newUser := users.UserInfo{
-		Name:         request.Name,
-		Email:        request.Email,
+		Username:     request.Username,
 		PasswordHash: passwordHash,
 		Role:         "user",
 	}
@@ -58,12 +57,12 @@ func login(c *gin.Context) {
 	ctx := c.Request.Context()
 	user, err := users.GetUser(ctx, request.Email)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	if err := users.VerifyPassword(request.Password, user.PasswordHash); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
@@ -71,7 +70,7 @@ func login(c *gin.Context) {
 	token, err := auth.GenerateToken(user, loginDuration)
 
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 

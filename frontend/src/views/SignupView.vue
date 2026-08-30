@@ -3,26 +3,13 @@ import fetchApi from '@/fetch/api';
 import { ref } from 'vue';
 
 const valid = ref(false);
-const name = ref('');
-const email = ref('');
+const username = ref('');
 const password = ref('');
 
-const nameRules = [
+const usernameRules = [
   (value: string | null) => {
     if (value) return true;
-    return 'User Name is required.';
-  },
-];
-
-const emailRules = [
-  (value: string | null) => {
-    if (value) return true;
-    return 'Email is required.';
-  },
-  (value: string) => {
-    const emailPattern = /.+@.+\..+/;
-    if (emailPattern.test(value)) return true;
-    return 'Email must be valid.';
+    return 'Username is required.';
   },
 ];
 
@@ -41,8 +28,7 @@ const handleSubmit = async () => {
   if (!valid.value) return;
 
   const signupRequest = {
-    name: name.value,
-    email: email.value,
+    username: username.value,
     password: password.value,
   };
 
@@ -60,15 +46,8 @@ const handleSubmit = async () => {
   <main>
     <v-sheet class="mx-auto" width="300">
       <v-form v-model="valid" validate-on="submit" fail-fast @submit.prevent="handleSubmit">
-        <v-text-field v-model="name" label="User Name" required :rules="nameRules" />
-        <v-text-field v-model="email" label="Email" required type="email" :rules="emailRules" />
-        <v-text-field
-          v-model="password"
-          label="Password"
-          required
-          type="password"
-          :rules="passwordRules"
-        />
+        <v-text-field v-model="username" label="Username" required :rules="usernameRules"/>
+        <v-text-field v-model="password" label="Password" required type="password" :rules="passwordRules"/>
         <v-btn class="ma-2 mt-0" color="primary" type="submit">Sign up</v-btn>
       </v-form>
     </v-sheet>

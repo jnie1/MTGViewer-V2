@@ -29,6 +29,10 @@ const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0
           <span class="cart-badge">{{ cartCount }}</span>
         </router-link>
       </li>
+      <li class="auth-links">
+        <router-link to="/login">Login</router-link>
+        <router-link to="/signup">Sign up</router-link>
+      </li>
     </ul>
   </nav>
 </template>
@@ -53,5 +57,11 @@ li {
 
 .cart-badge {
   padding-left: 4px;
+}
+
+.auth-links {
+  margin-left: auto;
+  display: flex;
+  gap: 1rem;
 }
 </style>
