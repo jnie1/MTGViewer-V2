@@ -7,19 +7,14 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 const valid = ref(false);
-const email = ref('');
+const username = ref('');
 const password = ref('');
 const errorMessage = ref('');
 
-const emailRules = [
+const usernameRules = [
   (value: string | null) => {
     if (value) return true;
-    return 'Email is required.';
-  },
-  (value: string) => {
-    const emailPattern = /.+@.+\..+/;
-    if (emailPattern.test(value)) return true;
-    return 'Invalid Email.';
+    return 'Username is required.';
   },
 ];
 
@@ -36,7 +31,7 @@ const handleSubmit = async () => {
   errorMessage.value = '';
 
   const loginRequest = {
-    email: email.value,
+    username: username.value,
     password: password.value,
   };
 
@@ -64,14 +59,8 @@ const handleSubmit = async () => {
   <main>
     <v-sheet class="mx-auto" width="300">
       <v-form v-model="valid" validate-on="submit" fail-fast @submit.prevent="handleSubmit">
-        <v-text-field v-model="email" label="Email" required type="email" :rules="emailRules" />
-        <v-text-field
-          v-model="password"
-          label="Password"
-          required
-          type="password"
-          :rules="passwordRules"
-        />
+        <v-text-field v-model="username" label="Username" required :rules="usernameRules" />
+        <v-text-field v-model="password" label="Password" required type="password" :rules="passwordRules"/>
         <v-alert v-if="errorMessage" type="error" density="compact" class="mb-2">
           {{ errorMessage }}
         </v-alert>
