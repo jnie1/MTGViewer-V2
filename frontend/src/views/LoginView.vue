@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import fetchApi, { type AccessTokenInfo, setAccessToken } from '@/fetch/api';
-import ResponseError from '@/fetch/ResponseError';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import fetchApi from '@/fetch/api';
+import { setAccessToken, type AccessTokenInfo } from '@/fetch/auth';
+import ResponseError from '@/fetch/ResponseError';
 
 const router = useRouter();
 
