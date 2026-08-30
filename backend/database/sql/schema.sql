@@ -28,7 +28,7 @@ CREATE TABLE transactions (
 
 CREATE TABLE users (
 	user_id SERIAL PRIMARY KEY,
-	email VARCHAR(128) NOT NULL,
+	username VARCHAR(64) NOT NULL UNIQUE,
 	password_hash TEXT NOT NULL,
 	user_role VARCHAR(32) NOT NULL
 );

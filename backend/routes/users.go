@@ -19,7 +19,7 @@ func signup(c *gin.Context) {
 		return
 	}
 
-	if _, err := users.GetUser(request.Email); !errors.Is(err, sql.ErrNoRows) {
+	if _, err := users.GetUser(request.Username); !errors.Is(err, sql.ErrNoRows) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -32,8 +32,7 @@ func signup(c *gin.Context) {
 	}
 
 	newUser := users.UserInfo{
-		Name:         request.Name,
-		Email:        request.Email,
+		Username:     request.Username,
 		PasswordHash: passwordHash,
 		Role:         "user",
 	}
@@ -54,7 +53,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	user, err := users.GetUser(request.Email)
+	user, err := users.GetUser(request.Username)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return

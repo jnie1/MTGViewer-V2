@@ -1,19 +1,17 @@
 package users
 
 type UserInfo struct {
-	Name         string
-	Email        string
+	Username     string
 	PasswordHash string
 	Role         string
 }
 
 type SignupRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
 type LoginRequest struct {
-	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
