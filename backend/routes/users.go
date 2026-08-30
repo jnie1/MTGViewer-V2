@@ -84,7 +84,8 @@ func login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"username": request.Username,
+		"username": user.Username,
+		"role":     user.Role,
 		"token":    token,
 		"expires":  loginDuration.Unix(),
 	})

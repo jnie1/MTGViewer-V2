@@ -2,6 +2,7 @@ import { computed, shallowRef, watch } from 'vue';
 
 export interface AccessTokenInfo {
   username: string;
+  role: string;
   token: string;
   expires: number;
 }
@@ -28,6 +29,7 @@ function initToken(): AccessTokenInfo | undefined {
   const obj = payload as Record<string, unknown>;
   return {
     username: String(obj['username']),
+    role: String(obj['role']),
     token: String(obj['token']),
     expires: Number(obj['expires']),
   };
@@ -53,3 +55,4 @@ export function getToken(): string | undefined {
 
 export const username = computed(() => tokenInfo.value?.username);
 export const isLoggedIn = computed(() => Boolean(tokenInfo.value?.token));
+export const isAdmin = computed(() => tokenInfo.value?.role === 'admin');
