@@ -1,14 +1,10 @@
 package transactions
 
 import (
-	"cmp"
-	"fmt"
-	"slices"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
-	"github.com/jnie1/MTGViewer-V2/containers"
 )
 
 type LogRange struct {
@@ -23,29 +19,34 @@ type CardTransaction struct {
 }
 
 type CardLogPreview struct {
-	FromContainer *containers.ContainerPreview
-	ToContainer   *containers.ContainerPreview
-	ScryfallId    uuid.UUID
-	Amount        int
+	ScryfallId      uuid.UUID
+	FromContainerId *int
+	ToContainerId   *int
+	Amount          int
 }
 
-type CardLog struct {
-	FromContainer *containers.ContainerPreview `json:"fromContainer"`
-	ToContainer   *containers.ContainerPreview `json:"toContainer"`
-	Card          cards.Card                   `json:"card"`
-	Amount        int                          `json:"amount"`
+type CardTransfer struct {
+	cards.CardImagePreview
+	Delta           int  `json:"delta"`
+	WithContainerId *int `json:"withContainerId,omitempty"`
+}
+
+type ContainerTransfers struct {
+	ContainerId   int            `json:"containerId"`
+	ContainerName string         `json:"containerName"`
+	Total         int            `json:"total"`
+	Cards         []CardTransfer `json:"cards"`
 }
 
 func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]any{}
-
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
 	for _, log := range transactionLogs {
-		uniqIds[log.ScryfallId] = nil
+		uniqIds[log.ScryfallId] = v
 	}
 
 	ids := make(uuid.UUIDs, len(uniqIds))
 	i := 0
-
 	for id := range uniqIds {
 		ids[i] = id
 		i += 1
@@ -54,39 +55,24 @@ func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
 	return ids
 }
 
-func JoinCardLogs(loggedCards []cards.Card, logs []CardLogPreview) ([]CardLog, error) {
-	cardChanges := make([]CardLog, len(logs))
-	cardMap := make(map[uuid.UUID]cards.Card, len(loggedCards))
-
-	for _, loggedCard := range loggedCards {
-		cardMap[loggedCard.ScryfallId] = loggedCard
-	}
-
-	for i, log := range logs {
-		reportedCard, ok := cardMap[log.ScryfallId]
-		if !ok {
-			return nil, fmt.Errorf("cannot resolve card id %s", log.ScryfallId)
+func ToContainerIds(transactionLogs []CardLogPreview) []int {
+	uniqIds := make(map[int]struct{})
+	var v struct{}
+	for _, log := range transactionLogs {
+		if log.FromContainerId != nil {
+			uniqIds[*log.FromContainerId] = v
 		}
-		cardChanges[i] = CardLog{
-			FromContainer: log.FromContainer,
-			ToContainer:   log.ToContainer,
-			Card:          reportedCard,
-			Amount:        log.Amount,
+		if log.ToContainerId != nil {
+			uniqIds[*log.ToContainerId] = v
 		}
 	}
 
-	slices.SortFunc(cardChanges, compareCardChange)
-	return cardChanges, nil
-}
-
-func compareCardChange(a, b CardLog) int {
-	if c := cmp.Compare(a.FromContainer.Container().Name, b.FromContainer.Container().Name); c != 0 {
-		return c
+	ids := make([]int, len(uniqIds))
+	i := 0
+	for id := range uniqIds {
+		ids[i] = id
+		i += 1
 	}
 
-	if c := cmp.Compare(a.ToContainer.Container().Name, b.ToContainer.Container().Name); c != 0 {
-		return c
-	}
-
-	return cmp.Compare(a.Card.Name, b.Card.Name)
+	return ids
 }

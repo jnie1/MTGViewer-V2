@@ -10,61 +10,27 @@ const { logs } = defineProps<ILogsProps>();
 </script>
 
 <template>
-  <div>
-    <v-row>
-      <v-col>Time</v-col>
-      <v-col>Amount</v-col>
-    </v-row>
-    <div v-for="log in logs" :key="log.groupId">
-      <v-row>
-        <v-col>
+  <v-table v-if="logs && logs.length > 0" density="comfortable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="log in logs" :key="log.groupId">
+        <td>
           <router-link
             :to="{ name: 'transaction', params: { groupId: log.groupId } }"
             class="clickable"
           >
             {{ new Date(log.time).toLocaleString() }}
           </router-link>
-        </v-col>
-        <v-col>
+        </td>
+        <td>
           {{ log.total }}
-        </v-col>
-      </v-row>
-    </div>
-  </div>
+        </td>
+      </tr>
+    </tbody>
+  </v-table>
 </template>
-
-<style lang="css" scoped>
-.item {
-  color: rgb(var(--v-theme-island));
-  justify-content: center;
-  border: 1em solid rgb(var(--v-theme-island));
-  border-width: 0.1em;
-  width: 100%;
-  height: 100%;
-  border-spacing: 1em;
-}
-
-td {
-  padding: 1em;
-}
-
-.clickable {
-  color: rgb(var(--v-theme-island));
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.v-row {
-  padding: 20px;
-  text-align: center;
-}
-
-.v-col {
-  display: grid;
-  border: 1px solid white;
-  color: white;
-  justify-content: center;
-  align-items: center;
-  padding-top: 0.5em;
-}
-</style>

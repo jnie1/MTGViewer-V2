@@ -48,8 +48,7 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	setCollectors := []cards.SetCollectorNumber{}
-	amountMap := map[cards.SetCollectorNumber]int{}
+	setCollectors := map[cards.SetCollectorNumber]int{}
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -72,15 +71,16 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 		}
 
 		newEntry := cards.SetCollectorNumber{Set: setCode, CollectorNumber: collectorNumber}
-		setCollectors = append(setCollectors, newEntry)
-		amountMap[newEntry] = amount
+		setCollectors[newEntry] = amount
 	}
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 
-	cardIds, err := cards.FetchIdsBySetCollector(ctx, setCollectors)
+	keys := slices.Collect(maps.Keys(setCollectors))
+	cardIds, err := cards.FetchIdsBySetCollector(ctx, keys...)
+
 	if err != nil {
 		return nil, err
 	}
@@ -88,9 +88,10 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 	requests := make([]CardRequest, len(cardIds))
 
 	for i, card := range cardIds {
-		source := cards.SetCollectorNumber{Set: card.SetCode, CollectorNumber: card.CollectorNumber}
-		newRequest := CardRequest{ScryfallId: card.ScryfallId, Delta: amountMap[source]}
-		requests[i] = newRequest
+		if amount, ok := setCollectors[card.SetCollectorNumber()]; ok {
+			newRequest := CardRequest{card.ScryfallId, card.OracleId, amount}
+			requests[i] = newRequest
+		}
 	}
 
 	return requests, nil
@@ -115,7 +116,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		return nil, csv.ErrFieldCount
 	}
 
-	requests := []CardRequest{}
+	scryfallIds := map[uuid.UUID]int{}
 	multiverseIds := map[int]int{}
 	setCollectors := map[cards.SetCollectorNumber]int{}
 	nameSets := map[cards.NameSet]int{}
@@ -140,9 +141,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 			if err != nil {
 				return nil, err
 			}
-
-			newRequest := CardRequest{ScryfallId: scryfallId, Delta: quantity}
-			requests = append(requests, newRequest)
+			scryfallIds[scryfallId] = quantity
 
 		case headerPositions.MultiverseId > -1:
 			multiverseId, err := strconv.Atoi(row[headerPositions.MultiverseId])
@@ -167,9 +166,24 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		}
 	}
 
+	var requests []CardRequest
+
+	if len(scryfallIds) > 0 {
+		keys := slices.Collect(maps.Keys(scryfallIds))
+		fullCards, err := cards.FetchCollection(ctx, keys...)
+		if err != nil {
+			return nil, err
+		}
+		for _, card := range fullCards {
+			if amount, ok := scryfallIds[card.ScryfallId]; ok {
+				requests = append(requests, CardRequest{card.ScryfallId, card.OracleId, amount})
+			}
+		}
+	}
+
 	if len(multiverseIds) > 0 {
 		keys := slices.Collect(maps.Keys(multiverseIds))
-		cardIds, err := cards.FetchIdsByMultiverseId(ctx, keys)
+		cardIds, err := cards.FetchIdsByMultiverseId(ctx, keys...)
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +196,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 
 	if len(setCollectors) > 0 {
 		keys := slices.Collect(maps.Keys(setCollectors))
-		cardIds, err := cards.FetchIdsBySetCollector(ctx, keys)
+		cardIds, err := cards.FetchIdsBySetCollector(ctx, keys...)
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +209,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 
 	if len(nameSets) > 0 {
 		keys := slices.Collect(maps.Keys(nameSets))
-		cardIds, err := cards.FetchIdsByNameSet(ctx, keys)
+		cardIds, err := cards.FetchIdsByNameSet(ctx, keys...)
 		if err != nil {
 			return nil, err
 		}

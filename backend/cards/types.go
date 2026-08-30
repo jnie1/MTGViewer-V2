@@ -41,9 +41,15 @@ type CardAmountPreview struct {
 	Amount     int       `json:"amount"`
 }
 
-type CardAmountImagePreview struct {
+type CardImagePreview struct {
 	ScryfallId uuid.UUID     `json:"scryfallId"`
-	Images     CardImageURLs `json:"images"`
+	Name       string        `json:"name"`
+	Images     CardImageURLs `json:"imageUrls"`
+}
+
+type CardImageAmount struct {
+	ScryfallId uuid.UUID     `json:"scryfallId"`
+	Images     CardImageURLs `json:"imageUrls"`
 	Amount     int           `json:"amount"`
 }
 
@@ -79,15 +85,14 @@ func ParseScryfallIds(ids []string) (uuid.UUIDs, error) {
 }
 
 func ToScryfallIds(amounts []CardAmountPreview) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]any{}
-
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
 	for _, deposit := range amounts {
-		uniqIds[deposit.ScryfallId] = nil
+		uniqIds[deposit.ScryfallId] = v
 	}
 
 	ids := make(uuid.UUIDs, len(uniqIds))
 	i := 0
-
 	for id := range uniqIds {
 		ids[i] = id
 		i += 1

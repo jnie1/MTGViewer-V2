@@ -1,4 +1,5 @@
 import { reactive, watch } from 'vue';
+import fetchApi from '@/fetch/api';
 
 export interface ICartItem {
   scryfallId: string;
@@ -7,7 +8,18 @@ export interface ICartItem {
   max: number;
   containerId: string;
 }
+interface IScryfallId {
+  scryfallId: string;
+}
 
+interface IScryfallAmount {
+  card: IScryfallId;
+  amount: number;
+}
+
+interface IWithDrawItem {
+  containerId: Map<number, IScryfallAmount[]>;
+}
 const STORAGE_KEY: string = 'shoppingCardCart';
 
 function isCartItem(value: unknown): value is ICartItem {
@@ -92,4 +104,32 @@ export function updateAmount(scryfallId: string, containerId: string, newAmount:
 
 export function removeAllCards() {
   cart.splice(0);
+}
+
+export async function submitAllCards() {
+  const grouped = new Map<number, IScryfallAmount[]>();
+  for (const item of cart) {
+    const containerId = Number(item.containerId);
+    const entry: IScryfallAmount = {
+      card: { scryfallId: item.scryfallId },
+      amount: item.amount,
+    };
+
+    const existing = grouped.get(containerId);
+    if (existing) {
+      existing.push(entry);
+    } else {
+      grouped.set(containerId, [entry]);
+    }
+  }
+
+  const payload: IWithDrawItem = { containerId: grouped };
+
+  const body = Object.fromEntries(payload.containerId);
+  await fetchApi('/cards/withdraw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  removeAllCards();
 }

@@ -10,7 +10,7 @@ import (
 var ErrInsufficientAllocations = errors.New("not enough space to fit the new additions")
 
 func GetContainerAdditions(requests []CardRequest, allocations []ContainerAllocation) ([]ContainerChanges, error) {
-	additions := []CardRequest{}
+	var additions []CardRequest
 	for _, request := range requests {
 		if request.Delta > 0 {
 			additions = append(additions, request)
@@ -18,7 +18,7 @@ func GetContainerAdditions(requests []CardRequest, allocations []ContainerAlloca
 	}
 
 	if len(additions) == 0 {
-		return []ContainerChanges{}, nil
+		return nil, nil
 	}
 
 	totalAdds := 0
@@ -26,7 +26,7 @@ func GetContainerAdditions(requests []CardRequest, allocations []ContainerAlloca
 		totalAdds += add.Delta
 	}
 
-	fitAllAdds := []ContainerAllocation{}
+	var fitAllAdds []ContainerAllocation
 	for _, allocation := range allocations {
 		if allocation.Remaining() >= totalAdds {
 			fitAllAdds = append(fitAllAdds, allocation)
@@ -88,10 +88,12 @@ func findBestFitAssignments(totalAdds int, allocations []ContainerAllocation) []
 		chosenContainerIds[containerId] = true
 	}
 
-	assignments := []ContainerAllocation{}
+	assignments := make([]ContainerAllocation, len(chosenContainerIds))
+	i := 0
 	for _, allocation := range allocations {
 		if chosenContainerIds[allocation.ContainerId] {
-			assignments = append(assignments, allocation)
+			assignments[i] = allocation
+			i += 1
 		}
 	}
 
@@ -180,12 +182,12 @@ func getAllocationCombinations(i, totalRemaining, target int, items *allocationG
 }
 
 func assignContainerChanges(additions []CardRequest, assignments []ContainerAllocation) []ContainerChanges {
-	allChanges := []ContainerChanges{}
+	var allChanges []ContainerChanges
 
 	requestIndex := 0
 	assignmentIndex := 0
 
-	containerRequests := []CardRequest{}
+	var containerRequests []CardRequest
 	currentRequest := additions[requestIndex]
 	currentAssignment := assignments[assignmentIndex]
 

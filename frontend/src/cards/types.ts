@@ -13,4 +13,5 @@ export interface ICard {
     normal?: string;
     full?: string;
   };
+  amount?: number;
 }

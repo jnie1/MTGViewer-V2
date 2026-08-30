@@ -9,7 +9,7 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
+func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
 	if targetCopies < 0 {
 		return nil
 	}
@@ -24,8 +24,8 @@ func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	belowPrice := map[uuid.UUID]CardDepositPreview{}
-	cheapOracles := map[uuid.UUID]any{}
+	belowPrice := map[uuid.UUID]bool{}
+	cheapOracles := map[uuid.UUID]bool{}
 
 	for _, deposit := range options {
 		card, ok := cardsById[deposit.ScryfallId]
@@ -43,18 +43,16 @@ func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices
 		}
 
 		if cardPrice < minPrice {
-			belowPrice[deposit.ScryfallId] = deposit
-			cheapOracles[deposit.OracleId] = nil
+			belowPrice[deposit.ScryfallId] = true
+			cheapOracles[deposit.OracleId] = true
 		}
 	}
 
-	depositsByOracle := map[uuid.UUID][]CardDepositPreview{}
+	depositsByOracle := map[uuid.UUID][]CardDeposit{}
 
 	for _, deposit := range options {
 		oracleId := deposit.OracleId
-		if _, ok := belowPrice[deposit.ScryfallId]; ok {
-			depositsByOracle[oracleId] = append(depositsByOracle[oracleId], deposit)
-		} else if _, ok := cheapOracles[oracleId]; ok {
+		if belowPrice[deposit.ScryfallId] || cheapOracles[oracleId] {
 			depositsByOracle[oracleId] = append(depositsByOracle[oracleId], deposit)
 		}
 	}
@@ -64,7 +62,7 @@ func TranslatePrune(options []CardDepositPreview, fullCards []cards.Card, prices
 	for _, deposits := range depositsByOracle {
 		remainingCopies := targetCopies
 
-		slices.SortFunc(deposits, func(a, b CardDepositPreview) int {
+		slices.SortFunc(deposits, func(a, b CardDeposit) int {
 			priceA, ok := pricesByCard[a.ScryfallId]
 			if !ok {
 				priceA = minPrice
@@ -127,14 +125,14 @@ func PreviewPrune(changes []ContainerChanges, fullCards []cards.Card, prices []c
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	allRequests := []CardRequest{}
+	var allRequests []CardRequest
 	for _, container := range changes {
 		for _, req := range container.Requests {
 			allRequests = append(allRequests, req)
 		}
 	}
 
-	previewCards := []cards.CardPriceAmount{}
+	var previewCards []cards.CardPriceAmount
 	total := 0
 
 	for _, req := range MergeCardRequests(allRequests) {

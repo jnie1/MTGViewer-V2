@@ -19,8 +19,9 @@ func signup(c *gin.Context) {
 		return
 	}
 
-	if _, err := users.GetUser(request.Username); !errors.Is(err, sql.ErrNoRows) {
-		c.AbortWithError(http.StatusBadRequest, err)
+	ctx := c.Request.Context()
+	if _, err := users.GetUser(ctx, request.Email); !errors.Is(err, sql.ErrNoRows) {
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
@@ -37,7 +38,7 @@ func signup(c *gin.Context) {
 		Role:         "user",
 	}
 
-	if err := users.CreateUser(newUser); err != nil {
+	if err := users.CreateUser(ctx, newUser); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -53,7 +54,8 @@ func login(c *gin.Context) {
 		return
 	}
 
-	user, err := users.GetUser(request.Username)
+	ctx := c.Request.Context()
+	user, err := users.GetUser(ctx, request.Email)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return

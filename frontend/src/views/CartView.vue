@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { updateAmount, cart, removeFromCart, removeAllCards } from '@/cart/CartContainer';
-
+import { updateAmount, cart, removeFromCart, removeAllCards, submitAllCards } from '@/cart/CartContainer';
 </script>
 
 <template>
@@ -14,7 +13,9 @@ import { updateAmount, cart, removeFromCart, removeAllCards } from '@/cart/CartC
         </router-link>
 
         <div class="qty-controls">
-          <button @click="updateAmount(item.scryfallId, item.containerId, item.amount - 1)">−</button>
+          <button @click="updateAmount(item.scryfallId, item.containerId, item.amount - 1)">
+            −
+          </button>
           <span>{{ item.amount }}</span>
           <button
             :disabled="item.amount >= item.max"
@@ -27,6 +28,7 @@ import { updateAmount, cart, removeFromCart, removeAllCards } from '@/cart/CartC
       </li>
     </ul>
     <button v-if="cart.length > 0" @click="removeAllCards">Clear All</button>
+    <button v-if="cart.length > 0" class="submit-button" @click="submitAllCards">Submit</button>
   </main>
 </template>
 
@@ -58,5 +60,24 @@ import { updateAmount, cart, removeFromCart, removeAllCards } from '@/cart/CartC
   width: 24px;
   height: 24px;
   cursor: pointer;
+}
+
+.submit-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #d32f2f;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  padding: 16px 32px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.submit-button:hover {
+  background-color: #b71c1c;
 }
 </style>

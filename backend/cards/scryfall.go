@@ -1,6 +1,7 @@
 package cards
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -56,22 +57,28 @@ type searchResult struct {
 }
 
 func ImageURLs(scryfallId uuid.UUID) (CardImageURLs, error) {
+	var imageUrls CardImageURLs
+
 	preview, err := imageURL(scryfallId, "thumb", "front", "webp")
 	if err != nil {
-		return CardImageURLs{}, err
+		return imageUrls, err
 	}
 
 	normal, err := imageURL(scryfallId, "grid", "front", "webp")
 	if err != nil {
-		return CardImageURLs{}, err
+		return imageUrls, err
 	}
 
 	full, err := imageURL(scryfallId, "display", "front", "webp")
 	if err != nil {
-		return CardImageURLs{}, err
+		return imageUrls, err
 	}
 
-	return CardImageURLs{preview, normal, full}, nil
+	imageUrls.Preview = preview
+	imageUrls.Normal = normal
+	imageUrls.Full = full
+
+	return imageUrls, nil
 }
 
 func imageURL(scryfallId uuid.UUID, size, face, ext string) (string, error) {
@@ -79,20 +86,22 @@ func imageURL(scryfallId uuid.UUID, size, face, ext string) (string, error) {
 	return url.JoinPath(scryfallImageUrl, size, face, string(fileName[0]), string(fileName[1]), fileName)
 }
 
-func SearchCards(query string, page int) (SearchCardPage, error) {
+func SearchCards(ctx context.Context, query string, page int) (SearchCardPage, error) {
+	var searchPage SearchCardPage
+
 	query, err := url.QueryUnescape(query)
 	if err != nil {
-		return SearchCardPage{}, err
+		return searchPage, err
 	}
 
 	searchPath, err := url.JoinPath(scryfallApiUrl, "/cards/search")
 	if err != nil {
-		return SearchCardPage{}, err
+		return searchPage, err
 	}
 
 	searchUrl, err := url.Parse(searchPath)
 	if err != nil {
-		return SearchCardPage{}, err
+		return searchPage, err
 	}
 
 	searchParams := url.Values{}
@@ -100,10 +109,10 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 	searchParams.Add("q", query)
 
 	searchUrl.RawQuery = searchParams.Encode()
-	req, err := http.NewRequest("GET", searchUrl.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, searchUrl.String(), nil)
 
 	if err != nil {
-		return SearchCardPage{}, err
+		return searchPage, err
 	}
 
 	req.Header.Set("User-Agent", "mtg-viewer-v2")
@@ -111,36 +120,34 @@ func SearchCards(query string, page int) (SearchCardPage, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return SearchCardPage{}, err
+		return searchPage, err
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotFound {
-		return SearchCardPage{}, nil
+		return searchPage, nil
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return SearchCardPage{}, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
+		return searchPage, fmt.Errorf("unexpected response status code %d", resp.StatusCode)
 	}
 
 	contentType := resp.Header.Get("Content-Type")
 	if !strings.Contains(contentType, "application/json") {
-		return SearchCardPage{}, fmt.Errorf("unexpected response content %s", contentType)
+		return searchPage, fmt.Errorf("unexpected response content %s", contentType)
 	}
 
 	decoder := json.NewDecoder(resp.Body)
 
 	var result searchResult
 	if err := decoder.Decode(&result); err != nil {
-		return SearchCardPage{}, err
+		return searchPage, err
 	}
 
-	searchPage := SearchCardPage{
-		Cards:   toCards(result.Cards),
-		Page:    page,
-		HasMore: result.HasMore,
-	}
+	searchPage.Cards = toCards(result.Cards)
+	searchPage.Page = page
+	searchPage.HasMore = result.HasMore
 
 	return searchPage, nil
 }

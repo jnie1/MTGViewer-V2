@@ -47,7 +47,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 
 	if len(scryfallIds) > 0 {
 		keys := slices.Collect(maps.Keys(scryfallIds))
-		fullCards, err := cards.FetchCollection(ctx, keys)
+		fullCards, err := cards.FetchCollection(ctx, keys...)
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 
 	if len(multiverseIds) > 0 {
 		keys := slices.Collect(maps.Keys(multiverseIds))
-		cardIds, err := cards.FetchIdsByMultiverseId(ctx, keys)
+		cardIds, err := cards.FetchIdsByMultiverseId(ctx, keys...)
 		if err != nil {
 			return err
 		}
@@ -75,7 +75,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 
 	if len(setCollectors) > 0 {
 		keys := slices.Collect(maps.Keys(setCollectors))
-		cardIds, err := cards.FetchIdsBySetCollector(ctx, keys)
+		cardIds, err := cards.FetchIdsBySetCollector(ctx, keys...)
 		if err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 
 	if len(nameSets) > 0 {
 		keys := slices.Collect(maps.Keys(nameSets))
-		cardIds, err := cards.FetchIdsByNameSet(ctx, keys)
+		cardIds, err := cards.FetchIdsByNameSet(ctx, keys...)
 		if err != nil {
 			return err
 		}
@@ -132,17 +132,18 @@ func ResolveIdentifiers(ctx context.Context, withdrawals ContainerWithdrawals) e
 	return nil
 }
 
-func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDepositPreview) ([]ContainerChanges, error) {
-	changes := []ContainerChanges{}
-	amountsByContainers := map[ContainerCard]int{}
-
+func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDeposit) ([]ContainerChanges, error) {
+	amountsByContainers := make(map[ContainerCard]int, len(deposits))
 	for _, deposit := range deposits {
 		key := ContainerCard{deposit.ContainerId, deposit.ScryfallId}
 		amountsByContainers[key] = deposit.Amount
 	}
 
+	changes := make([]ContainerChanges, len(withdrawals))
+	i := 0
+
 	for containerId, targets := range withdrawals {
-		requests := []CardRequest{}
+		var requests []CardRequest
 
 		for _, withdrawal := range targets {
 			if withdrawal.Amount < 0 {
@@ -162,21 +163,23 @@ func ValidateCardWithdrawals(withdrawals ContainerWithdrawals, deposits []CardDe
 			requests = append(requests, CardRequest{obj.ScryfallId, obj.OracleId, -withdrawal.Amount})
 		}
 
-		changes = append(changes, ContainerChanges{containerId, requests})
+		changes[i] = ContainerChanges{containerId, requests}
+		i += 1
 	}
 
 	return changes, nil
 }
 
 func FindScryfallIds(withdrawals ContainerWithdrawals) uuid.UUIDs {
-	uniqIds := map[uuid.UUID]any{}
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
 	for _, targets := range withdrawals {
 		for _, target := range targets {
 			switch t := target.Card.(type) {
 			case cards.ScryfallIdObj:
-				uniqIds[t.ScryfallId] = nil
+				uniqIds[t.ScryfallId] = v
 			case cards.ScryfallOracleObj:
-				uniqIds[t.ScryfallId] = nil
+				uniqIds[t.ScryfallId] = v
 			}
 		}
 	}
