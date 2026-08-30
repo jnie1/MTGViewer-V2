@@ -8,15 +8,16 @@
 }
 
 a,
-.green {
+.link {
   text-decoration: none;
   color: var(--color-primary);
   transition: 0.4s;
   padding: 3px;
+  border-radius: 4px;;
+  cursor: pointer;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+a:hover,
+.link:hover {
+  background-color: var(--color-gray-100);
 }
