@@ -2,6 +2,10 @@ type TimeoutId = Parameters<typeof clearTimeout>[0];
 
 export function timeout(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(signal.reason);
+    }
+
     let timeoutHandle: TimeoutId = undefined;
 
     const onAbort = () => {
