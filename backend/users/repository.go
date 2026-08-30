@@ -9,7 +9,7 @@ import (
 func GetUser(ctx context.Context, username string) (UserInfo, error) {
 	db := database.Instance()
 	row := db.QueryRowContext(ctx, `
-		SELECT username, password_hash, role
+		SELECT username, password_hash, user_role
 		FROM users
 		WHERE username = $1`, username)
 
@@ -24,7 +24,7 @@ func GetUser(ctx context.Context, username string) (UserInfo, error) {
 func CreateUser(ctx context.Context, user UserInfo) error {
 	db := database.Instance()
 	_, err := db.ExecContext(ctx, `
-		INSERT INTO users (username, password_hash, role)
+		INSERT INTO users (username, password_hash, user_role)
 		VALUES ($1, $2, $3)`,
 		user.Username, user.PasswordHash, user.Role)
 

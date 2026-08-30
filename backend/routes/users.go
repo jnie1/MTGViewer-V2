@@ -13,22 +13,32 @@ import (
 
 func signup(c *gin.Context) {
 	var request users.SignupRequest
-
 	if err := c.ShouldBind(&request); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
+	if err := users.Validate(request); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
 	ctx := c.Request.Context()
-	if _, err := users.GetUser(ctx, request.Email); !errors.Is(err, sql.ErrNoRows) {
+	_, err := users.GetUser(ctx, request.Username)
+
+	if err == nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	passwordHash, err := users.GenerateHash(request.Password)
+	if !errors.Is(err, sql.ErrNoRows) {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
+	passwordHash, err := users.GenerateHash(request.Password)
 	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -39,7 +49,7 @@ func signup(c *gin.Context) {
 	}
 
 	if err := users.CreateUser(ctx, newUser); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -48,14 +58,13 @@ func signup(c *gin.Context) {
 
 func login(c *gin.Context) {
 	var request users.LoginRequest
-
 	if err := c.ShouldBind(&request); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	ctx := c.Request.Context()
-	user, err := users.GetUser(ctx, request.Email)
+	user, err := users.GetUser(ctx, request.Username)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -74,17 +83,13 @@ func login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("token", token, int(loginDuration.Unix()), "", "", false, true)
-	c.Status(http.StatusNoContent)
-}
-
-func logout(c *gin.Context) {
-	c.SetCookie("token", "", -1, "", "", false, true)
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusOK, gin.H{
+		"token":   token,
+		"expires": loginDuration.Unix(),
+	})
 }
 
 func AddUserRoutes(router gin.IRouter) {
 	router.POST("/signup", signup)
 	router.POST("/login", login)
-	router.POST("/logout", logout)
 }
