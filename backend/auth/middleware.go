@@ -29,14 +29,15 @@ func CorsMiddleware() gin.HandlerFunc {
 }
 
 func IsAuthorized(c *gin.Context) {
-	cookie, err := c.Cookie("token")
+	creds := c.GetHeader("Authorization")
 
-	if err != nil {
+	if !strings.HasPrefix(creds, "Bearer ") {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	token, err := ParseToken(cookie)
+	creds = strings.TrimPrefix(creds, "Bearer ")
+	token, err := ParseToken(creds)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
