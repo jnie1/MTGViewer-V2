@@ -1,6 +1,12 @@
 import { createVuetify, type ThemeDefinition } from 'vuetify';
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg';
-import { mdiChevronRight, mdiChevronLeft } from '@mdi/js';
+import {
+  mdiChevronRight,
+  mdiChevronLeft,
+  mdiCartOutline,
+  mdiCartArrowDown,
+  mdiDeleteOutline,
+} from '@mdi/js';
 
 const customTheme: ThemeDefinition = {
   dark: true,
@@ -31,6 +37,9 @@ const vuetify = createVuetify({
       ...aliases,
       left: mdiChevronLeft,
       right: mdiChevronRight,
+      cart: mdiCartOutline,
+      cartAdd: mdiCartArrowDown,
+      trash: mdiDeleteOutline,
     },
     sets: {
       mdi,

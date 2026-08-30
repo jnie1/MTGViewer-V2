@@ -1,53 +1,27 @@
 <script setup lang="ts">
-import CardImage from '@/cards/CardImage.vue';
-import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
+import { useRoute } from 'vue-router';
+import { loadRouteData, routeData } from '@/fetch/routeData';
 import { capitalize } from '@/utils';
-import type { ICardContainerMatch } from '@/container/types';
-import { addToCart, cart } from '@/cart/CartContainer';
+import type { ICardContainerMatch } from '@/containers/types';
+import CardImage from '@/cards/CardImage.vue';
+import PrintCartItem from '@/cart/PrintCartItem.vue';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     const { scryfallId } = to.params;
-    await loadRouteData(`/cards/${scryfallId}`, to.meta, next);
+    await loadRouteData(to.meta, next, `/cards/${scryfallId}`);
   },
 });
-const matches = useRouteData<ICardContainerMatch>();
 
-function amountInContainer(containerId: string) {
-  return matches.containers.find((container) => container.containerId === containerId);
-}
-
-function printAmountInContainer(containerId: string, scryfallId: string): number {
-  const container = amountInContainer(containerId);
-  const print = container?.prints.find((p) => p.scryfallId === scryfallId);
-  return print ? print.amount : 0;
-}
-
-function amountInCart(scryfallId: string, containerId: string): number {
-  const existing = cart.find(
-    (item) => item.scryfallId === scryfallId && item.containerId === containerId,
-  );
-  return existing ? existing.amount : 0;
-}
-
-function isMaxed(scryfallId: string, containerId: string): boolean {
-  const max = printAmountInContainer(containerId, scryfallId);
-  return amountInCart(scryfallId, containerId) >= max;
-}
-
-function handleAddToCart(scryfallId: string, amount: number, containerId: string) {
-  const max = printAmountInContainer(containerId, scryfallId);
-  if (max === 0 || isMaxed(scryfallId, containerId)) return;
-  addToCart(scryfallId, containerId, matches.card.name, amount, max);
-}
+const { params, meta } = useRoute();
+const { scryfallId } = params;
+const matches = routeData<ICardContainerMatch>(meta, `/cards/${scryfallId}`);
 </script>
 
 <template>
   <main class="card-view">
     <div class="card-top">
-      <div>
-        <card-image :card="matches.card" highlight />
-      </div>
+      <card-image :card="matches.card" highlight />
       <v-card width="300" min-height="100" density="comfortable" :loading="!matches">
         <v-card-item>
           <v-card-title>{{ matches.card.name }}</v-card-title>
@@ -66,11 +40,7 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
     </div>
     <v-container>
       <v-expansion-panels>
-        <v-expansion-panel
-          v-for="container in matches.containers"
-          :key="container.containerId"
-          class="grid-card-link"
-        >
+        <v-expansion-panel v-for="container in matches.containers" :key="container.containerId">
           <v-expansion-panel-title>
             <div class="parent-panel-title">
               <v-card-subtitle class="panel-title">{{ container.name }}</v-card-subtitle>
@@ -78,46 +48,21 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
             </div>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            <ul class="print-list">
-              <li v-for="print in container.prints" :key="print.scryfallId" class="print-col">
-                <v-container class="print-row">
-                  <v-tooltip class="tooltip" :text="'Go to ' + container.name" location="bottom">
-                    <template #activator="{ props }">
-                      <router-link
-                        v-bind="props"
-                        :to="{
-                          name: 'container',
-                          params: { containerId: container.containerId },
-                          query: { search: matches.card.name },
-                        }"
-                      >
-                        <v-img
-                          class="card-img"
-                          :alt="matches.card.name"
-                          :src="print.imageUrls.full"
-                          :lazy-src="print.imageUrls.preview"
-                        />
-                      </router-link>
-                    </template>
-                  </v-tooltip>
-                  <v-container>
-                    <v-card-subtitle class="grid-card-title">{{ print.amount }}x </v-card-subtitle>
-                    <v-btn
-                      size="x-small"
-                      class="add-to-cart"
-                      :disabled="isMaxed(print.scryfallId, container.containerId)"
-                      @click="handleAddToCart(print.scryfallId, 1, container.containerId)"
-                    >
-                      {{
-                        amountInCart(print.scryfallId, container.containerId) > 0
-                          ? `${amountInCart(print.scryfallId, container.containerId)} in cart`
-                          : 'add to cart'
-                      }}
-                    </v-btn>
-                  </v-container>
-                </v-container>
-              </li>
-            </ul>
+            <v-row dense>
+              <v-col
+                v-for="print in container.prints"
+                :key="print.scryfallId"
+                cols="12"
+                md="6"
+                lg="3"
+              >
+                <print-cart-item
+                  :container
+                  :max="container.amount"
+                  :card="{ ...matches.card, ...print }"
+                />
+              </v-col>
+            </v-row>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
@@ -126,33 +71,12 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
 </template>
 
 <style lang="css" scoped>
-.card-img {
-  height: 156px;
-  width: 112px;
-  border-radius: 16px;
-}
-
 .card-view {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 40px;
   padding: 12px 0;
-}
-
-.grid-card-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  gap: 0.75rem;
-  min-height: 100%;
-  width: 100%;
-}
-
-.grid-card-title {
-  text-align: center;
-  font-weight: 300;
-  font-weight: bold;
 }
 
 .card-top {
@@ -163,36 +87,9 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
   gap: 40px;
 }
 
-.add-to-cart {
-  color: black;
-  border-radius: 4px;
-  border-color: black;
-  border-width: 2px;
-  background-color: white;
-  transition: color 0.2s ease;
-  margin-left: auto;
-  padding: 0 4px;
-}
-
-.add-to-cart:hover {
-  color: #ff5722;
-}
-
-.print-list {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 1rem;
-  list-style: none;
-  padding: 0;
-  font-size: 0.75rem;
-}
-.print-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 1rem;
-  width: 100%;
+.card-img {
+  height: 312px;
+  width: 224px;
 }
 
 .panel-title {
@@ -200,6 +97,7 @@ function handleAddToCart(scryfallId: string, amount: number, containerId: string
   padding-bottom: 8px;
   font-size: 1.25rem;
 }
+
 .parent-panel-title {
   display: flex;
   flex-direction: column;

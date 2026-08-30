@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
+import { loadRouteData, routeData } from '@/fetch/routeData';
 import type { ICardTransaction } from '@/transaction/types';
 import ChangeLogs from '@/transaction/ChangeLogs.vue';
+import { useRoute } from 'vue-router';
+
 defineOptions({
   async beforeRouteEnter(to, _, next) {
-    await loadRouteData('/logs', to.meta, next);
+    await loadRouteData(to.meta, next, '/logs');
   },
 });
-const logs = useRouteData<ICardTransaction[]>();
+
+const { meta } = useRoute();
+const logs = routeData<ICardTransaction[]>(meta, '/logs');
 </script>
 
 <template>

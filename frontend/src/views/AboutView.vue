@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import type { ICard } from '@/cards/types';
-import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
+import { loadRouteData, routeData } from '@/fetch/routeData';
+import { useRoute } from 'vue-router';
+
 defineOptions({
   async beforeRouteEnter(to, _, next) {
-    await loadRouteData('/cards/random', to.meta, next);
+    await loadRouteData(to.meta, next, '/cards/random');
   },
 });
-const card = useRouteData<ICard>();
+
+const { meta } = useRoute();
+const card = routeData<ICard>(meta, '/cards/random');
 </script>
 
 <template>

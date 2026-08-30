@@ -1,26 +1,27 @@
 <script setup lang="ts">
-import { loadRouteData, useRouteData } from '@/fetch/useRouteData';
-import type { ICard } from '@/cards/types';
-import ContainerItem from '@/container/ContainerItem.vue';
 import { useRoute, useRouter } from 'vue-router';
+import { loadRouteData, routeData } from '@/fetch/routeData';
+import type { ICard } from '@/cards/types';
+import ContainerItem from '@/containers/ContainerItem.vue';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     const { containerId } = to.params;
-    await loadRouteData(`containers/${containerId}/cards`, to.meta, next);
+    await loadRouteData(to.meta, next, `containers/${containerId}/cards`);
   },
 });
 
-const router = useRouter();
-const route = useRoute();
+const { meta, params, query } = useRoute();
+const { containerId } = params;
+const cards = routeData<ICard[]>(meta, `containers/${containerId}/cards`);
 
-const cards = useRouteData<ICard[]>();
-const search = route.query.search?.toString() ?? '';
+const router = useRouter();
+const search = query.search?.toString() ?? '';
 
 const handleSearch = (search: string) => {
   router.replace({
     name: 'container',
-    params: { containerId: route.params.containerId },
+    params: { containerId },
     query: search ? { search } : undefined,
   });
 };

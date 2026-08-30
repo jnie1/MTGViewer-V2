@@ -15,3 +15,16 @@ export interface ICard {
   };
   amount?: number;
 }
+
+export interface ISearchResult {
+  totalCards: boolean;
+  cards: ICard[];
+  page: number;
+  hasMore: boolean;
+}
+
+export interface ICardPrint {
+  scryfallId: string;
+  imageUrls: ICard['imageUrls'];
+  amount: number;
+}
