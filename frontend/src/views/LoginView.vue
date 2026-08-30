@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import fetchApi from '@/fetch/api';
-import { setAccessToken, type AccessTokenInfo } from '@/fetch/auth';
+import { login, type AccessTokenInfo } from '@/fetch/auth';
 import ResponseError from '@/fetch/ResponseError';
 
 const router = useRouter();
@@ -32,7 +32,7 @@ const handleSubmit = async () => {
       },
     });
 
-    setAccessToken(info);
+    login(info);
     router.push('/');
   } catch (e) {
     if (e instanceof ResponseError && e.status === 400) {
