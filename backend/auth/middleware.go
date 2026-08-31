@@ -29,26 +29,26 @@ func CorsMiddleware() gin.HandlerFunc {
 }
 
 func IsAuthorized(c *gin.Context) {
-	creds := c.GetHeader("Authorization")
+	token := c.GetHeader("Authorization")
 
-	if !strings.HasPrefix(creds, "Bearer ") {
+	if !strings.HasPrefix(token, "Bearer ") {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	creds = strings.TrimPrefix(creds, "Bearer ")
-	token, err := ParseToken(creds)
+	token = strings.TrimPrefix(token, "Bearer ")
+	claims, err := ParseToken(token)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	if err := ValidateClaims(token); err != nil {
+	if err := ValidateClaims(claims); err != nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	c.Set("role", token.Role)
+	c.Set("role", claims.Role)
 	c.Next()
 }
