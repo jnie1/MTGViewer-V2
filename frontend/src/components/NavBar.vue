@@ -32,7 +32,9 @@ const handleLogout = () => {
         <router-link to="/search">Search</router-link>
       </li>
       <li>
-        <router-link to="/upload">Upload</router-link>
+        <p v-if="isLoggedIn">
+          <router-link to="/upload">Upload</router-link>
+        </p>
       </li>
       <li class="right-links">
         <router-link v-if="cartCount > 0" to="/cart" class="cart-wrapper">
