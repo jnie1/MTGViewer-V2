@@ -18,8 +18,8 @@ const hasNextPage = ref(false);
 const isLoading = ref(false);
 const isNextDisabled = computed(() => !hasNextPage.value || isLoading.value);
 
-const handleSearch = (value: string) => {
-  searchQuery.value = value.trim();
+const handleSearch = (value: string | null) => {
+  searchQuery.value = value?.trim() ?? '';
   currentPage.value = 1;
   searchResults.value = [];
   hasNextPage.value = false;
