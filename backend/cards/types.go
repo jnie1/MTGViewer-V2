@@ -69,21 +69,6 @@ type SearchCardPage struct {
 	HasMore bool   `json:"hasMore"`
 }
 
-func ParseScryfallIds(ids []string) (uuid.UUIDs, error) {
-	scryfallIds := make(uuid.UUIDs, len(ids))
-
-	for i, id := range ids {
-		id, err := uuid.Parse(id)
-		if err != nil {
-			return nil, err
-		}
-
-		scryfallIds[i] = id
-	}
-
-	return scryfallIds, nil
-}
-
 func ToScryfallIds(amounts []CardAmountPreview) uuid.UUIDs {
 	uniqIds := make(map[uuid.UUID]struct{})
 	var v struct{}

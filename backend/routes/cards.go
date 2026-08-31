@@ -3,7 +3,6 @@ package routes
 import (
 	"mime/multipart"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -13,19 +12,22 @@ import (
 )
 
 func fetchCollection(c *gin.Context) {
-	scryfallIds, err := cards.ParseScryfallIds(c.QueryArray("cards"))
-	if err != nil {
+	var query struct {
+		ScryfallIds []uuid.UUID `form:"cards,parser=encoding.TextUnmarshaler"`
+	}
+
+	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if len(scryfallIds) == 0 {
+	if len(query.ScryfallIds) == 0 {
 		c.JSON(http.StatusOK, []cards.Card{})
 		return
 	}
 
 	ctx := c.Request.Context()
-	result, err := cards.FetchCollection(ctx, scryfallIds...)
+	result, err := cards.FetchCollection(ctx, query.ScryfallIds...)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -35,14 +37,17 @@ func fetchCollection(c *gin.Context) {
 }
 
 func fetchCard(c *gin.Context) {
-	scryfallId, err := uuid.Parse(c.Param("card"))
-	if err != nil {
+	var params struct {
+		ScryfallId uuid.UUID `uri:"card,parser=encoding.TextUnmarshaler" binding:"required"`
+	}
+
+	if err := c.ShouldBindUri(&params); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	ctx := c.Request.Context()
-	matches, err := cards.FetchCollection(ctx, scryfallId)
+	matches, err := cards.FetchCollection(ctx, params.ScryfallId)
 
 	if len(matches) == 0 {
 		c.AbortWithStatus(http.StatusNotFound)
@@ -140,7 +145,7 @@ func importCards(c *gin.Context) {
 
 func withdrawCards(c *gin.Context) {
 	var withdrawals containers.ContainerWithdrawals
-	if err := c.ShouldBind(&withdrawals); err != nil {
+	if err := c.ShouldBindJSON(&withdrawals); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -178,15 +183,18 @@ func withdrawCards(c *gin.Context) {
 }
 
 func searchCards(c *gin.Context) {
-	cardQuery := c.Query("q")
-	pageNum, err := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if err != nil {
+	var query struct {
+		CardQuery string `form:"q" binding:"required"`
+		Page      int    `form:"page,default=1"`
+	}
+
+	if err := c.ShouldBindQuery(&query); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	ctx := c.Request.Context()
-	cardPage, err := cards.SearchCards(ctx, cardQuery, pageNum)
+	cardPage, err := cards.SearchCards(ctx, query.CardQuery, query.Page)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

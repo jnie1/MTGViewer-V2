@@ -25,6 +25,10 @@ func ParseToken(tokenString string) (claims *Claims, err error) {
 		return nil, err
 	}
 
+	if !token.Valid {
+		return nil, errors.New("token is not valid")
+	}
+
 	claims, ok := token.Claims.(*Claims)
 	if !ok {
 		return nil, errors.New("claims failed to parse")
