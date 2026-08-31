@@ -31,6 +31,9 @@ const handleLogout = () => {
       <li>
         <router-link to="/search">Search</router-link>
       </li>
+      <li>
+        <router-link to="/upload">Upload</router-link>
+      </li>
       <li class="right-links">
         <router-link v-if="cartCount > 0" to="/cart" class="cart-wrapper">
           <v-icon size="small" icon="$cart" />
