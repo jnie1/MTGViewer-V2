@@ -97,6 +97,15 @@ func parseTextFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardR
 	return requests, nil
 }
 
+func isEmptyRow(row []string) bool {
+	for _, cell := range row {
+		if cell != "" {
+			return false
+		}
+	}
+	return true
+}
+
 func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRequest, error) {
 	file, err := formFile.Open()
 	if err != nil {
@@ -129,7 +138,9 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 		if err != nil {
 			return nil, err
 		}
-
+		if isEmptyRow(row) {
+			continue
+		}
 		quantity, err := strconv.Atoi(row[headerPositions.Quantity])
 		if err != nil {
 			return nil, err

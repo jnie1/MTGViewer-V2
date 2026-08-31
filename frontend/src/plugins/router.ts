@@ -9,6 +9,7 @@ import CollectionView from '@/views/CollectionView.vue';
 import SearchView from '@/views/SearchView.vue';
 import CartView from '@/views/CartView.vue';
 import LoginView from '@/views/LoginView.vue';
+import UploadView from '@/views/UploadView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -70,6 +71,11 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
+    },
+    {
+      path: '/upload',
+      name: 'upload',
+      component: UploadView,
     },
   ],
 });

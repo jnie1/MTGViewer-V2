@@ -2,7 +2,7 @@
 import { RouterLink, useRouter } from 'vue-router';
 import { cart } from '@/cart/CartContainer';
 import { computed } from 'vue';
-import { isLoggedIn, logout, username } from '@/fetch/auth';
+import { isLoggedIn, logout, username, isAdmin } from '@/fetch/auth';
 
 const router = useRouter();
 const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0));
@@ -30,6 +30,11 @@ const handleLogout = () => {
       </li>
       <li>
         <router-link to="/search">Search</router-link>
+      </li>
+      <li>
+        <p v-if="isAdmin">
+          <router-link to="/upload">Upload</router-link>
+        </p>
       </li>
       <li class="right-links">
         <router-link v-if="cartCount > 0" to="/cart" class="cart-wrapper">
