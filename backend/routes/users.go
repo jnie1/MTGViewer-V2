@@ -42,11 +42,6 @@ func signup(c *gin.Context) {
 		return
 	}
 
-	if err := users.Validate(request); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
 	ctx := c.Request.Context()
 	_, err := users.GetUser(ctx, request.Username)
 
