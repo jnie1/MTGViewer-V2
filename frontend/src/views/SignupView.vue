@@ -10,26 +10,6 @@ const valid = ref(false);
 const username = ref('');
 const password = ref('');
 
-const handleSubmit = async () => {
-  if (!valid.value) return;
-
-  const signupRequest = {
-    username: username.value,
-    password: password.value,
-  };
-
-  await fetchApi('/signup', {
-    method: 'POST',
-    credentials: 'omit',
-    body: JSON.stringify(signupRequest),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  router.push('/login');
-};
-
 const usernameRules = [
   (value: string | null) => {
     if (value?.trim()) return true;
@@ -58,6 +38,26 @@ const passwordRules = [
     return 'Must be at least 8 characters';
   },
 ];
+
+const handleSubmit = async () => {
+  if (!valid.value) return;
+
+  const signupRequest = {
+    username: username.value,
+    password: password.value,
+  };
+
+  await fetchApi('/signup', {
+    method: 'POST',
+    credentials: 'omit',
+    body: JSON.stringify(signupRequest),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  router.push('/login');
+};
 </script>
 
 <template>
