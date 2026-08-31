@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,14 +12,17 @@ import (
 )
 
 func validate(c *gin.Context) {
-	username := strings.TrimSpace(c.Param("username"))
-	if username == "" {
+	var param struct {
+		Username string `uri:"username" binding:"required"`
+	}
+
+	if err := c.BindUri(&param); err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	ctx := c.Request.Context()
-	_, err := users.GetUser(ctx, username)
+	_, err := users.GetUser(ctx, param.Username)
 
 	if err == nil {
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -36,14 +38,18 @@ func validate(c *gin.Context) {
 }
 
 func signup(c *gin.Context) {
-	var request users.SignupRequest
-	if err := c.ShouldBind(&request); err != nil {
+	var req struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required,min=8"`
+	}
+
+	if err := c.ShouldBind(&req); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	ctx := c.Request.Context()
-	_, err := users.GetUser(ctx, request.Username)
+	_, err := users.GetUser(ctx, req.Username)
 
 	if err == nil {
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -55,14 +61,14 @@ func signup(c *gin.Context) {
 		return
 	}
 
-	passwordHash, err := users.GenerateHash(request.Password)
+	passwordHash, err := users.GenerateHash(req.Password)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	newUser := users.UserInfo{
-		Username:     request.Username,
+		Username:     req.Username,
 		PasswordHash: passwordHash,
 		Role:         "user",
 	}
@@ -76,20 +82,24 @@ func signup(c *gin.Context) {
 }
 
 func login(c *gin.Context) {
-	var request users.LoginRequest
-	if err := c.ShouldBind(&request); err != nil {
+	var req struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	if err := c.ShouldBind(&req); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	ctx := c.Request.Context()
-	user, err := users.GetUser(ctx, request.Username)
+	user, err := users.GetUser(ctx, req.Username)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	if err := users.VerifyPassword(request.Password, user.PasswordHash); err != nil {
+	if err := users.VerifyPassword(req.Password, user.PasswordHash); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
