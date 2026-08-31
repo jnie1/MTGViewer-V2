@@ -1,4 +1,4 @@
-import { getToken } from './auth';
+import { accessToken } from './auth';
 import ResponseError from './ResponseError';
 
 async function fetchApi<T = unknown>(path: string, init?: RequestInit): Promise<T> {
@@ -9,7 +9,7 @@ async function fetchApi<T = unknown>(path: string, init?: RequestInit): Promise<
   headers.set('Accept', 'application/json');
 
   if (init?.credentials !== 'omit') {
-    const token = getToken();
+    const token = accessToken.value;
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }

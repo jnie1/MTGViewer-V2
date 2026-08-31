@@ -1,4 +1,4 @@
-import { computed, shallowRef, watch } from 'vue';
+import { computed, onWatcherCleanup, ref, shallowRef, watch } from 'vue';
 
 export interface AccessTokenInfo {
   username: string;
@@ -8,6 +8,7 @@ export interface AccessTokenInfo {
 }
 
 const tokenInfo = shallowRef(initToken());
+const now = ref(Date.now());
 
 watch(tokenInfo, (info) => {
   if (info) {
@@ -16,6 +17,14 @@ watch(tokenInfo, (info) => {
   } else {
     localStorage.removeItem('accessToken');
   }
+});
+
+watch(now, () => {
+  const onTimeout = () => {
+    now.value = Date.now();
+  };
+  const refresh = setTimeout(onTimeout, 300_000);
+  onWatcherCleanup(() => clearTimeout(refresh));
 });
 
 function initToken(): AccessTokenInfo | undefined {
@@ -43,16 +52,18 @@ export function logout() {
   tokenInfo.value = undefined;
 }
 
-export function getToken(): string | undefined {
+const refreshedInfo = computed(() => {
   const info = tokenInfo.value;
   if (!info) return;
 
   const expires = info.expires * 1_000; // secs -> ms
-  if (expires <= Date.now()) return;
+  if (expires <= now.value) return;
 
-  return info.token;
-}
+  return info;
+});
 
-export const username = computed(() => tokenInfo.value?.username);
-export const isLoggedIn = computed(() => Boolean(tokenInfo.value?.token));
-export const isAdmin = computed(() => tokenInfo.value?.role === 'admin');
+export const isLoggedIn = computed(() => Boolean(refreshedInfo.value));
+export const isAdmin = computed(() => refreshedInfo.value?.role === 'admin');
+
+export const accessToken = computed(() => refreshedInfo.value?.token);
+export const username = computed(() => refreshedInfo.value?.username);
