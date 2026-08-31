@@ -139,7 +139,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 			return nil, err
 		}
 		if isEmptyRow(row) {
-			break
+			continue
 		}
 		quantity, err := strconv.Atoi(row[headerPositions.Quantity])
 		if err != nil {
