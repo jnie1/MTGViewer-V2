@@ -18,7 +18,6 @@ const uploadFile = async () => {
   try {
     await fetchApi('/cards/import', {
       method: 'POST',
-      credentials: 'omit',
       body: formData,
     });
     console.log('Upload successful');
