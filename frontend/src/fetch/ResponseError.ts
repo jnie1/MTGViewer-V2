@@ -11,4 +11,8 @@ class ResponseError extends Error {
   }
 }
 
+export function isStatusError(err: unknown, statusCode: number): err is ResponseError {
+  return err instanceof ResponseError && err.status === statusCode;
+}
+
 export default ResponseError;

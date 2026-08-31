@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import { cart } from '@/cart/CartContainer';
 import { computed } from 'vue';
+import { isLoggedIn, logout, username } from '@/fetch/auth';
+
+const router = useRouter();
 const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0));
+
+const handleLogout = () => {
+  logout();
+  router.push('/');
+};
 </script>
 
 <template>
@@ -23,15 +31,15 @@ const cartCount = computed(() => cart.reduce((sum, item) => sum + item.amount, 0
       <li>
         <router-link to="/search">Search</router-link>
       </li>
-      <li v-if="cartCount > 0" class="cart-item">
-        <router-link to="/cart" class="cart-wrapper">
+      <li class="right-links">
+        <router-link v-if="cartCount > 0" to="/cart" class="cart-wrapper">
           <v-icon size="small" icon="$cart" />
           <span class="cart-badge">{{ cartCount }}</span>
         </router-link>
-      </li>
-      <li class="auth-links">
-        <router-link to="/login">Login</router-link>
-        <router-link to="/signup">Sign up</router-link>
+        <router-link v-if="!isLoggedIn" to="/login">Login</router-link>
+        <router-link v-if="!isLoggedIn" to="/signup">Sign up</router-link>
+        <p v-if="isLoggedIn" class="username">{{ username }}</p>
+        <p v-if="isLoggedIn" class="link" @click="handleLogout">Logout</p>
       </li>
     </ul>
   </nav>
@@ -51,17 +59,18 @@ li {
   font-size: 15px;
 }
 
-.cart-item {
-  margin-left: auto;
-}
-
 .cart-badge {
   padding-left: 4px;
 }
 
-.auth-links {
+.right-links {
   margin-left: auto;
   display: flex;
   gap: 1rem;
+}
+
+.username {
+  text-decoration: none;
+  padding: 3px;
 }
 </style>

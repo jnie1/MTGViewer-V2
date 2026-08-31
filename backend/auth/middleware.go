@@ -22,21 +22,22 @@ func CorsMiddleware() gin.HandlerFunc {
 
 	return cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodOptions},
 		AllowHeaders:     []string{"Content-type", "Authorization"},
 		AllowCredentials: true,
 	})
 }
 
 func IsAuthorized(c *gin.Context) {
-	cookie, err := c.Cookie("token")
+	creds := c.GetHeader("Authorization")
 
-	if err != nil {
+	if !strings.HasPrefix(creds, "Bearer ") {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	token, err := ParseToken(cookie)
+	creds = strings.TrimPrefix(creds, "Bearer ")
+	token, err := ParseToken(creds)
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnauthorized)

@@ -89,7 +89,7 @@ const handleRemoveFromCart = () => {
 .print-img {
   height: 156px;
   width: 112px;
-  border-radius: 16px;
+  border-radius: 8px;
 }
 
 .print-info {
