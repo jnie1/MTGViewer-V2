@@ -105,13 +105,11 @@ func importCards(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	println("here")
 	if file.Size >= 5_000_000 {
 		c.AbortWithError(http.StatusBadRequest, multipart.ErrMessageTooLarge)
 		return
 	}
 
-	println("here2")
 	ctx := c.Request.Context()
 	requests, err := containers.ParseCardRequests(ctx, file)
 	if err != nil {
@@ -119,14 +117,12 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	println("here3")
 	allocations, err := containers.GetAllocations(ctx)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	println("here4")
 	changes, err := containers.GetContainerAdditions(requests, allocations)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
