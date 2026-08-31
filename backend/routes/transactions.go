@@ -23,23 +23,26 @@ func fetchCardTransactions(c *gin.Context) {
 }
 
 func fetchCardLogs(c *gin.Context) {
-	group1, err := uuid.Parse(c.Param("group"))
-	if err != nil {
+	var params struct {
+		Group1 uuid.UUID `uri:"group,parser=encoding.TextUnmarshaler" binding:"required"`
+	}
+
+	if err := c.ShouldBindUri(&params); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	group2 := uuid.Nil
-	if e, ok := c.GetQuery("e"); ok {
-		group2, err = uuid.Parse(e)
-		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
+	var query struct {
+		Group2 uuid.UUID `form:"e,parser=encoding.TextUnmarshaler"`
+	}
+
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	ctx := c.Request.Context()
-	logs, err := getLogs(ctx, group1, group2)
+	logs, err := getLogs(ctx, params.Group1, query.Group2)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
