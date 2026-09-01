@@ -7,13 +7,13 @@ import { useRoute } from 'vue-router';
 defineOptions({
   async beforeRouteEnter(to, _, next) {
     const { groupId } = to.params;
-    await loadRouteData(to.meta, next, `logs/${groupId}`);
+    await loadRouteData(to.meta, next, `/logs/${groupId}`);
   },
 });
 
 const { params, meta } = useRoute();
 const { groupId } = params;
-const transfers = routeData<IContainerTransfers[]>(meta, `logs/${groupId}`);
+const transfers = routeData<IContainerTransfers[]>(meta, `/logs/${groupId}`);
 </script>
 <template>
   <main>

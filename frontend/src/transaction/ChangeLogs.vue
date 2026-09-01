@@ -5,7 +5,6 @@ interface ILogsProps {
   logs: ICardTransaction[];
 }
 
-//assuming i get the right transaction
 const { logs } = defineProps<ILogsProps>();
 </script>
 
@@ -14,22 +13,19 @@ const { logs } = defineProps<ILogsProps>();
     <thead>
       <tr>
         <th>Time</th>
-        <th>Amount</th>
+        <th>Description</th>
+        <th>Total</th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="log in logs" :key="log.groupId">
         <td>
-          <router-link
-            :to="{ name: 'transaction', params: { groupId: log.groupId } }"
-            class="clickable"
-          >
+          <router-link :to="{ name: 'transaction', params: { groupId: log.groupId } }" class="clickable">
             {{ new Date(log.time).toLocaleString() }}
           </router-link>
         </td>
-        <td>
-          {{ log.total }}
-        </td>
+        <td>{{ log.description }}</td>
+        <td>{{ log.total }}</td>
       </tr>
     </tbody>
   </v-table>

@@ -1,10 +1,11 @@
 import { type ICard } from '@/cards/types';
-import type { IContainerPreview } from '@/collection/types';
+import type { IContainerPreview } from '@/containers/types';
 
 export interface ICardTransaction {
   groupId: string;
   time: string;
   total: number;
+  description?: string;
 }
 
 export interface ICardLog {

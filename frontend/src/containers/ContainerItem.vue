@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { onWatcherCleanup, ref, watch } from 'vue';
 import type { ICard } from '@/cards/types';
 import CardImage from '@/cards/CardImage.vue';
-import { onWatcherCleanup, ref, watch } from 'vue';
 import { isAbortError, timeout } from '@/fetch/abort';
 
 interface IContainerItemProps {
@@ -48,13 +48,8 @@ watch(
 
 <template>
   <v-container>
-    <v-text-field
-      v-model="search"
-      label="Search items..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      clearable
-    />
+    <v-text-field v-model="search" label="Search items..." prepend-inner-icon="mdi-magnify" variant="outlined"
+      clearable />
     <v-slide-group v-model="matchId" class="slide-content" show-arrows>
       <template #next>
         <v-icon icon="$right" size="x-large" />
