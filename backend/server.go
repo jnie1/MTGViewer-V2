@@ -30,9 +30,11 @@ func RegisterRouter() {
 
 	api := r.Group("/api")
 	routes.AddUserRoutes(api)
-	routes.AddCardRoutes(api)
-	routes.AddContainerRoutes(api)
-	routes.AddTransactionRoutes(api)
+
+	protected := api.Group("", auth.IsAuthorized)
+	routes.AddCardRoutes(protected)
+	routes.AddContainerRoutes(protected)
+	routes.AddTransactionRoutes(protected)
 
 	if err := routes.AddStaticRoutes(r, "/api"); err != nil {
 		log.Fatal("Error adding static files: ", err)
