@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import fetchApi from '@/fetch/api';
+import fetchApi, { jsonRequest } from '@/fetch/api';
 import { isStatusError } from '@/fetch/ResponseError';
 
 const router = useRouter();
@@ -42,18 +42,13 @@ const passwordRules = [
 const handleSubmit = async () => {
   if (!valid.value) return;
 
-  const signupRequest = {
-    username: username.value,
-    password: password.value,
-  };
-
   await fetchApi('/signup', {
     method: 'POST',
     credentials: 'omit',
-    body: JSON.stringify(signupRequest),
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    ...jsonRequest({
+      username: username.value,
+      password: password.value,
+    }),
   });
 
   router.push('/login');

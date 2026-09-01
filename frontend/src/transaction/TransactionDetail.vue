@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import fetchApi from '@/fetch/api';
+import fetchApi, { jsonRequest } from '@/fetch/api';
 import type { ICardTransaction, IContainerTransfers } from './types';
 
 interface ITransactionProps {
@@ -27,10 +27,7 @@ const handleCheck = async () => {
   try {
     await fetchApi(`/logs/${log.groupId}/description`, {
       method: 'PUT',
-      body: JSON.stringify({ description: description.value }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      ...jsonRequest({ description: description.value }),
     });
   } finally {
     loading.value = false;

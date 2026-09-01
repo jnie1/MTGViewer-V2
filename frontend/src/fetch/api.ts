@@ -34,4 +34,11 @@ async function fetchApi<T = unknown>(path: string, init?: RequestInit): Promise<
   return body;
 }
 
+export function jsonRequest(value: unknown): RequestInit {
+  return {
+    body: JSON.stringify(value),
+    headers: [['Content-Type', 'application/json']],
+  };
+}
+
 export default fetchApi;
