@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jnie1/MTGViewer-V2/auth"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
 	"github.com/jnie1/MTGViewer-V2/transactions"
@@ -145,5 +146,5 @@ func AddTransactionRoutes(router gin.IRouter) {
 	group.GET("", fetchCardTransactions)
 	group.GET("/:group", fetchCardTransaction)
 	group.GET("/:group/cards", fetchCardLogs)
-	group.PUT("/:group/description", updateDescription)
+	group.PUT("/:group/description", auth.IsAdmin, updateDescription)
 }
