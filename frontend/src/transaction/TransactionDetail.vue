@@ -31,29 +31,42 @@ const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.contain
           <tbody>
             <tr v-for="card in transfer.cards" :key="card.scryfallId">
               <td class="name-col">
-                <router-link :to="{
-                  name: 'card',
-                  params: { scryfallId: card.scryfallId },
-                }">
+                <router-link
+                  :to="{
+                    name: 'card',
+                    params: { scryfallId: card.scryfallId },
+                  }"
+                >
                   {{ card.name }}
                 </router-link>
               </td>
               <td>
-                <img v-if="card.imageUrls.preview" :src="card.imageUrls.preview" alt="Card Image" class="card-image" />
+                <img
+                  v-if="card.imageUrls.preview"
+                  :src="card.imageUrls.preview"
+                  alt="Card Image"
+                  class="card-image"
+                />
               </td>
               <td>
-                <router-link v-if="
-                  card.withContainerId &&
-                  containersById.has(card.withContainerId) &&
-                  card.delta > 0
-                " :to="{ name: 'container', params: { containerId: card.withContainerId } }">
+                <router-link
+                  v-if="
+                    card.withContainerId &&
+                    containersById.has(card.withContainerId) &&
+                    card.delta > 0
+                  "
+                  :to="{ name: 'container', params: { containerId: card.withContainerId } }"
+                >
                   From {{ containersById.get(card.withContainerId) }}
                 </router-link>
-                <router-link v-else-if="
-                  card.withContainerId &&
-                  containersById.has(card.withContainerId) &&
-                  card.delta < 0
-                " :to="{ name: 'container', params: { containerId: card.withContainerId } }">
+                <router-link
+                  v-else-if="
+                    card.withContainerId &&
+                    containersById.has(card.withContainerId) &&
+                    card.delta < 0
+                  "
+                  :to="{ name: 'container', params: { containerId: card.withContainerId } }"
+                >
                   To {{ containersById.get(card.withContainerId) }}
                 </router-link>
                 <i v-else-if="!card.withContainerId && card.delta < 0">Removed</i>

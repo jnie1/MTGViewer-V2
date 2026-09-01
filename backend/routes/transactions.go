@@ -24,6 +24,26 @@ func fetchCardTransactions(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func fetchCardTransaction(c *gin.Context) {
+	var params struct {
+		Group uuid.UUID `uri:"group,parser=encoding.TextUnmarshaler" binding:"required"`
+	}
+
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	ctx := c.Request.Context()
+	result, err := transactions.GetTransactions(ctx)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func fetchCardLogs(c *gin.Context) {
 	var params struct {
 		Group1 uuid.UUID `uri:"group,parser=encoding.TextUnmarshaler" binding:"required"`
@@ -123,6 +143,7 @@ func updateDescription(c *gin.Context) {
 func AddTransactionRoutes(router gin.IRouter) {
 	group := router.Group("/logs")
 	group.GET("", fetchCardTransactions)
-	group.GET("/:group", fetchCardLogs)
+	group.GET("/:group", fetchCardTransaction)
+	group.GET("/:group/cards", fetchCardLogs)
 	group.PUT("/:group/description", updateDescription)
 }
