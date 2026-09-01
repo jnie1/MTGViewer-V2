@@ -22,21 +22,17 @@ const rules = [
 const handleSubmit = async () => {
   if (!valid.value) return;
 
-  errorMessage.value = '';
-
-  const loginRequest = {
-    username: username.value,
-    password: password.value,
-  };
-
   try {
+    errorMessage.value = '';
+
     const info = await fetchApi<AccessTokenInfo>('/login', {
       method: 'POST',
       credentials: 'omit',
-      body: JSON.stringify(loginRequest),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value,
+      }),
     });
 
     login(info);

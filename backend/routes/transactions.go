@@ -2,6 +2,8 @@ package routes
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,13 +24,33 @@ func fetchCardTransactions(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func fetchCardTransaction(c *gin.Context) {
+	var params struct {
+		Group uuid.UUID `uri:"group,parser=encoding.TextUnmarshaler" binding:"required"`
+	}
+
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	ctx := c.Request.Context()
+	result, err := transactions.GetTransaction(ctx, params.Group)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func fetchCardLogs(c *gin.Context) {
 	var params struct {
 		Group1 uuid.UUID `uri:"group,parser=encoding.TextUnmarshaler" binding:"required"`
 	}
 
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
 
@@ -83,8 +105,45 @@ func getLogs(ctx context.Context, group1, group2 uuid.UUID) ([]transactions.Card
 	return transactions.GetLogsFromRange(ctx, logRange)
 }
 
+func updateDescription(c *gin.Context) {
+	var params struct {
+		Group uuid.UUID `uri:"group,parser=encoding.TextUnmarshaler" binding:"required"`
+	}
+
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	var req struct {
+		Description *string `json:"description"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	ctx := c.Request.Context()
+	err := transactions.UpdateDescription(ctx, params.Group, req.Description)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
 func AddTransactionRoutes(router gin.IRouter) {
 	group := router.Group("/logs")
 	group.GET("", fetchCardTransactions)
-	group.GET("/:group", fetchCardLogs)
+	group.GET("/:group", fetchCardTransaction)
+	group.GET("/:group/cards", fetchCardLogs)
+	group.PUT("/:group/description", updateDescription)
 }

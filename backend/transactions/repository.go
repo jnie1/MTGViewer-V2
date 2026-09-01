@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -28,7 +29,7 @@ func GetTimeRange(ctx context.Context, group1, group2 uuid.UUID) (LogRange, erro
 func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 	db := database.Instance()
 	row, err := db.QueryContext(ctx, `
-		SELECT lg.log_group_id, lg.time, COALESCE(SUM(t.amount), 0) AS total
+		SELECT lg.log_group_id, lg.time, COALESCE(SUM(t.amount), 0) AS total, lg.description
 		FROM log_groups AS lg
 		LEFT JOIN transactions AS t ON t.log_group_id = lg.log_group_id
 		GROUP BY lg.log_group_id
@@ -43,7 +44,7 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 
 	for row.Next() {
 		var transaction CardTransaction
-		if err := row.Scan(&transaction.GroupId, &transaction.Time, &transaction.Total); err != nil {
+		if err := row.Scan(&transaction.GroupId, &transaction.Time, &transaction.Total, &transaction.Description); err != nil {
 			return nil, err
 		}
 		transactions = append(transactions, transaction)
@@ -54,6 +55,21 @@ func GetTransactions(ctx context.Context) ([]CardTransaction, error) {
 	}
 
 	return transactions, nil
+}
+
+func GetTransaction(ctx context.Context, groupId uuid.UUID) (CardTransaction, error) {
+	db := database.Instance()
+	row := db.QueryRowContext(ctx, `
+		SELECT lg.log_group_id, lg.time, COALESCE(SUM(t.amount), 0) AS total, lg.description
+		FROM log_groups AS lg
+		LEFT JOIN transactions AS t ON t.log_group_id = lg.log_group_id
+		WHERE lg.log_group_id = $1
+		GROUP BY lg.log_group_id;`, groupId)
+
+	var transaction CardTransaction
+	err := row.Scan(&transaction.GroupId, &transaction.Time, &transaction.Total, &transaction.Description)
+
+	return transaction, err
 }
 
 func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
@@ -113,6 +129,30 @@ func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview,
 	}
 
 	return logs, nil
+}
+
+func UpdateDescription(ctx context.Context, groupId uuid.UUID, description *string) error {
+	db := database.Instance()
+	res, err := db.ExecContext(ctx, `
+		UPDATE log_groups
+		SET description = $1
+		WHERE log_group_id = $2
+		RETURNING log_group_id;`, description, groupId)
+
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows < 1 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }
 
 func LogCollectionChanges(ctx context.Context, changes []containers.ContainerChanges) error {

@@ -42,18 +42,14 @@ const passwordRules = [
 const handleSubmit = async () => {
   if (!valid.value) return;
 
-  const signupRequest = {
-    username: username.value,
-    password: password.value,
-  };
-
   await fetchApi('/signup', {
     method: 'POST',
     credentials: 'omit',
-    body: JSON.stringify(signupRequest),
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: username.value,
+      password: password.value,
+    }),
   });
 
   router.push('/login');

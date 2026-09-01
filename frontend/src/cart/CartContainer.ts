@@ -117,12 +117,10 @@ export async function submitAllCards() {
     amounts.push({ card, amount });
   }
 
-  const payload = Object.fromEntries(grouped);
-
   await fetchApi('/cards/withdraw', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(Object.fromEntries(grouped)),
   });
 
   removeAllCards();

@@ -26,7 +26,7 @@ func fetchContainer(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
@@ -46,7 +46,7 @@ func fetchContainerCards(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindUri(&params); err != nil {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 

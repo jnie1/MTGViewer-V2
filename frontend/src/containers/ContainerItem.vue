@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { onWatcherCleanup, ref, watch } from 'vue';
 import type { ICard } from '@/cards/types';
 import CardImage from '@/cards/CardImage.vue';
-import { onWatcherCleanup, ref, watch } from 'vue';
 import { isAbortError, timeout } from '@/fetch/abort';
 
 interface IContainerItemProps {
