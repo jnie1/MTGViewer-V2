@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue';
+import fetchApi from '@/fetch/api';
 import type { ICardTransaction, IContainerTransfers } from './types';
 
 interface ITransactionProps {
@@ -7,12 +9,49 @@ interface ITransactionProps {
 }
 
 const { log, transfers } = defineProps<ITransactionProps>();
+
+const loading = ref(false);
+const disabled = ref(true);
+const description = ref(log.description);
+
 const transactionAt = new Date(log.time);
 const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.containerName]));
+
+watch(description, () => {
+  disabled.value = false;
+});
+
+const handleCheck = async () => {
+  disabled.value = true;
+  loading.value = true;
+  try {
+    await fetchApi(`/logs/${log.groupId}/description`, {
+      method: 'PUT',
+      body: JSON.stringify({ description: description.value }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <template>
-  <h2>{{ transactionAt.toLocaleString() }}</h2>
+  <h2 class="text-h5 transaction-title">{{ transactionAt.toLocaleString() }}</h2>
+  <v-textarea
+    v-model="description"
+    :loading
+    label="Description"
+    variant="outlined"
+    auto-grow
+    rows="1"
+  >
+    <template #append-inner>
+      <v-btn icon="$complete" variant="plain" :disabled @click="handleCheck" />
+    </template>
+  </v-textarea>
   <v-expansion-panels v-if="transfers && transfers.length > 0" variant="default" multiple>
     <v-expansion-panel v-for="transfer in transfers" :key="transfer.containerId">
       <v-expansion-panel-title>
@@ -41,11 +80,12 @@ const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.contain
                 </router-link>
               </td>
               <td>
-                <img
-                  v-if="card.imageUrls.preview"
-                  :src="card.imageUrls.preview"
-                  alt="Card Image"
-                  class="card-image"
+                <v-img
+                  inline
+                  class="card-img"
+                  :alt="card.name"
+                  :lazy-src="card.imageUrls.preview"
+                  :src="card.imageUrls.normal"
                 />
               </td>
               <td>
@@ -82,11 +122,23 @@ const containersById = new Map(transfers.map((ct) => [ct.containerId, ct.contain
 </template>
 
 <style lang="css" scoped>
+.transaction-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transaction-title {
+  padding: 0 8px 16px;
+}
+
 .name-col {
   width: 300px;
 }
 
-.card-image {
-  padding: 8px 0;
+.card-img {
+  min-height: 156px;
+  min-width: 112px;
+  border-radius: 8px;
 }
 </style>
