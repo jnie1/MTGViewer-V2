@@ -16,7 +16,7 @@ type CardTransaction struct {
 	GroupId     uuid.UUID `json:"groupId"`
 	Time        time.Time `json:"time"`
 	Total       int       `json:"total"`
-	Description string    `json:"description,omitempty"`
+	Description *string   `json:"description,omitempty"`
 }
 
 type CardLogPreview struct {

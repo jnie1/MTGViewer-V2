@@ -35,7 +35,7 @@ func fetchCardTransaction(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	result, err := transactions.GetTransactions(ctx)
+	result, err := transactions.GetTransaction(ctx, params.Group)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
