@@ -22,7 +22,7 @@ func CorsMiddleware() gin.HandlerFunc {
 
 	return cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
-		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodOptions},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
 		AllowHeaders:     []string{"Content-type", "Authorization"},
 		AllowCredentials: true,
 	})
