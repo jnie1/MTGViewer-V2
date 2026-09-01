@@ -270,6 +270,6 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/search", searchCards)
 	group.GET("/random", fetchRandomCard)
 	group.POST("/import", auth.IsAdmin, importCards)
-	group.POST("/withdraw", auth.IsAuthorized, withdrawCards)
+	group.POST("/withdraw", auth.IsAdmin, withdrawCards)
 	group.POST("/oracle", refreshOracle)
 }
