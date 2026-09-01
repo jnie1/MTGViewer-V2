@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jnie1/MTGViewer-V2/auth"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
 	"github.com/jnie1/MTGViewer-V2/transactions"
@@ -169,6 +170,6 @@ func AddContainerRoutes(router gin.IRouter) {
 	group.GET("", fetchContainerPreviews)
 	group.GET("/:container", fetchContainer)
 	group.GET("/:container/cards", fetchContainerCards)
-	group.GET("/prune", checkPrune)
-	group.POST("/prune", applyPrune)
+	group.GET("/prune", auth.IsAdmin, checkPrune)
+	group.POST("/prune", auth.IsAdmin, applyPrune)
 }

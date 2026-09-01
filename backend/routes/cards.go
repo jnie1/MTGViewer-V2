@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jnie1/MTGViewer-V2/auth"
 	"github.com/jnie1/MTGViewer-V2/cards"
 	"github.com/jnie1/MTGViewer-V2/containers"
 	"github.com/jnie1/MTGViewer-V2/transactions"
@@ -268,7 +269,7 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/:card", fetchCard)
 	group.GET("/search", searchCards)
 	group.GET("/random", fetchRandomCard)
-	group.POST("/import", importCards)
-	group.POST("/withdraw", withdrawCards)
+	group.POST("/import", auth.IsAdmin, importCards)
+	group.POST("/withdraw", auth.IsAuthorized, withdrawCards)
 	group.POST("/oracle", refreshOracle)
 }
