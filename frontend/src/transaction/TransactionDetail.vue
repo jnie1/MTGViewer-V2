@@ -39,7 +39,10 @@ const handleCheck = async () => {
 </script>
 
 <template>
-  <h2 class="text-h5 transaction-title">{{ transactionAt.toLocaleString() }}</h2>
+  <div class="transaction-header">
+    <h2 class="text-h5">{{ transactionAt.toLocaleString() }}</h2>
+    <h3 class="text-h7">Amount: {{ log.total }}</h3>
+  </div>
   <v-textarea
     v-model="description"
     :loading
@@ -55,7 +58,10 @@ const handleCheck = async () => {
   <v-expansion-panels v-if="transfers && transfers.length > 0" variant="default" multiple>
     <v-expansion-panel v-for="transfer in transfers" :key="transfer.containerId">
       <v-expansion-panel-title>
-        {{ transfer.containerName }}
+        <div class="parent-panel-title">
+          <v-card-subtitle class="panel-title">{{ transfer.containerName }}</v-card-subtitle>
+          <v-card-subtitle>Amount: {{ Math.abs(transfer.total) }}</v-card-subtitle>
+        </div>
       </v-expansion-panel-title>
       <v-expansion-panel-text class="log-table">
         <v-table>
@@ -122,18 +128,30 @@ const handleCheck = async () => {
 </template>
 
 <style lang="css" scoped>
-.transaction-details {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.transaction-title {
+.transaction-header {
   padding: 0 8px 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: last baseline;
+  justify-content: space-between;
 }
 
 .name-col {
   width: 300px;
+}
+
+.panel-title {
+  color: var(--color-primary);
+  padding-bottom: 8px;
+  font-size: 1.25rem;
+}
+
+.parent-panel-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  align-items: left;
+  width: 100%;
 }
 
 .card-img {
