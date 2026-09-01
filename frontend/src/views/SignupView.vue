@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import fetchApi, { jsonRequest } from '@/fetch/api';
+import fetchApi from '@/fetch/api';
 import { isStatusError } from '@/fetch/ResponseError';
 
 const router = useRouter();
@@ -45,7 +45,8 @@ const handleSubmit = async () => {
   await fetchApi('/signup', {
     method: 'POST',
     credentials: 'omit',
-    ...jsonRequest({
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
       username: username.value,
       password: password.value,
     }),

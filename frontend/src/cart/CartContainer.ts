@@ -1,5 +1,5 @@
 import { reactive, watch } from 'vue';
-import fetchApi, { jsonRequest } from '@/fetch/api';
+import fetchApi from '@/fetch/api';
 
 export interface ICartItem {
   scryfallId: string;
@@ -119,7 +119,8 @@ export async function submitAllCards() {
 
   await fetchApi('/cards/withdraw', {
     method: 'POST',
-    ...jsonRequest(Object.fromEntries(grouped)),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.fromEntries(grouped)),
   });
 
   removeAllCards();

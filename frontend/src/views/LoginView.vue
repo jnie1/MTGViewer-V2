@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import fetchApi, { jsonRequest } from '@/fetch/api';
+import fetchApi from '@/fetch/api';
 import { login, type AccessTokenInfo } from '@/fetch/auth';
 import { isStatusError } from '@/fetch/ResponseError';
 
@@ -28,7 +28,8 @@ const handleSubmit = async () => {
     const info = await fetchApi<AccessTokenInfo>('/login', {
       method: 'POST',
       credentials: 'omit',
-      ...jsonRequest({
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         username: username.value,
         password: password.value,
       }),
