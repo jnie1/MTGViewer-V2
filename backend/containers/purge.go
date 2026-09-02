@@ -114,64 +114,81 @@ func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []card
 	return changes
 }
 
-func PreviewPrune(changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) CardPrunePreview {
+func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) PrunePreviews {
+	containerIdRequests := make(map[int][]CardRequest, len(changes))
+
 	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
 	for _, card := range fullCards {
 		cardsById[card.ScryfallId] = card
 	}
-
+	bxIdToName := make(map[int]string, len(boxes))
+	for _, box := range boxes {
+		bxIdToName[box.ContainerId] = box.Name
+	}
 	pricesByCard := make(map[uuid.UUID]float64, len(prices))
 	for _, price := range prices {
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	var allRequests []CardRequest
 	for _, container := range changes {
+		var allRequests []CardRequest
 		for _, req := range container.Requests {
 			allRequests = append(allRequests, req)
 		}
+		containerIdRequests[container.ContainerId] = allRequests
 	}
+	grandTotal := 0
+	var globalPrnPreviews PrunePreviews
+	for containerId, requests := range containerIdRequests {
+		var previewCards []cards.CardPriceAmount
+		total := 0
+		for _, req := range MergeCardRequests(requests) {
+			cardId := req.ScryfallId
+			amount := req.Delta
+			if amount < 0 {
+				amount = -amount
+			}
 
-	var previewCards []cards.CardPriceAmount
-	total := 0
+			card, ok := cardsById[cardId]
+			if !ok {
+				continue
+			}
 
-	for _, req := range MergeCardRequests(allRequests) {
-		cardId := req.ScryfallId
-		amount := req.Delta
-		if amount < 0 {
-			amount = -amount
+			price, ok := pricesByCard[cardId]
+			if !ok {
+				continue
+			}
+
+			cardPrice := cards.CardPriceAmount{
+				CardAmount: cards.CardAmount{Card: card, Amount: amount},
+				Price:      price,
+			}
+
+			previewCards = append(previewCards, cardPrice)
+			total += amount
 		}
-
-		card, ok := cardsById[cardId]
-		if !ok {
-			continue
-		}
-
-		price, ok := pricesByCard[cardId]
-		if !ok {
-			continue
-		}
-
-		cardPrice := cards.CardPriceAmount{
-			CardAmount: cards.CardAmount{Card: card, Amount: amount},
-			Price:      price,
-		}
-
-		previewCards = append(previewCards, cardPrice)
-		total += amount
+		slices.SortFunc(previewCards, func(a, b cards.CardPriceAmount) int {
+			nameCompare := strings.Compare(a.Name, b.Name)
+			if nameCompare != 0 {
+				return nameCompare
+			}
+			setCompare := strings.Compare(a.Set, b.Set)
+			if setCompare != 0 {
+				return setCompare
+			}
+			return cmp.Compare(a.Price, b.Price)
+		})
+		grandTotal += total
+		globalPrnPreviews.ContainersPrunePreviews = append(globalPrnPreviews.ContainersPrunePreviews, ContainersPrunePreview{
+			ContainerId:   containerId,
+			ContainerName: bxIdToName[containerId],
+			Total:         total,
+			Cards:         previewCards,
+		})
 	}
-
-	slices.SortFunc(previewCards, func(a, b cards.CardPriceAmount) int {
-		nameCompare := strings.Compare(a.Name, b.Name)
-		if nameCompare != 0 {
-			return nameCompare
-		}
-		setCompare := strings.Compare(a.Set, b.Set)
-		if setCompare != 0 {
-			return setCompare
-		}
-		return cmp.Compare(a.Price, b.Price)
+	slices.SortFunc(globalPrnPreviews.ContainersPrunePreviews, func(a, b ContainersPrunePreview) int {
+		return cmp.Compare(a.ContainerId, b.ContainerId)
 	})
-
-	return CardPrunePreview{total, previewCards}
+	globalPrnPreviews.Total = grandTotal
+	return globalPrnPreviews
 }
