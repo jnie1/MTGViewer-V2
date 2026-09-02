@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch, onWatcherCleanup } from 'vue';
+import { ref, watch, onWatcherCleanup } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { isAbortError, timeout } from '@/fetch/abort';
 import type { IContainerPrunePreview } from '@/containers/types';
 import { previewPrune } from '@/containers/fetches';
-import SearchItem from '@/cards/SearchItem.vue';
 
 const router = useRouter();
 const route = useRoute();
