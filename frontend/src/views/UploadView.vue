@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import { loadRouteData, routeData } from '@/fetch/routeData';
-import { useRoute } from 'vue-router';
-import { VFileUpload } from 'vuetify/labs/VFileUpload';
-import fetchApi from '@/fetch/api';
 import { ref } from 'vue';
+import fetchApi from '@/fetch/api';
 
 const chosenFile = ref<File | File[] | undefined>(undefined);
 
 const uploadFile = async () => {
-  if (!chosenFile.value) return
+  if (!chosenFile.value) return;
 
-  const formData = new FormData()
-  
-  const files = Array.isArray(chosenFile.value) ? chosenFile.value : [chosenFile.value]
+  const formData = new FormData();
+
+  const files = Array.isArray(chosenFile.value) ? chosenFile.value : [chosenFile.value];
   files.forEach((file) => formData.append('file', file));
 
   try {
@@ -22,10 +19,9 @@ const uploadFile = async () => {
     });
     console.log('Upload successful');
   } catch (error) {
-    console.error('Upload failed:', error)
+    console.error('Upload failed:', error);
   }
-} 
-
+};
 </script>
 
 <template>
