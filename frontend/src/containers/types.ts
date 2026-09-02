@@ -24,7 +24,7 @@ export interface IContainerPreview {
   name: string;
 }
 
-export interface ICardPrunePreview {
+export interface IContainersPrunePreview {
   containerId: number;
   containerName: string;
   total: number;
@@ -33,5 +33,5 @@ export interface ICardPrunePreview {
 
 export interface IContainerPrunePreview {
   total: number;
-  cardPrunePreviews: ICardPrunePreview[];
+  containersPrunePreviews: IContainersPrunePreview[];
 }

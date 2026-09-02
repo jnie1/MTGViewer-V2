@@ -114,7 +114,7 @@ func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []card
 	return changes
 }
 
-func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) (CardPrunePreviewByContainer, error) {
+func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) PrunePreviews {
 	containerIdRequests := make(map[int][]CardRequest, len(changes))
 
 	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
@@ -138,7 +138,7 @@ func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCard
 		containerIdRequests[container.ContainerId] = allRequests
 	}
 	grandTotal := 0
-	var grandTotalCardsPrunePreviews CardPrunePreviewByContainer
+	var globalPrnPreviews PrunePreviews
 	for containerId, requests := range containerIdRequests {
 		var previewCards []cards.CardPriceAmount
 		total := 0
@@ -179,16 +179,16 @@ func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCard
 			return cmp.Compare(a.Price, b.Price)
 		})
 		grandTotal += total
-		grandTotalCardsPrunePreviews.CardPrunePreviews = append(grandTotalCardsPrunePreviews.CardPrunePreviews, CardPrunePreview{
+		globalPrnPreviews.ContainersPrunePreviews = append(globalPrnPreviews.ContainersPrunePreviews, ContainersPrunePreview{
 			ContainerId:   containerId,
 			ContainerName: bxIdToName[containerId],
 			Total:         total,
 			Cards:         previewCards,
 		})
 	}
-	slices.SortFunc(grandTotalCardsPrunePreviews.CardPrunePreviews, func(a, b CardPrunePreview) int {
+	slices.SortFunc(globalPrnPreviews.ContainersPrunePreviews, func(a, b ContainersPrunePreview) int {
 		return cmp.Compare(a.ContainerId, b.ContainerId)
 	})
-	grandTotalCardsPrunePreviews.Total = grandTotal
-	return grandTotalCardsPrunePreviews, nil
+	globalPrnPreviews.Total = grandTotal
+	return globalPrnPreviews
 }

@@ -118,7 +118,7 @@ func checkPrune(c *gin.Context) {
 	}
 
 	changes := containers.TranslatePrune(excess, matches, prices, query.MaxCopies, query.MinPrice)
-	preview, err := containers.PreviewPrune(boxes, changes, matches, prices)
+	preview := containers.PreviewPrune(boxes, changes, matches, prices)
 
 	c.JSON(http.StatusOK, preview)
 }

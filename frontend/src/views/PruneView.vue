@@ -11,14 +11,14 @@ const route = useRoute();
 const quantityAmount = ref(route.query.size ? parseInt(route.query.size as string) : 0);
 const priceAmount = ref(route.query.price ? parseFloat(route.query.price as string) : 0);
 
-const pruneResults = ref<IContainerPrunePreview>({ total: 0, cardPrunePreviews: [] });
+const pruneResults = ref<IContainerPrunePreview>({ total: 0, containersPrunePreviews: [] });
 const isLoading = ref(false);
 
 watch(
   [quantityAmount, priceAmount],
   async ([quantity, price], prev) => {
     if (quantity === 0 && price === 0) {
-      pruneResults.value = { total: 0, cardPrunePreviews: [] };
+      pruneResults.value = { total: 0, containersPrunePreviews: [] };
       return;
     }
 
@@ -79,7 +79,7 @@ watch(
     <v-container>
       <v-expansion-panels>
         <v-expansion-panel
-          v-for="prunePreview in pruneResults.cardPrunePreviews"
+          v-for="prunePreview in pruneResults.containersPrunePreviews"
           :key="prunePreview.containerId"
         >
           <v-expansion-panel-title>
