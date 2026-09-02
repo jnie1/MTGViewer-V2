@@ -105,24 +105,24 @@ watch(
                   location="bottom"
                 >
                   <template #activator="{ props }">
-                    <router-link
-                      v-bind="props"
-                      :to="{
-                        name: 'container',
-                        params: { containerId: prunePreview.containerId },
-                        query: { search: card.name },
-                      }"
-                    >
-                      <v-img
-                        class="print-img"
-                        :alt="card.name"
-                        :src="card.imageUrls.full"
-                        :lazy-src="card.imageUrls.preview"
-                      />
-                      <v-card-title v-if="card?.amount !== undefined"
-                        >{{ card.amount }}x</v-card-title
+                    <div class="print-row">
+                      <router-link
+                        v-bind="props"
+                        :to="{
+                          name: 'container',
+                          params: { containerId: prunePreview.containerId },
+                          query: { search: card.name },
+                        }"
                       >
-                    </router-link>
+                        <v-img
+                          class="print-img"
+                          :alt="card.name"
+                          :src="card.imageUrls.full"
+                          :lazy-src="card.imageUrls.preview"
+                        />
+                      </router-link>
+                      <p v-if="card?.amount !== undefined">{{ card.amount }}x</p>
+                    </div>
                   </template>
                 </v-tooltip>
               </v-col>
@@ -147,5 +147,18 @@ watch(
   justify-content: left;
   align-items: left;
   width: 100%;
+}
+
+.print-img {
+  height: 156px;
+  width: 112px;
+  border-radius: 8px;
+}
+
+.print-row {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: start;
+  align-items: center;
 }
 </style>
