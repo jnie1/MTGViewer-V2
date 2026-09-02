@@ -32,6 +32,9 @@ const handleLogout = () => {
         <router-link to="/search">Search</router-link>
       </li>
       <li>
+        <router-link to="/prune">Prune</router-link>
+      </li>
+      <li>
         <p v-if="isAdmin">
           <router-link to="/upload">Upload</router-link>
         </p>

@@ -23,3 +23,15 @@ export interface IContainerPreview {
   containerId: number;
   name: string;
 }
+
+export interface IContainersPrunePreview {
+  containerId: number;
+  containerName: string;
+  total: number;
+  cards: ICard[];
+}
+
+export interface IPrunePreview {
+  total: number;
+  containersPrunePreviews: IContainersPrunePreview[];
+}
