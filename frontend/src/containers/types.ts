@@ -31,7 +31,7 @@ export interface IContainersPrunePreview {
   cards: ICard[];
 }
 
-export interface IContainerPrunePreview {
+export interface IPrunePreview {
   total: number;
   containersPrunePreviews: IContainersPrunePreview[];
 }
