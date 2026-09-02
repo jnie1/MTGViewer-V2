@@ -2,7 +2,7 @@
 import { ref, watch, onWatcherCleanup } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { isAbortError, timeout } from '@/fetch/abort';
-import type { IContainerPrunePreview } from '@/containers/types';
+import type { IPrunePreview } from '@/containers/types';
 import { previewPrune } from '@/containers/fetches';
 
 const router = useRouter();
@@ -11,7 +11,7 @@ const route = useRoute();
 const quantityAmount = ref(route.query.size ? parseInt(route.query.size as string) : 0);
 const priceAmount = ref(route.query.price ? parseFloat(route.query.price as string) : 0);
 
-const pruneResults = ref<IContainerPrunePreview>({ total: 0, containersPrunePreviews: [] });
+const pruneResults = ref<IPrunePreview>({ total: 0, containersPrunePreviews: [] });
 const isLoading = ref(false);
 
 watch(
