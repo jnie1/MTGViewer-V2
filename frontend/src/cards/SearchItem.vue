@@ -21,6 +21,9 @@ const { cards } = defineProps<ICardProps>();
           <v-card class="grid-card" elevation="2">
             <card-image :card />
             <v-card-title class="grid-card-title">{{ card.name }}</v-card-title>
+            <v-card-title v-if="card?.amount !== undefined" class="grid-card-title"
+              >{{ card.amount }}x</v-card-title
+            >
           </v-card>
         </router-link>
       </div>

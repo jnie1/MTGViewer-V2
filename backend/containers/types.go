@@ -52,8 +52,15 @@ type CardContainerMatch struct {
 }
 
 type CardPrunePreview struct {
-	Total int                     `json:"total"`
-	Cards []cards.CardPriceAmount `json:"cards"`
+	ContainerId   int                     `json:"containerId"`
+	ContainerName string                  `json:"containerName"`
+	Total         int                     `json:"total"`
+	Cards         []cards.CardPriceAmount `json:"cards"`
+}
+
+type CardPrunePreviewByContainer struct {
+	Total             int                `json:"total"`
+	CardPrunePreviews []CardPrunePreview `json:"cardPrunePreviews"`
 }
 
 type CardRequest struct {
