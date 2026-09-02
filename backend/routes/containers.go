@@ -97,6 +97,12 @@ func checkPrune(c *gin.Context) {
 		return
 	}
 
+	ids := containers.ToContainerIds(excess)
+	boxes, err := containers.GetContainerPreviews(ctx, ids)
+	if err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
 	scryfallIds := containers.ToScryfallIds(excess)
 	matches, err := cards.FetchCollection(ctx, scryfallIds...)
 
@@ -112,7 +118,7 @@ func checkPrune(c *gin.Context) {
 	}
 
 	changes := containers.TranslatePrune(excess, matches, prices, query.MaxCopies, query.MinPrice)
-	preview := containers.PreviewPrune(c, changes, matches, prices)
+	preview, err := containers.PreviewPrune(boxes, changes, matches, prices)
 
 	c.JSON(http.StatusOK, preview)
 }

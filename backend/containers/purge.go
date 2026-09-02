@@ -2,11 +2,9 @@ package containers
 
 import (
 	"cmp"
-	"net/http"
 	"slices"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
@@ -116,14 +114,17 @@ func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []card
 	return changes
 }
 
-func PreviewPrune(c *gin.Context, changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) CardPrunePreviewByContainer {
+func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) (CardPrunePreviewByContainer, error) {
 	containerIdRequests := make(map[int][]CardRequest, len(changes))
 
 	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
 	for _, card := range fullCards {
 		cardsById[card.ScryfallId] = card
 	}
-
+	bxIdToName := make(map[int]string, len(boxes))
+	for _, box := range boxes {
+		bxIdToName[box.ContainerId] = box.Name
+	}
 	pricesByCard := make(map[uuid.UUID]float64, len(prices))
 	for _, price := range prices {
 		pricesByCard[price.ScryfallId] = price.Price
@@ -139,11 +140,6 @@ func PreviewPrune(c *gin.Context, changes []ContainerChanges, fullCards []cards.
 	grandTotal := 0
 	var grandTotalCardsPrunePreviews CardPrunePreviewByContainer
 	for containerId, requests := range containerIdRequests {
-		container, err := GetContainer(c, containerId)
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return CardPrunePreviewByContainer{}
-		}
 		var previewCards []cards.CardPriceAmount
 		total := 0
 		for _, req := range MergeCardRequests(requests) {
@@ -185,7 +181,7 @@ func PreviewPrune(c *gin.Context, changes []ContainerChanges, fullCards []cards.
 		grandTotal += total
 		grandTotalCardsPrunePreviews.CardPrunePreviews = append(grandTotalCardsPrunePreviews.CardPrunePreviews, CardPrunePreview{
 			ContainerId:   containerId,
-			ContainerName: container.Name,
+			ContainerName: bxIdToName[containerId],
 			Total:         total,
 			Cards:         previewCards,
 		})
@@ -194,5 +190,5 @@ func PreviewPrune(c *gin.Context, changes []ContainerChanges, fullCards []cards.
 		return cmp.Compare(a.ContainerId, b.ContainerId)
 	})
 	grandTotalCardsPrunePreviews.Total = grandTotal
-	return grandTotalCardsPrunePreviews
+	return grandTotalCardsPrunePreviews, nil
 }
