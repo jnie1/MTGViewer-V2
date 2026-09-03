@@ -4,6 +4,17 @@ import { useRoute, useRouter } from 'vue-router';
 import { isAbortError, timeout } from '@/fetch/abort';
 import type { IPrunePreview } from '@/containers/types';
 import { previewPrune } from '@/containers/fetches';
+import { isAdmin } from '@/fetch/auth';
+
+defineOptions({
+  beforeRouteEnter(to, _, next) {
+    if (!isAdmin.value) {
+      next('/');
+    } else {
+      next();
+    }
+  },
+});
 
 const router = useRouter();
 const route = useRoute();

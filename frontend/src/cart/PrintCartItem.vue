@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import type { ICard } from '@/cards/types';
 import type { IContainerPreview } from '@/containers/types';
 import { addToCart, cart, updateAmount } from './CartContainer';
+import { isLoggedIn } from '@/fetch/auth';
 
 interface IPrintCartItemProps {
   container: IContainerPreview;
@@ -55,7 +56,7 @@ const handleRemoveFromCart = () => {
     </v-tooltip>
     <div class="print-info">
       <v-card-title> {{ card.amount }}x </v-card-title>
-      <v-card-actions class="cart-actions">
+      <v-card-actions v-if="isLoggedIn" class="cart-actions">
         <v-btn
           size="small"
           density="compact"
