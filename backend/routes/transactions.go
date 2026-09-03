@@ -146,5 +146,5 @@ func AddTransactionRoutes(router gin.IRouter) {
 	group.GET("", fetchCardTransactions)
 	group.GET("/:group", fetchCardTransaction)
 	group.GET("/:group/cards", fetchCardLogs)
-	group.PUT("/:group/description", auth.IsAdmin, updateDescription)
+	group.PUT("/:group/description", auth.IsAuthorized, auth.IsAdmin, updateDescription)
 }

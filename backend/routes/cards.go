@@ -269,7 +269,8 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/:card", fetchCard)
 	group.GET("/search", searchCards)
 	group.GET("/random", fetchRandomCard)
-	group.POST("/import", auth.IsAdmin, importCards)
-	group.POST("/withdraw", auth.IsAdmin, withdrawCards)
+	group.POST("/withdraw", auth.IsAuthorized, withdrawCards)
+	group.POST("/import", auth.IsAuthorized, auth.IsAdmin, importCards)
+	//Oracle is to be removed later on so I won't bother with auth for now, but it should be admin only
 	group.POST("/oracle", refreshOracle)
 }

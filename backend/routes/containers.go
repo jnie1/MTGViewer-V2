@@ -170,6 +170,6 @@ func AddContainerRoutes(router gin.IRouter) {
 	group.GET("", fetchContainerPreviews)
 	group.GET("/:container", fetchContainer)
 	group.GET("/:container/cards", fetchContainerCards)
-	group.GET("/prune", auth.IsAdmin, checkPrune)
-	group.POST("/prune", auth.IsAdmin, applyPrune)
+	group.GET("/prune", auth.IsAuthorized, auth.IsAdmin, checkPrune)
+	group.POST("/prune", auth.IsAuthorized, auth.IsAdmin, applyPrune)
 }
