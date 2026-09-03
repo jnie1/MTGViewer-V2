@@ -52,3 +52,14 @@ func IsAuthorized(c *gin.Context) {
 	c.Set("role", claims.Role)
 	c.Next()
 }
+
+func IsAdmin(c *gin.Context) {
+	role, exists := c.Get("role")
+
+	if !exists || role != "admin" {
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
+	c.Next()
+}
