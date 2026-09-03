@@ -97,3 +97,7 @@ import { isLoggedIn } from '@/fetch/auth';
   background-color: #b71c1c;
 }
 </style>
+
+.login-reminder {
+  margin-top: 16px;
+}
