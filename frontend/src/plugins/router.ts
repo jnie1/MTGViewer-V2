@@ -11,6 +11,7 @@ import CartView from '@/views/CartView.vue';
 import LoginView from '@/views/LoginView.vue';
 import UploadView from '@/views/UploadView.vue';
 import PruneView from '@/views/PruneView.vue';
+import { isAdmin } from '@/fetch/auth.js';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -77,13 +78,21 @@ const router = createRouter({
       path: '/upload',
       name: 'upload',
       component: UploadView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/prune',
       name: 'prune',
       component: PruneView,
+      meta: { requiresAuth: true },
     },
   ],
+});
+
+router.beforeEach((to) => {
+  if (to.meta.requiresAuth && !isAdmin.value) {
+    return { name: 'home' };
+  }
 });
 
 export default router;

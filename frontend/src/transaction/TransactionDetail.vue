@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import fetchApi from '@/fetch/api';
 import type { ICardTransaction, IContainerTransfers } from './types';
+import { isAdmin } from '@/fetch/auth';
 
 interface ITransactionProps {
   log: ICardTransaction;
@@ -44,12 +45,13 @@ const handleCheck = async () => {
   <v-textarea
     v-model="description"
     :loading
+    :readonly="!isAdmin"
     label="Description"
     variant="outlined"
     auto-grow
     rows="1"
   >
-    <template #append-inner>
+    <template v-if="isAdmin" #append-inner>
       <v-btn icon="$complete" variant="plain" :disabled @click="handleCheck" />
     </template>
   </v-textarea>
