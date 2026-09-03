@@ -11,7 +11,7 @@ import CartView from '@/views/CartView.vue';
 import LoginView from '@/views/LoginView.vue';
 import UploadView from '@/views/UploadView.vue';
 import PruneView from '@/views/PruneView.vue';
-import { isAdmin } from '@/fetch/auth.js';
+import { isAdmin, isLoggedIn } from '@/fetch/auth.js';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,6 +68,7 @@ const router = createRouter({
       path: '/cart',
       name: 'cart',
       component: CartView,
+      meta: { requiresLoggedIn: true },
     },
     {
       path: '/login',
@@ -87,6 +88,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
   ],
+});
+
+router.beforeEach((to) => {
+  if (to.meta.requiresLoggedIn && !isLoggedIn.value) {
+    return { name: 'home' };
+  }
 });
 
 router.beforeEach((to) => {
