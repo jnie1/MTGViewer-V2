@@ -6,6 +6,7 @@ import {
   removeAllCards,
   submitAllCards,
 } from '@/cart/CartContainer';
+import { isLoggedIn } from '@/fetch/auth';
 </script>
 
 <template>
@@ -34,7 +35,16 @@ import {
       </li>
     </ul>
     <button v-if="cart.length > 0" @click="removeAllCards">Clear All</button>
-    <button v-if="cart.length > 0" class="submit-button" @click="submitAllCards">Submit</button>
+    <button
+      v-if="cart.length > 0 && isLoggedIn"
+      class="submit-button"
+      @click="submitAllCards"
+    >
+      Submit
+    </button>
+    <p v-if ="cart.length > 0 && !isLoggedIn" class="login-reminder">
+      <router-link to="/login">Log in</router-link> to submit your cart.
+    </p>
   </main>
 </template>
 
