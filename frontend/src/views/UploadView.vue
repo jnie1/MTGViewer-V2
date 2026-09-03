@@ -1,17 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import fetchApi from '@/fetch/api';
-import { isAdmin } from '@/fetch/auth';
-
-defineOptions({
-  beforeRouteEnter(to, _, next) {
-    if (!isAdmin.value) {
-      next('/');
-    } else {
-      next();
-    }
-  },
-});
 
 const chosenFile = ref<File | File[] | undefined>(undefined);
 

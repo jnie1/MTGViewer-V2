@@ -6,18 +6,6 @@ import {
   removeAllCards,
   submitAllCards,
 } from '@/cart/CartContainer';
-import { isLoggedIn } from '@/fetch/auth';
-
-defineOptions({
-  beforeRouteEnter(to, _, next) {
-    if (!isLoggedIn.value) {
-      next('/');
-    } else {
-      next();
-    }
-  },
-});
-
 </script>
 
 <template>
