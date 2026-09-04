@@ -41,13 +41,17 @@ const handleLogout = () => {
           <router-link to="/upload">Upload</router-link>
         </p>
       </li>
+      <li>
+        <p v-if="isAdmin">
+          <router-link to="/create-user">Create User</router-link>
+        </p>
+      </li>
       <li class="right-links">
         <router-link v-if="cartCount > 0" to="/cart" class="cart-wrapper">
           <v-icon size="small" icon="$cart" />
           <span class="cart-badge">{{ cartCount }}</span>
         </router-link>
         <router-link v-if="!isLoggedIn" to="/login">Login</router-link>
-        <router-link v-if="!isLoggedIn" to="/signup">Sign up</router-link>
         <p v-if="isLoggedIn" class="username">{{ username }}</p>
         <p v-if="isLoggedIn" class="link" @click="handleLogout">Logout</p>
       </li>
