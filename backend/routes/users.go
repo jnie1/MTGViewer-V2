@@ -121,7 +121,7 @@ func login(c *gin.Context) {
 }
 
 func AddUserRoutes(router gin.IRouter) {
-	router.GET("/users/validate/:username", validate)
-	router.POST("/signup", signup)
+	router.GET("/users/validate/:username", auth.IsAuthorized, auth.IsAdmin, validate)
+	router.POST("/signup", auth.IsAuthorized, auth.IsAdmin, signup)
 	router.POST("/login", login)
 }
