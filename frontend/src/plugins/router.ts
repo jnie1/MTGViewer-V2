@@ -90,14 +90,9 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach((to) => {
-  if (to.meta.requiresLoggedIn && !isLoggedIn.value) {
-    return { name: 'home' };
-  }
-});
 
 router.beforeEach((to) => {
-  if (to.meta.requiresAuth && !isAdmin.value) {
+  if ((to.meta.requiresAuth && !isAdmin.value) || (to.meta.requiresLoggedIn && !isLoggedIn.value)) {
     return { name: 'home' };
   }
 });
