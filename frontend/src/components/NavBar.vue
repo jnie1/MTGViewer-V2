@@ -32,19 +32,11 @@ const handleLogout = () => {
         <router-link to="/search">Search</router-link>
       </li>
       <li>
-        <p v-if="isAdmin">
-          <router-link to="/prune">Prune</router-link>
-        </p>
+        <router-link v-if="isAdmin" to="/prune">Prune</router-link>
       </li>
+      <li><router-link to="/upload">Upload</router-link></li>
       <li>
-        <p v-if="isAdmin">
-          <router-link to="/upload">Upload</router-link>
-        </p>
-      </li>
-      <li>
-        <p v-if="isAdmin">
-          <router-link to="/create-user">Create User</router-link>
-        </p>
+        <router-link v-if="isAdmin" to="/create-user">Create User</router-link>
       </li>
       <li class="right-links">
         <router-link v-if="cartCount > 0" to="/cart" class="cart-wrapper">
