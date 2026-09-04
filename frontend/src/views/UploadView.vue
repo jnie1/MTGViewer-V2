@@ -17,7 +17,6 @@ const uploadFile = async () => {
       method: 'POST',
       body: formData,
     });
-    console.log('Upload successful');
   } catch (error) {
     console.error('Upload failed:', error);
   }
@@ -25,24 +24,22 @@ const uploadFile = async () => {
 </script>
 
 <template>
-  <v-container>
+  <v-container class="card-upload">
     <v-file-upload
       v-model="chosenFile"
       browse-text="Local Filesystem"
       divider-text="or choose locally"
       icon="mdi-upload"
       title="Drag and Drop Here"
-    ></v-file-upload>
-    <v-btn color="primary" :disabled="!chosenFile" @click="uploadFile"> Upload File </v-btn>
+    />
+    <v-btn class="upload-btn" color="primary" :disabled="!chosenFile" @click="uploadFile">
+      Upload File
+    </v-btn>
   </v-container>
 </template>
 
 <style>
-@media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
+.upload-btn {
+  margin-top: 16px;
 }
 </style>

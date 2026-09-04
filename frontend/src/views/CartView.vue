@@ -35,14 +35,10 @@ import { isLoggedIn } from '@/fetch/auth';
       </li>
     </ul>
     <button v-if="cart.length > 0" @click="removeAllCards">Clear All</button>
-    <button
-      v-if="cart.length > 0 && isLoggedIn"
-      class="submit-button"
-      @click="submitAllCards"
-    >
+    <button v-if="cart.length > 0 && isLoggedIn" class="submit-button" @click="submitAllCards">
       Submit
     </button>
-    <p v-if ="cart.length > 0 && !isLoggedIn" class="login-reminder">
+    <p v-if="cart.length > 0 && !isLoggedIn" class="login-reminder">
       <router-link to="/login">Log in</router-link> to submit your cart.
     </p>
   </main>
@@ -96,8 +92,8 @@ import { isLoggedIn } from '@/fetch/auth';
 .submit-button:hover {
   background-color: #b71c1c;
 }
-</style>
 
 .login-reminder {
   margin-top: 16px;
 }
+</style>
