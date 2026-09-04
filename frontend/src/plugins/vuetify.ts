@@ -7,6 +7,7 @@ import {
   mdiCartArrowDown,
   mdiDeleteOutline,
 } from '@mdi/js';
+import { VFileUpload } from 'vuetify/labs/components';
 
 const customTheme: ThemeDefinition = {
   dark: true,
@@ -44,6 +45,9 @@ const vuetify = createVuetify({
     sets: {
       mdi,
     },
+  },
+  components: {
+    VFileUpload,
   },
   theme: {
     defaultTheme: 'customTheme',
