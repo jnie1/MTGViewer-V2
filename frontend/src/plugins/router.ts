@@ -79,20 +79,20 @@ const router = createRouter({
       path: '/upload',
       name: 'upload',
       component: UploadView,
-      meta: { requiresAuth: true },
+      meta: { requiresAdmin: true },
     },
     {
       path: '/prune',
       name: 'prune',
       component: PruneView,
-      meta: { requiresAuth: true },
+      meta: { requiresAdmin: true },
     },
   ],
 });
 
 
 router.beforeEach((to) => {
-  if ((to.meta.requiresAuth && !isAdmin.value) || (to.meta.requiresLoggedIn && !isLoggedIn.value)) {
+  if ((to.meta.requiresAdmin && !isAdmin.value) || (to.meta.requiresLoggedIn && !isLoggedIn.value)) {
     return { name: 'home' };
   }
 });
