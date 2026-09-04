@@ -22,9 +22,10 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/signup',
-      name: 'signup',
+      path: '/create-user',
+      name: 'create-user',
       component: SignupView,
+      meta: { requiresAdmin: true },
     },
     {
       path: '/card/:scryfallId',

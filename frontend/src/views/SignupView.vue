@@ -44,7 +44,6 @@ const handleSubmit = async () => {
 
   await fetchApi('/signup', {
     method: 'POST',
-    credentials: 'omit',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username: username.value,
@@ -52,7 +51,7 @@ const handleSubmit = async () => {
     }),
   });
 
-  router.push('/login');
+  router.push('/');
 };
 </script>
 
@@ -76,7 +75,7 @@ const handleSubmit = async () => {
           type="password"
           :rules="passwordRules"
         />
-        <v-btn class="ma-2" color="primary" type="submit">Sign up</v-btn>
+        <v-btn class="ma-2" color="primary" type="submit">Create User</v-btn>
       </v-form>
     </v-sheet>
   </main>
