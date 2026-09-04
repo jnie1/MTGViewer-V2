@@ -22,11 +22,6 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/signup',
-      name: 'signup',
-      component: SignupView,
-    },
-    {
       path: '/card/:scryfallId',
       name: 'card',
       component: CardView,
@@ -92,7 +87,10 @@ const router = createRouter({
 
 
 router.beforeEach((to) => {
-  if ((to.meta.requiresAdmin && !isAdmin.value) || (to.meta.requiresLoggedIn && !isLoggedIn.value)) {
+  if (
+    (to.meta.requiresAdmin && !isAdmin.value) ||
+    (to.meta.requiresLoggedIn && !isLoggedIn.value)
+  ) {
     return { name: 'home' };
   }
 });

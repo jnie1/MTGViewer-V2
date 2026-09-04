@@ -47,7 +47,6 @@ const handleLogout = () => {
           <span class="cart-badge">{{ cartCount }}</span>
         </router-link>
         <router-link v-if="!isLoggedIn" to="/login">Login</router-link>
-        <router-link v-if="!isLoggedIn" to="/signup">Sign up</router-link>
         <p v-if="isLoggedIn" class="username">{{ username }}</p>
         <p v-if="isLoggedIn" class="link" @click="handleLogout">Logout</p>
       </li>
