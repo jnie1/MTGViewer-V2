@@ -34,7 +34,9 @@ const handleLogout = () => {
       <li>
         <router-link v-if="isAdmin" to="/prune">Prune</router-link>
       </li>
-      <li><router-link to="/upload">Upload</router-link></li>
+      <li>
+        <router-link to="/upload">Upload</router-link>
+      </li>
       <li>
         <router-link v-if="isAdmin" to="/create-user">Create User</router-link>
       </li>
@@ -43,7 +45,7 @@ const handleLogout = () => {
           <v-icon size="small" icon="$cart" />
           <span class="cart-badge">{{ cartCount }}</span>
         </router-link>
-        <router-link v-if="!isLoggedIn" to="/login">Login</router-link>
+        <router-link v-if="!isLoggedIn" to="/login"> Login </router-link>
         <p v-if="isLoggedIn" class="username">{{ username }}</p>
         <p v-if="isLoggedIn" class="link" @click="handleLogout">Logout</p>
       </li>
