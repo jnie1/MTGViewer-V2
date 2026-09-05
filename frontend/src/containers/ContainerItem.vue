@@ -17,6 +17,7 @@ const emits = defineEmits<IContainerItemEmits>();
 
 const search = ref(props.search);
 const matchId = ref('');
+const errorMessage = ref<string>();
 
 watch(
   search,
@@ -30,9 +31,12 @@ watch(
       if (search) {
         const target = search.toLowerCase();
         const match = props.cards?.find((c) => c.name.toLowerCase().includes(target));
+
         matchId.value = match?.scryfallId ?? '';
+        errorMessage.value = !match ? 'Not Found' : undefined;
       } else {
         matchId.value = '';
+        errorMessage.value = undefined;
       }
 
       if (search !== props.search) {
@@ -50,6 +54,8 @@ watch(
   <v-container>
     <v-text-field
       v-model="search"
+      :error-messages="errorMessage"
+      validate-on="input"
       label="Search items..."
       prepend-inner-icon="mdi-magnify"
       variant="outlined"
