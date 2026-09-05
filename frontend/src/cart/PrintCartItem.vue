@@ -88,9 +88,9 @@ const handleRemoveFromCart = () => {
 }
 
 .print-img {
-  height: 156px;
-  width: 112px;
-  border-radius: 8px;
+  height: var(--card-height-sm);
+  width: var(--card-width-sm);
+  border-radius: var(--card-corners-sm);
 }
 
 .print-info {
@@ -100,6 +100,7 @@ const handleRemoveFromCart = () => {
 
 .print-info .cart-actions {
   padding: 0 1rem;
+  min-height: initial;
 }
 
 .cart-btn {

@@ -87,11 +87,6 @@ const matches = routeData<ICardContainerMatch>(meta, `/cards/${scryfallId}`);
   gap: 40px;
 }
 
-.card-img {
-  height: 312px;
-  width: 224px;
-}
-
 .panel-title {
   color: var(--color-primary);
   padding-bottom: 8px;

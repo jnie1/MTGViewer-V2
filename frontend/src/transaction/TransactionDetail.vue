@@ -155,8 +155,8 @@ const handleCheck = async () => {
 }
 
 .card-img {
-  min-height: 156px;
-  min-width: 112px;
-  border-radius: 8px;
+  min-height: var(--card-height-sm);
+  min-width: var(--card-width-sm);
+  border-radius: var(--card-corners-sm);
 }
 </style>
