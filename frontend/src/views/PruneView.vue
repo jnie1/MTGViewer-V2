@@ -5,6 +5,7 @@ import { isAbortError, timeout } from '@/fetch/abort';
 import { toQueryString } from '@/fetch/routeData';
 import type { IPrunePreview } from '@/containers/types';
 import { previewPrune } from '@/containers/fetches';
+import CardImage from '@/cards/CardImage.vue';
 
 const {
   query: { size, price },
@@ -19,8 +20,8 @@ const pruneResults = ref<IPrunePreview>({ total: 0, containersPrunePreviews: [] 
 
 watch(
   [quantityAmount, priceAmount],
-  async ([quantity, price], prev) => {
-    if (quantity < 0 || price <= 0) {
+  async ([quantity, price]) => {
+    if (quantity <= 0 || price <= 0) {
       pruneResults.value = { total: 0, containersPrunePreviews: [] };
       return;
     }
@@ -31,15 +32,10 @@ watch(
     try {
       isLoading.value = true;
 
-      const isNewSearch = quantity !== prev?.[0] && price === prev?.[1];
-      if (isNewSearch) {
-        await timeout(500, abortController.signal);
-      }
+      await timeout(500, abortController.signal);
       const results = await previewPrune(quantity, price, abortController.signal);
-      if (quantity !== prev?.[0] || price !== prev?.[1]) {
-        // Update the route with the new search parameters
-        router.replace({ query: { size: quantity.toString(), price: price.toString() } });
-      }
+      // Update the route with the new search parameters
+      router.replace({ query: { size: quantity.toString(), price: price.toString() } });
       pruneResults.value = results;
     } catch (e) {
       if (!isAbortError(e)) throw e;
@@ -55,22 +51,29 @@ watch(
 
 <template>
   <main>
-    <v-text-field
-      v-model.number="quantityAmount"
-      label="Quantity to keep..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      clearable
-    >
-    </v-text-field>
-    <v-text-field
-      v-model.number="priceAmount"
-      label="Price of items..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      clearable
-    >
-    </v-text-field>
+    <v-row>
+      <v-col>
+        <v-number-input
+          v-model="quantityAmount"
+          label="Quantity to keep..."
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          control-variant="split"
+          clearable
+        />
+      </v-col>
+      <v-col>
+        <v-number-input
+          v-model="priceAmount"
+          :precision="2"
+          label="Price of items..."
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          control-variant="split"
+          clearable
+        />
+      </v-col>
+    </v-row>
     <v-overlay :model-value="isLoading" absolute>
       <v-sheet class="d-flex align-center justify-center" width="100%" height="100%" elevation="2">
         <v-progress-circular indeterminate size="64" />
@@ -111,20 +114,18 @@ watch(
                     <div class="print-row">
                       <router-link
                         v-bind="props"
+                        class="card-link"
                         :to="{
                           name: 'container',
                           params: { containerId: prunePreview.containerId },
                           query: { search: card.name },
                         }"
                       >
-                        <v-img
-                          class="print-img"
-                          :alt="card.name"
-                          :src="card.imageUrls.full"
-                          :lazy-src="card.imageUrls.preview"
-                        />
+                        <card-image :card size="sm" />
                       </router-link>
-                      <p v-if="card?.amount !== undefined">{{ card.amount }}x</p>
+                      <v-card-title v-if="card?.amount !== undefined" class="text-subtitle-1">
+                        {{ card.amount }}x
+                      </v-card-title>
                     </div>
                   </template>
                 </v-tooltip>
@@ -152,16 +153,16 @@ watch(
   width: 100%;
 }
 
-.print-img {
-  height: var(--card-height-sm);
-  width: var(--card-width-sm);
-  border-radius: var(--card-corners-sm);
-}
-
 .print-row {
   display: flex;
   flex-wrap: nowrap;
   justify-content: start;
   align-items: center;
+}
+
+.card-link {
+  display: flex;
+  padding: 0;
+  border-radius: var(--card-corners-sm);
 }
 </style>
