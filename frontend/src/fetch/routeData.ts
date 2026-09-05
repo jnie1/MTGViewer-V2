@@ -1,4 +1,4 @@
-import type { NavigationGuardNext, RouteMeta } from 'vue-router';
+import type { LocationQuery, NavigationGuardNext, RouteMeta } from 'vue-router';
 import fetchApi from './api';
 import ResponseError from './ResponseError';
 
@@ -31,4 +31,8 @@ async function loadPath(meta: RouteMeta, path: string) {
 
 export function routeData<T>(meta: RouteMeta, path: string) {
   return meta[path] as T;
+}
+
+export function toQueryString(value: LocationQuery[string]) {
+  return value?.toString() ?? '';
 }

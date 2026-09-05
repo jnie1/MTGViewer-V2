@@ -5,11 +5,7 @@ import TransactionDetail from '@/transaction/TransactionDetail.vue';
 import { useRoute } from 'vue-router';
 
 defineOptions({
-  async beforeRouteEnter(to, _, next) {
-    const {
-      params: { groupId },
-      meta,
-    } = to;
+  async beforeRouteEnter({ params: { groupId }, meta }, _, next) {
     await loadRouteData(meta, next, `/logs/${groupId}`, `/logs/${groupId}/cards`);
   },
 });

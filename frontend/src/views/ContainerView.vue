@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { loadRouteData, routeData } from '@/fetch/routeData';
+import { loadRouteData, routeData, toQueryString } from '@/fetch/routeData';
 import type { ICard } from '@/cards/types';
 import ContainerItem from '@/containers/ContainerItem.vue';
 
 defineOptions({
-  async beforeRouteEnter(to, _, next) {
-    const {
-      params: { containerId },
-      meta,
-    } = to;
+  async beforeRouteEnter({ params: { containerId }, meta }, _, next) {
     await loadRouteData(meta, next, `containers/${containerId}/cards`);
   },
 });
@@ -34,6 +30,6 @@ const handleSearch = (search: string) => {
 
 <template>
   <main>
-    <container-item :cards :search="String(search)" @search="handleSearch" />
+    <container-item :cards :search="toQueryString(search)" @search="handleSearch" />
   </main>
 </template>
