@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onWatcherCleanup, ref, watch } from 'vue';
-import type { ICard } from '@/cards/types';
-import CardImage from '@/cards/CardImage.vue';
 import { isAbortError, timeout } from '@/fetch/abort';
+import type { ICard } from '@/cards/types';
+import CardListing from '@/cards/CardListing.vue';
 
 interface IContainerItemProps {
   cards: ICard[];
@@ -55,7 +55,7 @@ watch(
       variant="outlined"
       clearable
     />
-    <v-slide-group v-model="matchId" class="slide-content" show-arrows>
+    <v-slide-group v-model="matchId" class="slide-content" show-arrows center-active>
       <template #next>
         <v-icon icon="$right" size="x-large" />
       </template>
@@ -63,13 +63,7 @@ watch(
         <v-icon icon="$left" size="x-large" />
       </template>
       <v-slide-group-item v-for="card in cards" :key="card.scryfallId" :value="card.scryfallId">
-        <v-card class="mx-2" max-width="350">
-          <router-link :to="{ name: 'card', params: { scryfallId: card.scryfallId } }">
-            <card-image :card />
-          </router-link>
-          <v-card-title>{{ card.name }}</v-card-title>
-          <v-card-title>Amount: {{ card.amount }}</v-card-title>
-        </v-card>
+        <card-listing :card :active="card.scryfallId == matchId" />
       </v-slide-group-item>
     </v-slide-group>
   </v-container>

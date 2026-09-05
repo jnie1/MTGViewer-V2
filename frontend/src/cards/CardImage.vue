@@ -4,9 +4,10 @@ import type { ICard } from '@/cards/types';
 interface ICardImageProps {
   card: ICard;
   highlight?: boolean;
+  active?: boolean;
 }
 
-const { card, highlight } = defineProps<ICardImageProps>();
+const { card, highlight, active } = defineProps<ICardImageProps>();
 </script>
 
 <template>
@@ -17,6 +18,7 @@ const { card, highlight } = defineProps<ICardImageProps>();
       uncommon: card.rarity === 'uncommon',
       rare: card.rarity === 'rare',
       mythic: card.rarity === 'mythic',
+      active,
     }"
     :alt="card.name"
     :src="card.imageUrls.normal"
@@ -38,7 +40,8 @@ const { card, highlight } = defineProps<ICardImageProps>();
       box-shadow 200ms ease-in;
   }
 
-  .card-img:hover {
+  .card-img:hover,
+  .card-img.active {
     --shadow-length: 0 0 16px;
     transform: scale(1.05);
   }
