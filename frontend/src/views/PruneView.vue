@@ -5,23 +5,20 @@ import { isAbortError, timeout } from '@/fetch/abort';
 import type { IPrunePreview } from '@/containers/types';
 import { previewPrune } from '@/containers/fetches';
 
+const {
+  query: { size, price },
+} = useRoute();
+
 const router = useRouter();
-const route = useRoute();
-
-const quantityAmount = ref(route.query.size ? parseInt(route.query.size as string) : 0);
-const priceAmount = ref(route.query.price ? parseFloat(route.query.price as string) : 0);
-
-const pruneResults = ref<IPrunePreview>({ total: 0, containersPrunePreviews: [] });
 const isLoading = ref(false);
+
+const quantityAmount = ref(Number.parseInt(String(size)));
+const priceAmount = ref(Number.parseFloat(String(price)));
+const pruneResults = ref<IPrunePreview>({ total: 0, containersPrunePreviews: [] });
 
 watch(
   [quantityAmount, priceAmount],
   async ([quantity, price], prev) => {
-    if (quantity === 0 && price === 0) {
-      pruneResults.value = { total: 0, containersPrunePreviews: [] };
-      return;
-    }
-
     const abortController = new AbortController();
     onWatcherCleanup(() => abortController.abort());
 

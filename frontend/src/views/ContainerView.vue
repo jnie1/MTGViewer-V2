@@ -6,17 +6,22 @@ import ContainerItem from '@/containers/ContainerItem.vue';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
-    const { containerId } = to.params;
-    await loadRouteData(to.meta, next, `containers/${containerId}/cards`);
+    const {
+      params: { containerId },
+      meta,
+    } = to;
+    await loadRouteData(meta, next, `containers/${containerId}/cards`);
   },
 });
 
-const { meta, params, query } = useRoute();
-const { containerId } = params;
-const cards = routeData<ICard[]>(meta, `containers/${containerId}/cards`);
+const {
+  params: { containerId },
+  query: { search },
+  meta,
+} = useRoute();
 
 const router = useRouter();
-const search = query.search?.toString() ?? '';
+const cards = routeData<ICard[]>(meta, `containers/${containerId}/cards`);
 
 const handleSearch = (search: string) => {
   router.replace({
@@ -29,6 +34,6 @@ const handleSearch = (search: string) => {
 
 <template>
   <main>
-    <container-item :cards :search @search="handleSearch" />
+    <container-item :cards :search="String(search)" @search="handleSearch" />
   </main>
 </template>
