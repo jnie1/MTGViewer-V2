@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { isLoggedIn } from '@/fetch/auth';
 import type { ICard } from '@/cards/types';
+import CardImage from '@/cards/CardImage.vue';
 import type { IContainerPreview } from '@/containers/types';
 import { addToCart, cart, updateAmount } from './CartContainer';
-import { isLoggedIn } from '@/fetch/auth';
 
 interface IPrintCartItemProps {
   container: IContainerPreview;
@@ -39,18 +40,14 @@ const handleRemoveFromCart = () => {
       <template #activator="{ props }">
         <router-link
           v-bind="props"
+          class="card-link"
           :to="{
             name: 'container',
             params: { containerId: container.containerId },
             query: { search: card.name },
           }"
         >
-          <v-img
-            class="print-img"
-            :alt="card.name"
-            :src="card.imageUrls.full"
-            :lazy-src="card.imageUrls.preview"
-          />
+          <card-image size="sm" :card />
         </router-link>
       </template>
     </v-tooltip>
@@ -87,10 +84,10 @@ const handleRemoveFromCart = () => {
   align-items: center;
 }
 
-.print-img {
-  height: 156px;
-  width: 112px;
-  border-radius: 8px;
+.card-link {
+  display: flex;
+  padding: 0;
+  border-radius: var(--card-corners-sm);
 }
 
 .print-info {
@@ -100,6 +97,7 @@ const handleRemoveFromCart = () => {
 
 .print-info .cart-actions {
   padding: 0 1rem;
+  min-height: initial;
 }
 
 .cart-btn {

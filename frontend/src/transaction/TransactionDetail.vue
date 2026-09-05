@@ -40,7 +40,7 @@ const handleCheck = async () => {
 <template>
   <div class="transaction-header">
     <h2 class="text-h5">{{ transactionAt.toLocaleString() }}</h2>
-    <h3 class="text-h7">Amount: {{ log.total }}</h3>
+    <h3>Amount: {{ log.total }}</h3>
   </div>
   <v-textarea
     v-model="description"
@@ -155,8 +155,8 @@ const handleCheck = async () => {
 }
 
 .card-img {
-  min-height: 156px;
-  min-width: 112px;
-  border-radius: 8px;
+  min-height: var(--card-height-sm);
+  min-width: var(--card-width-sm);
+  border-radius: var(--card-corners-sm);
 }
 </style>
