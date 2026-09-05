@@ -22,8 +22,8 @@ const { cards } = defineProps<ICardProps>();
 }
 
 .grid-table {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(336px, 1fr));
+  justify-items: center;
 }
 </style>
