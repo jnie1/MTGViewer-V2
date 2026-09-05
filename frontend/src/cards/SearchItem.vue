@@ -23,7 +23,7 @@ const { cards } = defineProps<ICardProps>();
 
 .grid-table {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(336px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--card-width-md), 1fr));
   justify-items: center;
 }
 </style>

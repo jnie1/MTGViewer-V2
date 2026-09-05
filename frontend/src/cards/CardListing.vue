@@ -12,7 +12,7 @@ const { card, size, active } = defineProps<ICardListingProps>();
 </script>
 
 <template>
-  <v-card :class="{ 'card-listing': true, md: size === 'md', lg: size === 'lg' }">
+  <v-card class="card-listing" :class="{ lg: size === 'lg' }">
     <router-link class="card-link" :to="{ name: 'card', params: { scryfallId: card.scryfallId } }">
       <card-image :card :size highlight :active />
     </router-link>
@@ -25,6 +25,7 @@ const { card, size, active } = defineProps<ICardListingProps>();
 
 <style lang="css" scoped>
 .card-listing {
+  max-width: var(--card-width-md);
   margin: 20px 8px 0;
   border-top-left-radius: var(--card-corners);
   border-top-right-radius: var(--card-corners);
@@ -32,11 +33,7 @@ const { card, size, active } = defineProps<ICardListingProps>();
   z-index: initial;
 }
 
-.card-listing.md {
-  max-width: var(--card-width-md);
-}
-
-.card-listing-lg {
+.card-listing.lg {
   max-width: var(--card-width-lg);
 }
 

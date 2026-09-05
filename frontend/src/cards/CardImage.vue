@@ -20,7 +20,6 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
       rare: card.rarity === 'rare',
       mythic: card.rarity === 'mythic',
       active,
-      md: size === 'md',
       lg: size === 'lg',
     }"
     :alt="card.name"
@@ -31,12 +30,9 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
 
 <style lang="css" scoped>
 .card-img {
-  border-radius: var(--card-corners);
-}
-
-.card-img.md {
   height: var(--card-height-md);
   width: var(--card-width-md);
+  border-radius: var(--card-corners);
 }
 
 .card-img.lg {
