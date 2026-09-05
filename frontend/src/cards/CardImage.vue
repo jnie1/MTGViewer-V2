@@ -3,7 +3,7 @@ import type { ICard } from '@/cards/types';
 
 interface ICardImageProps {
   card: ICard;
-  size?: 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
   highlight?: boolean;
   active?: boolean;
 }
@@ -20,6 +20,7 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
       rare: card.rarity === 'rare',
       mythic: card.rarity === 'mythic',
       active,
+      sm: size === 'sm',
       lg: size === 'lg',
     }"
     :alt="card.name"
@@ -35,6 +36,12 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
   border-radius: var(--card-corners-md);
 }
 
+.card-img.sm {
+  height: var(--card-height-sm);
+  width: var(--card-width-sm);
+  border-radius: var(--card-corners-sm);
+}
+
 .card-img.lg {
   height: var(--card-height-lg);
   width: var(--card-width-lg);
@@ -43,20 +50,23 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
 
 @media (min-width: 768px) {
   .card-img {
+    --shadow-length: 0 0 var(--card-corners-md);
     transition:
       transform 200ms ease-in,
       box-shadow 200ms ease-in;
   }
 
-  .card-img:hover,
-  .card-img.active {
-    --shadow-length: 0 0 var(--card-corners-md);
-    transform: scale(1.05);
+  .card-img.sm {
+    --shadow-length: 0 0 var(--card-corners-sm);
   }
 
-  .card-img.lg:hover,
-  .card-img.lg.active {
+  .card-img.lg {
     --shadow-length: 0 0 var(--card-corners-lg);
+  }
+
+  .card-img:hover,
+  .card-img.active {
+    transform: scale(1.05);
   }
 
   .card-img.shadow.uncommon:hover,
