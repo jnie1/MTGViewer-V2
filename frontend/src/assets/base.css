@@ -30,6 +30,18 @@
   --color-text: var(--color-gray-clear-100);
 
   --section-gap: 160px;
+
+  --card-height-lg: 468px;
+  --card-width-lg: 336px;
+
+  --card-height-md: 312px;
+  --card-width-md: 224px;
+
+  --card-height-sm: 156px;
+  --card-width-sm: 112px;
+
+  --card-corners: 16px;
+  --card-corners-sm: 8px;
 }
 
 *,

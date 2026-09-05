@@ -3,6 +3,7 @@ import type { ICard } from '@/cards/types';
 
 interface ICardImageProps {
   card: ICard;
+  size?: 'md' | 'lg';
   highlight?: boolean;
   active?: boolean;
 }
@@ -19,6 +20,8 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
       rare: card.rarity === 'rare',
       mythic: card.rarity === 'mythic',
       active,
+      md: size === 'md',
+      lg: size === 'lg',
     }"
     :alt="card.name"
     :src="card.imageUrls.normal"
@@ -28,9 +31,17 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
 
 <style lang="css" scoped>
 .card-img {
-  height: 468px;
-  width: 336px;
-  border-radius: 16px;
+  border-radius: var(--card-corners);
+}
+
+.card-img.md {
+  height: var(--card-height-md);
+  width: var(--card-width-md);
+}
+
+.card-img.lg {
+  height: var(--card-height-lg);
+  width: var(--card-width-lg);
 }
 
 @media (min-width: 768px) {
@@ -42,7 +53,7 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
 
   .card-img:hover,
   .card-img.active {
-    --shadow-length: 0 0 16px;
+    --shadow-length: 0 0 var(--card-corners);
     transform: scale(1.05);
   }
 
