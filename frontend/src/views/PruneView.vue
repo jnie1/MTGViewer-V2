@@ -13,13 +13,18 @@ const {
 const router = useRouter();
 const isLoading = ref(false);
 
-const quantityAmount = ref(Number.parseInt(toQueryString(size)));
-const priceAmount = ref(Number.parseFloat(toQueryString(price)));
+const quantityAmount = ref(Number(toQueryString(size)) || 0);
+const priceAmount = ref(Number(toQueryString(price)) || 0);
 const pruneResults = ref<IPrunePreview>({ total: 0, containersPrunePreviews: [] });
 
 watch(
   [quantityAmount, priceAmount],
   async ([quantity, price], prev) => {
+    if (quantity < 0 || price <= 0) {
+      pruneResults.value = { total: 0, containersPrunePreviews: [] };
+      return;
+    }
+
     const abortController = new AbortController();
     onWatcherCleanup(() => abortController.abort());
 
