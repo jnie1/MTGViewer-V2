@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 
 const props = defineProps<{ cost?: string }>();
-console.log(props.cost);
 const manaSymbols = computed(() => {
   if (!props.cost) return [];
   const matches = props.cost.match(/\{([^}]+)\}/g);
@@ -10,7 +9,6 @@ const manaSymbols = computed(() => {
 
   return matches.map((symbol) => symbol.replace(/[{/}]/g, '').toLowerCase());
 });
-console.log(manaSymbols.value);
 </script>
 
 <template>
