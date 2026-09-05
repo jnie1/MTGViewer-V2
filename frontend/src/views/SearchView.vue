@@ -30,7 +30,7 @@ const load = async ({ done }: { done: (status: 'ok' | 'empty' | 'error') => void
     const results = await searchCards(
       searchQuery.value,
       currentPage.value,
-      new AbortController().signal,
+      abort.value ?? new AbortController().signal,
     );
     searchResults.value = [...searchResults.value, ...results.cards];
     hasNextPage.value = results.hasMore;
