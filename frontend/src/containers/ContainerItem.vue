@@ -63,7 +63,7 @@ watch(
         <v-icon icon="$left" size="x-large" />
       </template>
       <v-slide-group-item v-for="card in cards" :key="card.scryfallId" :value="card.scryfallId">
-        <card-listing :card :active="card.scryfallId == matchId" />
+        <card-listing :card />
       </v-slide-group-item>
     </v-slide-group>
   </v-container>
