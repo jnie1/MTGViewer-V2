@@ -23,10 +23,10 @@ const handleLogout = () => {
         <router-link to="/collection">Collection</router-link>
       </li>
       <li>
-        <router-link to="/logs">Logs</router-link>
+        <router-link to="/search">Search</router-link>
       </li>
       <li>
-        <router-link to="/search">Search</router-link>
+        <router-link to="/logs">Logs</router-link>
       </li>
       <li>
         <router-link v-if="isAdmin" to="/prune">Prune</router-link>
