@@ -12,7 +12,7 @@ const scroll = useTemplateRef('scroll');
 const querySearch = Array.isArray(route.query.q) ? route.query.q[0] : route.query.q;
 const searchQuery = ref(querySearch || '');
 const currentPage = ref(1);
-
+const abort = ref<AbortSignal>();
 const searchResults = ref<ICard[]>([]);
 const hasNextPage = ref(false);
 const isLoading = ref(false);
@@ -30,11 +30,8 @@ const load = async ({ done }: { done: (status: 'ok' | 'empty' | 'error') => void
     const results = await searchCards(
       searchQuery.value,
       currentPage.value,
-      new AbortController().signal,
+      abort.value ?? new AbortController().signal,
     );
-    if (querySearch) {
-      router.replace({ query: { q: searchQuery.value, page: currentPage.value } });
-    }
     searchResults.value = [...searchResults.value, ...results.cards];
     hasNextPage.value = results.hasMore;
     done('ok');
@@ -44,8 +41,8 @@ const load = async ({ done }: { done: (status: 'ok' | 'empty' | 'error') => void
 };
 
 watch(
-  [searchQuery],
-  async ([search], prev) => {
+  searchQuery,
+  async (search) => {
     if (!search) {
       searchResults.value = [];
       hasNextPage.value = false;
@@ -53,22 +50,19 @@ watch(
     }
 
     const abortController = new AbortController();
+    abort.value = abortController.signal;
     onWatcherCleanup(() => abortController.abort());
 
     try {
       isLoading.value = true;
 
-      const isNewSearch = search !== prev?.[0];
-      if (isNewSearch) {
-        await timeout(500, abortController.signal);
-      }
-      const results = await searchCards(search, currentPage.value, abortController.signal);
-      if (search !== querySearch) {
-        router.replace({ query: { q: search, page: currentPage.value}});
-      }
-      scroll.value?.reset();
-      searchResults.value = [...searchResults.value, ...results.cards];
+      await timeout(500, abortController.signal);
+      const results = await searchCards(search, 1, abortController.signal);
+      router.replace({ query: { q: search }});
+      currentPage.value = 1;
+      searchResults.value = results.cards as ICard[];
       hasNextPage.value = results.hasMore;
+      scroll.value?.reset();
     } catch (e) {
       if (!isAbortError(e)) throw e;
     } finally {
