@@ -1,26 +1,17 @@
-import type { LocationQuery, NavigationGuardNext, RouteMeta } from 'vue-router';
+import type { LocationQuery, RouteMeta } from 'vue-router';
 import fetchApi from './api';
 import ResponseError from './ResponseError';
 
-export async function loadRouteData(
-  meta: RouteMeta,
-  next: NavigationGuardNext,
-  ...paths: string[]
-) {
+export async function loadRouteData(meta: RouteMeta, ...paths: string[]) {
   try {
     const loads: Promise<void>[] = [];
     for (const path of new Set(paths)) {
       loads.push(loadPath(meta, path));
     }
     await Promise.all(loads);
-    next();
   } catch (e) {
-    if (e instanceof ResponseError) {
-      next(e);
-    } else if (e instanceof Error) {
-      next(e);
-    } else {
-      next(false);
+    if (e instanceof ResponseError && e.status === 401) {
+      return { name: 'login' };
     }
   }
 }

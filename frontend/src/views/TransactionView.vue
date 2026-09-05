@@ -5,8 +5,9 @@ import TransactionDetail from '@/transaction/TransactionDetail.vue';
 import { useRoute } from 'vue-router';
 
 defineOptions({
-  async beforeRouteEnter({ params: { groupId }, meta }, _, next) {
-    await loadRouteData(meta, next, `/logs/${groupId}`, `/logs/${groupId}/cards`);
+  async beforeRouteEnter({ params: { groupId }, meta }) {
+    const redirect = await loadRouteData(meta, `/logs/${groupId}`, `/logs/${groupId}/cards`);
+    if (redirect) return redirect;
   },
 });
 

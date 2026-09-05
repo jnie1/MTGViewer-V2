@@ -5,8 +5,9 @@ import type { ICard } from '@/cards/types';
 import ContainerItem from '@/containers/ContainerItem.vue';
 
 defineOptions({
-  async beforeRouteEnter({ params: { containerId }, meta }, _, next) {
-    await loadRouteData(meta, next, `containers/${containerId}/cards`);
+  async beforeRouteEnter({ params: { containerId }, meta }) {
+    const redirect = await loadRouteData(meta, `containers/${containerId}/cards`);
+    if (redirect) return redirect;
   },
 });
 

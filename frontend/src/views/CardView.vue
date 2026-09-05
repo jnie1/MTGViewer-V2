@@ -7,8 +7,9 @@ import CardImage from '@/cards/CardImage.vue';
 import PrintCartItem from '@/cart/PrintCartItem.vue';
 
 defineOptions({
-  async beforeRouteEnter({ params: { scryfallId }, meta }, _, next) {
-    await loadRouteData(meta, next, `/cards/${scryfallId}`);
+  async beforeRouteEnter({ params: { scryfallId }, meta }) {
+    const redirect = await loadRouteData(meta, `/cards/${scryfallId}`);
+    if (redirect) return redirect;
   },
 });
 
