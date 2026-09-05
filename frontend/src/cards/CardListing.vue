@@ -7,18 +7,19 @@ interface ICardListingProps {
   size?: 'md' | 'lg';
   active?: boolean;
 }
-
 const { card, size, active } = defineProps<ICardListingProps>();
 </script>
 
 <template>
   <v-card class="card-listing" :class="{ lg: size === 'lg' }">
     <router-link class="card-link" :to="{ name: 'card', params: { scryfallId: card.scryfallId } }">
-      <card-image :card :size highlight :active />
+      <card-image highlight :card :size :active />
     </router-link>
     <v-card-item>
-      <v-card-title>{{ card.name }}</v-card-title>
-      <v-card-subtitle v-if="card.amount != null">Copies: {{ card.amount }}</v-card-subtitle>
+      <v-card-title :class="{ 'text-subtitle-1': size !== 'lg' }">{{ card.name }}</v-card-title>
+      <v-card-subtitle v-if="card.amount != null" class="text-subtitle-2">
+        Copies: {{ card.amount }}
+      </v-card-subtitle>
     </v-card-item>
   </v-card>
 </template>
