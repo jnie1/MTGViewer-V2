@@ -29,6 +29,15 @@ const handleLoadMore = () => {
   currentPage.value++;
 };
 
+const load = ({ done }: { done: (status: 'ok' | 'empty' | 'error') => void }) => {
+  if (!isLoading.value) {
+    handleLoadMore();
+    done('ok');
+  } else {
+    done('error');
+  }
+};
+
 watch(
   [searchQuery, currentPage],
   async ([search, page], prev) => {
@@ -84,6 +93,8 @@ watch(
         <v-progress-circular indeterminate size="64" />
       </v-sheet>
     </v-overlay>
-    <search-item :cards="searchResults" />
+    <v-infinite-scroll @load="load">
+      <search-item :cards="searchResults" />
+    </v-infinite-scroll>
   </main>
 </template>
