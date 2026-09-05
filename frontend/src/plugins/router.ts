@@ -84,11 +84,11 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-  if (
-    (to.meta.requiresAdmin && !isAdmin.value) ||
-    (to.meta.requiresLoggedIn && !isLoggedIn.value)
-  ) {
-    return { name: 'home' };
+  if (to.meta.requiresLoggedIn && !isLoggedIn.value) {
+    return { name: 'login', replace: true };
+  }
+  if (to.meta.requiresAdmin && !isAdmin.value) {
+    return { name: 'home', replace: true };
   }
 });
 

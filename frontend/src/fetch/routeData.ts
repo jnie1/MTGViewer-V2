@@ -11,7 +11,7 @@ export async function loadRouteData(meta: RouteMeta, ...paths: string[]) {
     await Promise.all(loads);
   } catch (e) {
     if (e instanceof ResponseError && e.status === 401) {
-      return { name: 'login' };
+      return { name: 'login', replace: true };
     }
   }
 }
