@@ -32,12 +32,13 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
 .card-img {
   height: var(--card-height-md);
   width: var(--card-width-md);
-  border-radius: var(--card-corners);
+  border-radius: var(--card-corners-md);
 }
 
 .card-img.lg {
   height: var(--card-height-lg);
   width: var(--card-width-lg);
+  border-radius: var(--card-corners-lg);
 }
 
 @media (min-width: 768px) {
@@ -49,8 +50,13 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
 
   .card-img:hover,
   .card-img.active {
-    --shadow-length: 0 0 var(--card-corners);
+    --shadow-length: 0 0 var(--card-corners-md);
     transform: scale(1.05);
+  }
+
+  .card-img.lg:hover,
+  .card-img.lg.active {
+    --shadow-length: 0 0 var(--card-corners-lg);
   }
 
   .card-img.shadow.uncommon:hover,

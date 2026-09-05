@@ -28,19 +28,25 @@ const { card, size, active } = defineProps<ICardListingProps>();
 .card-listing {
   max-width: var(--card-width-md);
   margin: 20px 8px 0;
-  border-top-left-radius: var(--card-corners);
-  border-top-right-radius: var(--card-corners);
+  border-top-left-radius: var(--card-corners-md);
+  border-top-right-radius: var(--card-corners-md);
   overflow: initial;
   z-index: initial;
 }
 
 .card-listing.lg {
   max-width: var(--card-width-lg);
+  border-top-left-radius: var(--card-corners-lg);
+  border-top-right-radius: var(--card-corners-lg);
 }
 
 .card-link {
   display: flex;
   padding: 0;
-  border-radius: var(--card-corners);
+  border-radius: var(--card-corners-md);
+}
+
+.lg .card-link {
+  border-radius: var(--card-corners-lg);
 }
 </style>
