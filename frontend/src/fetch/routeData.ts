@@ -25,5 +25,5 @@ export function routeData<T>(meta: RouteMeta, path: string) {
 }
 
 export function toQueryString(value: LocationQuery[string]) {
-  return Array.isArray(value) ? value[0] : value || '';
+  return (Array.isArray(value) ? value[0] : value) || '';
 }
