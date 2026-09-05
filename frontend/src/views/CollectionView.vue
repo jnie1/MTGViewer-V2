@@ -5,8 +5,9 @@ import type { IContainer } from '@/containers/types';
 import CollectionContainer from '@/containers/CollectionContainer.vue';
 
 defineOptions({
-  async beforeRouteEnter(to, _, next) {
-    await loadRouteData(to.meta, next, '/containers');
+  async beforeRouteEnter({ meta }) {
+    const redirect = await loadRouteData(meta, '/containers');
+    if (redirect) return redirect;
   },
 });
 

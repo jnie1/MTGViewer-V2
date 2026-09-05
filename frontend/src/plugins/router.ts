@@ -33,14 +33,6 @@ const router = createRouter({
       component: CardView,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
-    },
-    {
       path: '/logs',
       name: 'logs',
       component: ChangeView,
@@ -92,11 +84,11 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-  if (
-    (to.meta.requiresAdmin && !isAdmin.value) ||
-    (to.meta.requiresLoggedIn && !isLoggedIn.value)
-  ) {
-    return { name: 'home' };
+  if (to.meta.requiresLoggedIn && !isLoggedIn.value) {
+    return { name: 'login', replace: true };
+  }
+  if (to.meta.requiresAdmin && !isAdmin.value) {
+    return { name: 'home', replace: true };
   }
 });
 

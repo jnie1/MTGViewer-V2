@@ -7,14 +7,17 @@ import CardImage from '@/cards/CardImage.vue';
 import PrintCartItem from '@/cart/PrintCartItem.vue';
 
 defineOptions({
-  async beforeRouteEnter(to, _, next) {
-    const { scryfallId } = to.params;
-    await loadRouteData(to.meta, next, `/cards/${scryfallId}`);
+  async beforeRouteEnter({ params: { scryfallId }, meta }) {
+    const redirect = await loadRouteData(meta, `/cards/${scryfallId}`);
+    if (redirect) return redirect;
   },
 });
 
-const { params, meta } = useRoute();
-const { scryfallId } = params;
+const {
+  params: { scryfallId },
+  meta,
+} = useRoute();
+
 const matches = routeData<ICardContainerMatch>(meta, `/cards/${scryfallId}`);
 </script>
 

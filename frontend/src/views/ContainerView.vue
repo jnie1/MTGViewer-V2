@@ -1,22 +1,24 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { loadRouteData, routeData } from '@/fetch/routeData';
+import { loadRouteData, routeData, toQueryString } from '@/fetch/routeData';
 import type { ICard } from '@/cards/types';
 import ContainerItem from '@/containers/ContainerItem.vue';
 
 defineOptions({
-  async beforeRouteEnter(to, _, next) {
-    const { containerId } = to.params;
-    await loadRouteData(to.meta, next, `containers/${containerId}/cards`);
+  async beforeRouteEnter({ params: { containerId }, meta }) {
+    const redirect = await loadRouteData(meta, `containers/${containerId}/cards`);
+    if (redirect) return redirect;
   },
 });
 
-const { meta, params, query } = useRoute();
-const { containerId } = params;
-const cards = routeData<ICard[]>(meta, `containers/${containerId}/cards`);
+const {
+  params: { containerId },
+  query: { search },
+  meta,
+} = useRoute();
 
 const router = useRouter();
-const search = query.search?.toString() ?? '';
+const cards = routeData<ICard[]>(meta, `containers/${containerId}/cards`);
 
 const handleSearch = (search: string) => {
   router.replace({
@@ -29,6 +31,6 @@ const handleSearch = (search: string) => {
 
 <template>
   <main>
-    <container-item :cards :search @search="handleSearch" />
+    <container-item :cards :search="toQueryString(search)" @search="handleSearch" />
   </main>
 </template>

@@ -5,8 +5,9 @@ import type { ICardTransaction } from '@/transaction/types';
 import ChangeLogs from '@/transaction/ChangeLogs.vue';
 
 defineOptions({
-  async beforeRouteEnter(to, _, next) {
-    await loadRouteData(to.meta, next, '/logs');
+  async beforeRouteEnter({ meta }) {
+    const redirect = await loadRouteData(meta, '/logs');
+    if (redirect) return redirect;
   },
 });
 
