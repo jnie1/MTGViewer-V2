@@ -25,8 +25,31 @@ const handleSearch = (value: string | null) => {
   hasNextPage.value = false;
 };
 
-const handleLoadMore = () => {
-  currentPage.value++;
+const handleLoadMore = ({ done }: { done: (status: 'ok' | 'error' | 'empty') => void }) => {
+  const proceed = () => {
+    if (!hasNextPage.value) {
+      done('empty');
+      return;
+    }
+    currentPage.value++;
+    const stop = watch(isLoading, (loading) => {
+      if (!loading) {
+        stop();
+        done(hasNextPage.value ? 'ok' : 'empty');
+      }
+    });
+  };
+
+  if (isLoading.value) {
+    const stop = watch(isLoading, (loading) => {
+      if (!loading) {
+        stop();
+        proceed();
+      }
+    });
+  } else {
+    proceed();
+  }
 };
 
 watch(
@@ -77,13 +100,17 @@ watch(
       @update:model-value="handleSearch"
     >
     </v-text-field>
-    <v-btn color="primary" :disabled="isNextDisabled" @click="handleLoadMore">Show More</v-btn>
+    <v-btn color="primary" :disabled="isNextDisabled" @click="handleLoadMore({ done: () => {} })">
+      Show More
+    </v-btn>
 
     <v-overlay :model-value="isLoading" absolute>
       <v-sheet class="d-flex align-center justify-center" width="100%" height="100%" elevation="2">
         <v-progress-circular indeterminate size="64" />
       </v-sheet>
     </v-overlay>
-    <search-item :cards="searchResults" />
+    <v-infinite-scroll :disabled="isNextDisabled" @load="handleLoadMore">
+      <search-item :cards="searchResults" />
+    </v-infinite-scroll>
   </main>
 </template>
