@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onWatcherCleanup, ref, watch } from 'vue';
-import type { ICard } from '@/cards/types';
-import CardImage from '@/cards/CardImage.vue';
 import { isAbortError, timeout } from '@/fetch/abort';
+import type { ICard } from '@/cards/types';
+import CardListing from '@/cards/CardListing.vue';
 
 interface IContainerItemProps {
   cards: ICard[];
@@ -17,6 +17,7 @@ const emits = defineEmits<IContainerItemEmits>();
 
 const search = ref(props.search);
 const matchId = ref('');
+const errorMessage = ref<string>();
 
 watch(
   search,
@@ -30,9 +31,12 @@ watch(
       if (search) {
         const target = search.toLowerCase();
         const match = props.cards?.find((c) => c.name.toLowerCase().includes(target));
+
         matchId.value = match?.scryfallId ?? '';
+        errorMessage.value = !match ? 'Not Found' : undefined;
       } else {
         matchId.value = '';
+        errorMessage.value = undefined;
       }
 
       if (search !== props.search) {
@@ -47,32 +51,26 @@ watch(
 </script>
 
 <template>
-  <v-container>
-    <v-text-field
-      v-model="search"
-      label="Search items..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      clearable
-    />
-    <v-slide-group v-model="matchId" class="slide-content" show-arrows>
-      <template #next>
-        <v-icon icon="$right" size="x-large" />
-      </template>
-      <template #prev>
-        <v-icon icon="$left" size="x-large" />
-      </template>
-      <v-slide-group-item v-for="card in cards" :key="card.scryfallId" :value="card.scryfallId">
-        <v-card class="mx-2" max-width="350">
-          <router-link :to="{ name: 'card', params: { scryfallId: card.scryfallId } }">
-            <card-image :card />
-          </router-link>
-          <v-card-title>{{ card.name }}</v-card-title>
-          <v-card-title>Amount: {{ card.amount }}</v-card-title>
-        </v-card>
-      </v-slide-group-item>
-    </v-slide-group>
-  </v-container>
+  <v-text-field
+    v-model="search"
+    :error-messages="errorMessage"
+    validate-on="input"
+    label="Search items..."
+    prepend-inner-icon="mdi-magnify"
+    variant="outlined"
+    clearable
+  />
+  <v-slide-group v-model="matchId" class="slide-content" show-arrows center-active>
+    <template #next>
+      <v-icon icon="$right" size="x-large" />
+    </template>
+    <template #prev>
+      <v-icon icon="$left" size="x-large" />
+    </template>
+    <v-slide-group-item v-for="card in cards" :key="card.scryfallId" :value="card.scryfallId">
+      <card-listing :card size="lg" />
+    </v-slide-group-item>
+  </v-slide-group>
 </template>
 
 <style lang="css" scoped>

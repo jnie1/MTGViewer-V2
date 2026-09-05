@@ -150,9 +150,9 @@ watch(
 }
 
 .print-img {
-  height: 156px;
-  width: 112px;
-  border-radius: 8px;
+  height: var(--card-height-sm);
+  width: var(--card-width-sm);
+  border-radius: var(--card-corners-sm);
 }
 
 .print-row {
