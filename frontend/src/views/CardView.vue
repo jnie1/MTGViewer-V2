@@ -5,6 +5,7 @@ import { capitalize } from '@/utils';
 import type { ICardContainerMatch } from '@/containers/types';
 import CardImage from '@/cards/CardImage.vue';
 import PrintCartItem from '@/cart/PrintCartItem.vue';
+import ManaIcons from '@/cards/ManaIcons.vue';
 
 defineOptions({
   async beforeRouteEnter(to, _, next) {
@@ -25,9 +26,9 @@ const matches = routeData<ICardContainerMatch>(meta, `/cards/${scryfallId}`);
       <v-card width="300" min-height="100" density="comfortable" :loading="!matches">
         <v-card-item>
           <v-card-title>{{ matches.card.name }}</v-card-title>
-          <v-card-subtitle v-if="matches?.card.manaCost">{{
-            matches.card.manaCost
-          }}</v-card-subtitle>
+          <v-card-subtitle v-if="matches?.card.manaCost">
+            <mana-icons :cost="matches.card.manaCost" />
+          </v-card-subtitle>
         </v-card-item>
         <v-card-text>
           <p>{{ matches.card.type }}</p>
