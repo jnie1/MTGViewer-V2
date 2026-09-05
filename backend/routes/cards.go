@@ -225,44 +225,6 @@ func searchCards(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func refreshOracle(c *gin.Context) {
-	ctx := c.Request.Context()
-	ids, err := containers.FindMissingOracleIds(ctx)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	if len(ids) == 0 {
-		c.Status(http.StatusOK)
-		return
-	}
-
-	matches, err := cards.FetchCollection(ctx, ids...)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	if len(matches) == 0 {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-
-	objs := make([]cards.ScryfallOracleObj, len(matches))
-	for i, card := range matches {
-		objs[i] = cards.ScryfallOracleObj{ScryfallId: card.ScryfallId, OracleId: card.OracleId}
-	}
-
-	err = containers.UpdateOracleIds(ctx, objs)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	c.Status(http.StatusOK)
-}
-
 func AddCardRoutes(router gin.IRouter) {
 	group := router.Group("/cards")
 	group.GET("/", fetchCollection)
@@ -271,6 +233,4 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/random", fetchRandomCard)
 	group.POST("/withdraw", auth.IsAuthorized, withdrawCards)
 	group.POST("/import", auth.IsAuthorized, auth.IsAdmin, importCards)
-	//Oracle is to be removed later on so I won't bother with auth for now, but it should be admin only
-	group.POST("/oracle", refreshOracle)
 }

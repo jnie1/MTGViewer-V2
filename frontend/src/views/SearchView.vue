@@ -2,41 +2,46 @@
 import { ref, watch, onWatcherCleanup, useTemplateRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { isAbortError, timeout } from '@/fetch/abort';
+import { toQueryString } from '@/fetch/routeData';
 import type { ICard } from '@/cards/types';
 import { searchCards } from '@/cards/fetches';
 import SearchItem from '@/cards/SearchItem.vue';
 
+const {
+  query: { q },
+} = useRoute();
+
 const router = useRouter();
-const route = useRoute();
 const scroll = useTemplateRef('scroll');
-const querySearch = Array.isArray(route.query.q) ? route.query.q[0] : route.query.q;
-const searchQuery = ref(querySearch || '');
-const currentPage = ref(1);
+
 const abort = ref<AbortSignal>();
-const searchResults = ref<ICard[]>([]);
+const currentPage = ref(1);
+const searchQuery = ref(toQueryString(q));
+
+const cards = ref<ICard[]>([]);
 const hasNextPage = ref(false);
 const isLoading = ref(false);
 
 const handleSearch = (value: string | null) => {
   searchQuery.value = value?.trim() ?? '';
-  currentPage.value = 1;
-  searchResults.value = [];
-  hasNextPage.value = false;
 };
 
-const load = async ({ done }: { done: (status: 'ok' | 'empty' | 'error') => void }) => {
-  if (hasNextPage.value) {
-    currentPage.value++;
-    const results = await searchCards(
-      searchQuery.value,
-      currentPage.value,
-      abort.value ?? new AbortController().signal,
-    );
-    searchResults.value = [...searchResults.value, ...results.cards];
+const handleLoad = async ({ done }: { done: (status: 'ok' | 'empty' | 'error') => void }) => {
+  if (!hasNextPage.value) {
+    done('empty');
+    return;
+  }
+
+  try {
+    const results = await searchCards(searchQuery.value, currentPage.value + 1, abort.value);
+    currentPage.value += 1;
+    cards.value = [...cards.value, ...results.cards];
     hasNextPage.value = results.hasMore;
     done('ok');
-  } else {
-    done('empty');
+  } catch (e) {
+    if (!isAbortError(e)) {
+      done('error');
+    }
   }
 };
 
@@ -44,7 +49,8 @@ watch(
   searchQuery,
   async (search) => {
     if (!search) {
-      searchResults.value = [];
+      currentPage.value = 1;
+      cards.value = [];
       hasNextPage.value = false;
       return;
     }
@@ -55,14 +61,15 @@ watch(
 
     try {
       isLoading.value = true;
-
       await timeout(500, abortController.signal);
       const results = await searchCards(search, 1, abortController.signal);
-      router.replace({ query: { q: search }});
-      currentPage.value = 1;
-      searchResults.value = results.cards as ICard[];
-      hasNextPage.value = results.hasMore;
+
+      router.replace({ query: { q: search } });
       scroll.value?.reset();
+
+      currentPage.value = 1;
+      cards.value = results.cards;
+      hasNextPage.value = results.hasMore;
     } catch (e) {
       if (!isAbortError(e)) throw e;
     } finally {
@@ -91,8 +98,8 @@ watch(
         <v-progress-circular indeterminate size="64" />
       </v-sheet>
     </v-overlay>
-    <v-infinite-scroll ref="scroll" @load="load">
-      <search-item :cards="searchResults" />
+    <v-infinite-scroll ref="scroll" @load="handleLoad">
+      <search-item :cards />
     </v-infinite-scroll>
   </main>
 </template>
