@@ -46,15 +46,18 @@ const { card, highlight, active } = defineProps<ICardImageProps>();
     transform: scale(1.05);
   }
 
-  .card-img.shadow.uncommon:hover {
+  .card-img.shadow.uncommon:hover,
+  .card-img.shadow.uncommon.active {
     box-shadow: var(--shadow-length) var(--color-secondary);
   }
 
-  .card-img.shadow.rare:hover {
+  .card-img.shadow.rare:hover,
+  .card-img.shadow.rare.active {
     box-shadow: var(--shadow-length) var(--color-primary-variant);
   }
 
-  .card-img.shadow.mythic:hover {
+  .card-img.shadow.mythic:hover,
+  .card-img.shadow.mythic.active {
     box-shadow: var(--shadow-length) var(--color-primary);
   }
 }
