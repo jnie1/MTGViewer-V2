@@ -12,7 +12,7 @@ const manaSymbols = computed(() => {
 </script>
 
 <template>
-  <span>
+  <span class="mana-cost">
     <i
       v-for="(symbol, index) in manaSymbols"
       :key="index"
@@ -23,7 +23,11 @@ const manaSymbols = computed(() => {
 
 <style scoped>
 .ms::before {
+  vertical-align: top;
+}
+.mana-cost {
   display: inline-flex;
+  gap: 2px;
   align-items: center;
 }
 </style>
