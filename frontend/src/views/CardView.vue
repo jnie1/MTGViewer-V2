@@ -29,7 +29,7 @@ const matches = routeData<ICardContainerMatch>(meta, `/cards/${scryfallId}`);
       <v-card width="300" min-height="100" density="comfortable" :loading="!matches">
         <v-card-item>
           <v-card-title>{{ matches.card.name }}</v-card-title>
-          <v-card-subtitle v-if="matches?.card.manaCost">
+          <v-card-subtitle v-if="matches?.card.manaCost" class="card-panel-cost">
             <mana-icons :cost="matches.card.manaCost" />
           </v-card-subtitle>
         </v-card-item>
@@ -89,6 +89,10 @@ const matches = routeData<ICardContainerMatch>(meta, `/cards/${scryfallId}`);
   align-items: center;
   justify-content: center;
   gap: 40px;
+}
+
+.card-panel-cost {
+  padding-top: 4px;
 }
 
 .panel-title {
