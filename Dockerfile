@@ -1,5 +1,5 @@
 # Frontend build stage (Vue)
-FROM node:20-bookworm AS frontend-builder
+FROM node:24-bookworm AS frontend-builder
 
 WORKDIR /frontend
 
