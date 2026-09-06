@@ -4,7 +4,6 @@ FROM node:20-bookworm AS frontend-builder
 WORKDIR /frontend
 
 ARG VITE_API_URL=""
-
 ENV VITE_API_URL=$VITE_API_URL
 
 # Copy frontend package files first to leverage build cache
@@ -28,7 +27,7 @@ RUN go mod download
 COPY backend ./
 
 # Compile Go binary
-RUN go build -tags=prod -ldflags="-s -w" -o app .
+RUN go build -tags=prod,nomsgpack -ldflags="-s -w" -o app .
 
 # Runtime stage
 FROM debian:bookworm-slim
