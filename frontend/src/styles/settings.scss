@@ -1,0 +1,6 @@
+@use 'vuetify/settings' with (
+  $utilities: (
+    "margin-start": false,
+    "negative-margin-start": false,
+  )
+);
