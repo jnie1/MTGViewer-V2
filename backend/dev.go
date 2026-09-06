@@ -9,10 +9,8 @@ import (
 )
 
 func main() {
-	// Loading environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
-	RegisterRouter()
+	registerRouter()
 }

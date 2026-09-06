@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jnie1/MTGViewer-V2/auth"
@@ -10,7 +12,7 @@ import (
 	"github.com/jnie1/MTGViewer-V2/routes"
 )
 
-func RegisterRouter() {
+func registerRouter() {
 	db, err := database.Open()
 	if err != nil {
 		log.Fatal("Error opening database: ", err)
@@ -38,5 +40,22 @@ func RegisterRouter() {
 		log.Fatal("Error adding static files: ", err)
 	}
 
-	r.Run(":8080")
+	go syncCards()
+	if err := r.Run(":8080"); err != nil {
+		log.Println("Error running: ", err)
+	}
+}
+
+func syncCards() {
+	ctx := context.Background()
+
+	if err := cards.RefreshViews(ctx); err != nil {
+		log.Println("issue refreshing views: ", err)
+	}
+
+	for range time.Tick(time.Hour * 24) {
+		if err := cards.RefreshViews(ctx); err != nil {
+			log.Println("issue refreshing views: ", err)
+		}
+	}
 }
