@@ -1,0 +1,9 @@
+**/MTGViewer-V2
+**/app
+**/node_modules
+**/build
+**/dist
+**/.env
+**/.env.*
+**/.gitignore
+.git
