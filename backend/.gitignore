@@ -22,6 +22,8 @@ vendor/
 *.sqlite
 *.dump
 pgdata/
+app
+MTGViewer-V2
 
 # Built frontend
 dist/
