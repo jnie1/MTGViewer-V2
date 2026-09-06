@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@mdi/js": "^7.4.47",
+    "mana-font": "^1.18.0",
     "mtgviewer-v2": "file:",
     "vue": "^3.5.42",
     "vue-router": "^4.6.4",
