@@ -19,6 +19,17 @@ func OpenSDK() (*mtgjson.SDK, error) {
 	return sdk, err
 }
 
+func RefreshViews(ctx context.Context) error {
+	stale, err := sdk.Refresh(ctx)
+	if !stale {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return sdk.EnsureViews(ctx, "cards", "card_identifiers", "sets", "all_prices_today")
+}
+
 func FetchRandomCard(ctx context.Context) (Card, error) {
 	var row Card
 
