@@ -55,6 +55,7 @@ watch(
       <v-col>
         <v-number-input
           v-model="quantityAmount"
+          :min="0"
           label="Quantity to keep..."
           prepend-inner-icon="mdi-magnify"
           variant="outlined"
@@ -65,6 +66,8 @@ watch(
       <v-col>
         <v-number-input
           v-model="priceAmount"
+          :min="0"
+          :step="0.1"
           :precision="2"
           label="Price of items..."
           prepend-inner-icon="mdi-magnify"
