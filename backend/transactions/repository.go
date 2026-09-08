@@ -182,19 +182,27 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 
 	var vals []string
 	var args []any
+
+	total := 0
 	i := 0
+
 	for _, change := range changes {
 		for _, request := range change.Requests {
 			if request.Delta == 0 {
 				continue
 			}
+
 			vals = append(vals, fmt.Sprintf("($%d::uuid, $%d, $%d, $%d::uuid, $%d)", i+1, i+2, i+3, i+4, i+5))
 			i += 5
+
 			switch {
 			case request.Delta > 0:
 				args = append(args, groupId, nil, change.ContainerId, request.ScryfallId, request.Delta)
+				total += request.Delta
+
 			case request.Delta < 0:
 				args = append(args, groupId, change.ContainerId, nil, request.ScryfallId, -request.Delta)
+				total -= request.Delta
 			}
 		}
 	}
@@ -213,6 +221,7 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 
 	group.GroupId = groupId
 	group.Time = now
+	group.Total = total
 
 	return group, nil
 }
