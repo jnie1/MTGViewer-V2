@@ -43,7 +43,7 @@ const handleCheckout = async () => {
           <span>{{ item.amount }}</span>
           <button
             :disabled="item.amount >= item.max"
-            @click="addToCart(item.scryfallId, item.containerId, item.name, item.amount)"
+            @click="addToCart(item.scryfallId, item.containerId, item.name, item.max)"
           >
             +
           </button>
