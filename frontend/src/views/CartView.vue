@@ -1,12 +1,23 @@
 <script setup lang="ts">
-import {
-  updateAmount,
-  cart,
-  removeFromCart,
-  removeAllCards,
-  submitAllCards,
-} from '@/cart/CartContainer';
+import fetchApi from '@/fetch/api';
 import { isLoggedIn } from '@/fetch/auth';
+import {
+  cart,
+  removeItem,
+  removeAllCards,
+  withdrawals,
+  addToCart,
+  removeFromCart,
+} from '@/cart/CartContainer';
+
+const handleCheckout = async () => {
+  await fetchApi('/cards/withdraw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(withdrawals.value),
+  });
+  removeAllCards();
+};
 </script>
 
 <template>
@@ -20,22 +31,20 @@ import { isLoggedIn } from '@/fetch/auth';
         </router-link>
 
         <div class="qty-controls">
-          <button @click="updateAmount(item.scryfallId, item.containerId, item.amount - 1)">
-            −
-          </button>
+          <button @click="removeFromCart(item.scryfallId, item.containerId)">−</button>
           <span>{{ item.amount }}</span>
           <button
             :disabled="item.amount >= item.max"
-            @click="updateAmount(item.scryfallId, item.containerId, item.amount + 1)"
+            @click="addToCart(item.scryfallId, item.containerId, item.name, item.amount)"
           >
             +
           </button>
         </div>
-        <button @click="removeFromCart(item.scryfallId, item.containerId)">Remove</button>
+        <button @click="removeItem(item.scryfallId, item.containerId)">Remove</button>
       </li>
     </ul>
     <button v-if="cart.length > 0" @click="removeAllCards">Clear All</button>
-    <button v-if="cart.length > 0 && isLoggedIn" class="submit-button" @click="submitAllCards">
+    <button v-if="cart.length > 0 && isLoggedIn" class="submit-button" @click="handleCheckout">
       Submit
     </button>
     <p v-if="cart.length > 0 && !isLoggedIn" class="login-reminder">

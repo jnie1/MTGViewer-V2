@@ -4,7 +4,7 @@ import { isLoggedIn } from '@/fetch/auth';
 import type { ICard } from '@/cards/types';
 import CardImage from '@/cards/CardImage.vue';
 import type { IContainerPreview } from '@/containers/types';
-import { addToCart, cart, updateAmount } from './CartContainer';
+import { addToCart, cart, removeFromCart } from './CartContainer';
 
 interface IPrintCartItemProps {
   container: IContainerPreview;
@@ -23,13 +23,13 @@ const amountInCart = computed(() => {
 
 const handleAddToCart = () => {
   if (amountInCart.value < max) {
-    addToCart(card.scryfallId, container.containerId, card.name, 1, max);
+    addToCart(card.scryfallId, container.containerId, card.name, max);
   }
 };
 
 const handleRemoveFromCart = () => {
   if (amountInCart.value > 0) {
-    updateAmount(card.scryfallId, container.containerId, amountInCart.value - 1);
+    removeFromCart(card.scryfallId, container.containerId);
   }
 };
 </script>
