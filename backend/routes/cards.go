@@ -181,7 +181,7 @@ func withdrawCards(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusNoContent, result)
+	c.JSON(http.StatusOK, result)
 }
 
 func searchCards(c *gin.Context) {
