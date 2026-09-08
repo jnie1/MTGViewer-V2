@@ -12,12 +12,13 @@ const uploadFile = async () => {
   if (!chosenFile.value) return;
 
   const formData = new FormData();
-  if (Array.isArray(chosenFile.value)) {
+
+  if (!Array.isArray(chosenFile.value)) {
+    formData.append('file', chosenFile.value);
+  } else {
     for (const file of chosenFile.value) {
       formData.append('file', file);
     }
-  } else {
-    formData.append('file', chosenFile.value);
   }
 
   try {
@@ -25,6 +26,7 @@ const uploadFile = async () => {
       method: 'POST',
       body: formData,
     });
+
     router.push({
       name: 'transaction',
       params: { groupId: group.groupId },

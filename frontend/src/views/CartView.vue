@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import fetchApi from '@/fetch/api';
 import { isLoggedIn } from '@/fetch/auth';
+import type { ICardTransaction } from '@/transaction/types';
 import {
   cart,
   removeItem,
@@ -10,13 +12,19 @@ import {
   removeFromCart,
 } from '@/cart/CartContainer';
 
+const router = useRouter();
+
 const handleCheckout = async () => {
-  await fetchApi('/cards/withdraw', {
+  const group = await fetchApi<ICardTransaction>('/cards/withdraw', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(withdrawals.value),
   });
   removeAllCards();
+  router.push({
+    name: 'transaction',
+    params: { groupId: group.groupId },
+  });
 };
 </script>
 
