@@ -96,27 +96,27 @@ const handleCheck = async () => {
               </td>
               <td>
                 <router-link
-                  v-if="
-                    card.withContainerId &&
-                    containersById.has(card.withContainerId) &&
-                    card.delta > 0
-                  "
-                  :to="{ name: 'container', params: { containerId: card.withContainerId } }"
+                  v-if="card.withContainerId"
+                  :to="{
+                    name: 'container',
+                    params: { containerId: card.withContainerId },
+                    query: { search: card.name },
+                  }"
                 >
-                  From {{ containersById.get(card.withContainerId) }}
+                  {{ card.delta > 0 ? 'From' : 'To' }}
+                  {{ containersById.get(card.withContainerId) }}
                 </router-link>
                 <router-link
-                  v-else-if="
-                    card.withContainerId &&
-                    containersById.has(card.withContainerId) &&
-                    card.delta < 0
-                  "
-                  :to="{ name: 'container', params: { containerId: card.withContainerId } }"
+                  v-else-if="card.delta > 0"
+                  :to="{
+                    name: 'container',
+                    params: { containerId: transfer.containerId },
+                    query: { search: card.name },
+                  }"
                 >
-                  To {{ containersById.get(card.withContainerId) }}
+                  <i>Added</i>
                 </router-link>
-                <i v-else-if="!card.withContainerId && card.delta < 0">Removed</i>
-                <i v-else-if="!card.withContainerId && card.delta > 0">Added</i>
+                <i v-else>Removed</i>
               </td>
               <td class="text-right">{{ Math.abs(card.delta) }}</td>
             </tr>
