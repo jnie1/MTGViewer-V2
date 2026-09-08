@@ -20,8 +20,8 @@ const pruneResults = ref<IPrunePreview>({ total: 0, containersPrunePreviews: [] 
 
 watch(
   [quantityAmount, priceAmount],
-  async ([quantity, price]) => {
-    if (quantity <= 0 || price <= 0) {
+  async ([size, price], prev) => {
+    if (size <= 0 || price <= 0) {
       pruneResults.value = { total: 0, containersPrunePreviews: [] };
       return;
     }
@@ -31,11 +31,12 @@ watch(
 
     try {
       isLoading.value = true;
+      if (prev !== undefined) {
+        await timeout(500, abortController.signal);
+      }
+      const results = await previewPrune(size, price, abortController.signal);
 
-      await timeout(500, abortController.signal);
-      const results = await previewPrune(quantity, price, abortController.signal);
-      // Update the route with the new search parameters
-      router.replace({ query: { size: quantity.toString(), price: price.toString() } });
+      router.replace({ query: { size, price } });
       pruneResults.value = results;
     } catch (e) {
       if (!isAbortError(e)) throw e;
