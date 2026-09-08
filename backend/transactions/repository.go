@@ -155,17 +155,19 @@ func UpdateDescription(ctx context.Context, groupId uuid.UUID, description *stri
 	return nil
 }
 
-func LogCollectionChanges(ctx context.Context, changes []containers.ContainerChanges) error {
+func LogCollectionChanges(ctx context.Context, changes []containers.ContainerChanges) (CardTransaction, error) {
+	var group CardTransaction
+
 	now := time.Now().UTC()
 	groupId, err := uuid.NewRandom()
 	if err != nil {
-		return err
+		return group, err
 	}
 
 	db := database.Instance()
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return group, err
 	}
 
 	defer tx.Rollback()
@@ -175,7 +177,7 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 		VALUES ($1, $2);`, groupId, now)
 
 	if err != nil {
-		return err
+		return group, err
 	}
 
 	var vals []string
@@ -202,8 +204,15 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 		VALUES `+strings.Join(vals, ", ")+`;`, args...)
 
 	if err != nil {
-		return err
+		return group, err
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return group, err
+	}
+
+	group.GroupId = groupId
+	group.Time = now
+
+	return group, nil
 }

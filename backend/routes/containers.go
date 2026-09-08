@@ -163,12 +163,13 @@ func applyPrune(c *gin.Context) {
 		return
 	}
 
-	if err := transactions.LogCollectionChanges(ctx, changes); err != nil {
+	group, err := transactions.LogCollectionChanges(ctx, changes)
+	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, group)
 }
 
 func AddContainerRoutes(router gin.IRouter) {
