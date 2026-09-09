@@ -73,7 +73,7 @@ watch(
 const slideGroupRef = useTemplateRef<{ $el: HTMLElement }>('slideGroupRef');
 
 function handleWheel(e: WheelEvent) {
-  if (isVertical.value) return; // let native vertical scroll happen on mobile-portrait mode
+  if (isVertical.value) return;
   if (e.deltaY === 0) return;
 
   const container = slideGroupRef.value?.$el.querySelector<HTMLElement>('.v-slide-group__container');
