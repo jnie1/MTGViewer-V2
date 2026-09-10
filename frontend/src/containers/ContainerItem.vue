@@ -145,11 +145,6 @@ function handleWheel(e: WheelEvent) {
   flex-direction: column;
 }
 
-.slide-content--vertical :deep(.v-slide-group__container) {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
 .v-slide-group__wrapper {
   touch-action: pan-y !important;
 }
