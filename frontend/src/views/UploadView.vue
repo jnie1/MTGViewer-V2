@@ -6,7 +6,7 @@ import type { ICardTransaction } from '@/transaction/types';
 
 const router = useRouter();
 const chosenFile = ref<File | File[]>();
-const disabled = computed(() => Boolean(chosenFile.value));
+const disabled = computed(() => !chosenFile.value);
 
 const uploadFile = async () => {
   if (!chosenFile.value) return;
