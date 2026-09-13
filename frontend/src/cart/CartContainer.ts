@@ -25,7 +25,7 @@ function isCartItem(value: unknown): value is ICartItem {
     typeof item.name === 'string' &&
     typeof item.amount === 'number' &&
     typeof item.max === 'number' &&
-    typeof item.containerId === 'string'
+    typeof item.containerId === 'number'
   );
 }
 
