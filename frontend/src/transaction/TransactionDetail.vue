@@ -75,7 +75,7 @@ const handleCheck = async () => {
           </thead>
           <tbody>
             <tr v-for="card in transfer.cards" :key="card.scryfallId">
-              <td class="name-col">
+              <td class="name-col" data-label="Name">
                 <router-link
                   :to="{
                     name: 'card',
@@ -85,7 +85,7 @@ const handleCheck = async () => {
                   {{ card.name }}
                 </router-link>
               </td>
-              <td>
+              <td data-label="Card">
                 <v-img
                   inline
                   class="card-img"
@@ -94,7 +94,7 @@ const handleCheck = async () => {
                   :src="card.imageUrls.normal"
                 />
               </td>
-              <td>
+              <td data-label="Action">
                 <router-link
                   v-if="
                     card.withContainerId &&
@@ -118,7 +118,7 @@ const handleCheck = async () => {
                 <i v-else-if="!card.withContainerId && card.delta < 0">Removed</i>
                 <i v-else-if="!card.withContainerId && card.delta > 0">Added</i>
               </td>
-              <td class="text-right">{{ Math.abs(card.delta) }}</td>
+              <td class="text-right" data-label="Amount">{{ Math.abs(card.delta) }}</td>
             </tr>
           </tbody>
         </v-table>
@@ -154,9 +154,65 @@ const handleCheck = async () => {
   width: 100%;
 }
 
+.log-table :deep(td[data-label='Card']) {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .card-img {
   min-height: var(--card-height-sm);
   min-width: var(--card-width-sm);
   border-radius: var(--card-corners-sm);
+}
+
+@media (max-width: 600px) {
+  .log-table :deep(thead) {
+    display: none;
+  }
+
+  .log-table :deep(table),
+  .log-table :deep(tbody),
+  .log-table :deep(tr),
+  .log-table :deep(td) {
+    display: block;
+    width: 100%;
+  }
+
+  .log-table :deep(tr) {
+    margin-bottom: 12px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+    padding-bottom: 8px;
+  }
+
+  .log-table :deep(td) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: right;
+    padding: 4px 8px;
+  }
+
+  .log-table :deep(td)::before {
+    content: attr(data-label);
+    font-weight: bold;
+    text-align: left;
+    margin-right: 8px;
+  }
+
+  .log-table :deep(.name-col) {
+    width: 100%;
+  }
+
+  .log-table :deep(td[data-label='Action']),
+  .log-table :deep(td[data-label='Amount']) {
+    justify-content: right;
+    gap: 8px;
+  }
+
+  .log-table :deep(td[data-label='Card']) {
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+  }
 }
 </style>
