@@ -135,12 +135,13 @@ func importCards(c *gin.Context) {
 		return
 	}
 
-	if err := transactions.LogCollectionChanges(ctx, changes); err != nil {
+	result, err := transactions.LogCollectionChanges(ctx, changes)
+	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, result)
 }
 
 func withdrawCards(c *gin.Context) {
@@ -174,12 +175,13 @@ func withdrawCards(c *gin.Context) {
 		return
 	}
 
-	if err := transactions.LogCollectionChanges(ctx, changes); err != nil {
+	result, err := transactions.LogCollectionChanges(ctx, changes)
+	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	c.JSON(http.StatusOK, result)
 }
 
 func searchCards(c *gin.Context) {

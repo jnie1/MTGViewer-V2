@@ -155,17 +155,19 @@ func UpdateDescription(ctx context.Context, groupId uuid.UUID, description *stri
 	return nil
 }
 
-func LogCollectionChanges(ctx context.Context, changes []containers.ContainerChanges) error {
+func LogCollectionChanges(ctx context.Context, changes []containers.ContainerChanges) (CardTransaction, error) {
+	var group CardTransaction
+
 	now := time.Now().UTC()
 	groupId, err := uuid.NewRandom()
 	if err != nil {
-		return err
+		return group, err
 	}
 
 	db := database.Instance()
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		return err
+		return group, err
 	}
 
 	defer tx.Rollback()
@@ -175,24 +177,32 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 		VALUES ($1, $2);`, groupId, now)
 
 	if err != nil {
-		return err
+		return group, err
 	}
 
 	var vals []string
 	var args []any
+
+	total := 0
 	i := 0
+
 	for _, change := range changes {
 		for _, request := range change.Requests {
 			if request.Delta == 0 {
 				continue
 			}
+
 			vals = append(vals, fmt.Sprintf("($%d::uuid, $%d, $%d, $%d::uuid, $%d)", i+1, i+2, i+3, i+4, i+5))
 			i += 5
+
 			switch {
 			case request.Delta > 0:
 				args = append(args, groupId, nil, change.ContainerId, request.ScryfallId, request.Delta)
+				total += request.Delta
+
 			case request.Delta < 0:
 				args = append(args, groupId, change.ContainerId, nil, request.ScryfallId, -request.Delta)
+				total -= request.Delta
 			}
 		}
 	}
@@ -202,8 +212,16 @@ func LogCollectionChanges(ctx context.Context, changes []containers.ContainerCha
 		VALUES `+strings.Join(vals, ", ")+`;`, args...)
 
 	if err != nil {
-		return err
+		return group, err
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return group, err
+	}
+
+	group.GroupId = groupId
+	group.Time = now
+	group.Total = total
+
+	return group, nil
 }

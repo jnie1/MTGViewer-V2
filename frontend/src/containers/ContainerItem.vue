@@ -42,18 +42,19 @@ const errorMessage = ref<string>();
 
 watch(
   search,
-  async (search) => {
+  async (search, prev) => {
     const abortController = new AbortController();
     onWatcherCleanup(() => abortController.abort());
 
     try {
-      await timeout(150, abortController.signal);
-
       if (search) {
+        if (prev !== undefined) {
+          await timeout(150, abortController.signal);
+        }
         const target = search.toLowerCase();
-        const match = props.cards?.find((c) => c.name.toLowerCase().includes(target));
+        const match = props.cards?.find((c) => c.name.toLowerCase().includes(target))?.scryfallId;
 
-        matchId.value = match?.scryfallId ?? '';
+        matchId.value = match ?? '';
         errorMessage.value = !match ? 'Not Found' : undefined;
       } else {
         matchId.value = '';

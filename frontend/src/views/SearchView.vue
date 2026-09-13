@@ -47,7 +47,7 @@ const handleLoad = async ({ done }: { done: (status: 'ok' | 'empty' | 'error') =
 
 watch(
   searchQuery,
-  async (search) => {
+  async (search, prev) => {
     if (!search) {
       currentPage.value = 1;
       cards.value = [];
@@ -61,7 +61,9 @@ watch(
 
     try {
       isLoading.value = true;
-      await timeout(500, abortController.signal);
+      if (prev !== undefined) {
+        await timeout(500, abortController.signal);
+      }
       const results = await searchCards(search, 1, abortController.signal);
 
       router.replace({ query: { q: search } });

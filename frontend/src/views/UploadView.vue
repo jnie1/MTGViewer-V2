@@ -1,21 +1,35 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import fetchApi from '@/fetch/api';
+import type { ICardTransaction } from '@/transaction/types';
 
-const chosenFile = ref<File | File[] | undefined>(undefined);
+const router = useRouter();
+const chosenFile = ref<File | File[]>();
+const disabled = computed(() => Boolean(chosenFile.value));
 
 const uploadFile = async () => {
   if (!chosenFile.value) return;
 
   const formData = new FormData();
 
-  const files = Array.isArray(chosenFile.value) ? chosenFile.value : [chosenFile.value];
-  files.forEach((file) => formData.append('file', file));
+  if (!Array.isArray(chosenFile.value)) {
+    formData.append('file', chosenFile.value);
+  } else {
+    for (const file of chosenFile.value) {
+      formData.append('file', file);
+    }
+  }
 
   try {
-    await fetchApi('/cards/import', {
+    const group = await fetchApi<ICardTransaction>('/cards/import', {
       method: 'POST',
       body: formData,
+    });
+
+    router.push({
+      name: 'transaction',
+      params: { groupId: group.groupId },
     });
   } catch (error) {
     console.error('Upload failed:', error);
@@ -32,14 +46,12 @@ const uploadFile = async () => {
       icon="mdi-upload"
       title="Drag and Drop Here"
     />
-    <v-btn class="upload-btn" color="primary" :disabled="!chosenFile" @click="uploadFile">
-      Upload File
-    </v-btn>
+    <v-btn class="upload-btn" color="primary" :disabled @click="uploadFile">Upload File</v-btn>
   </v-container>
 </template>
 
 <style>
 .upload-btn {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 </style>

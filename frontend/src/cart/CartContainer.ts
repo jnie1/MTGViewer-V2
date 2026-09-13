@@ -1,5 +1,4 @@
-import { reactive, watch } from 'vue';
-import fetchApi from '@/fetch/api';
+import { computed, reactive, readonly, watch } from 'vue';
 
 export interface ICartItem {
   scryfallId: string;
@@ -9,12 +8,10 @@ export interface ICartItem {
   containerId: number;
 }
 
-interface IScryfallId {
-  scryfallId: string;
-}
-
-interface IScryfallAmount {
-  card: IScryfallId;
+export interface IScryfallAmount {
+  card: {
+    scryfallId: string;
+  };
   amount: number;
 }
 
@@ -46,10 +43,26 @@ function loadCart(): ICartItem[] {
   }
 }
 
-export const cart = reactive<ICartItem[]>(loadCart());
+const items = reactive(loadCart());
+export const cart: readonly ICartItem[] = readonly(items);
+
+export const withdrawals = computed(() => {
+  const grouped = new Map<number, IScryfallAmount[]>();
+
+  for (const { scryfallId, containerId, amount } of items) {
+    let amounts = grouped.get(containerId);
+    if (!amounts) {
+      amounts = [];
+      grouped.set(containerId, amounts);
+    }
+    amounts.push({ card: { scryfallId }, amount });
+  }
+
+  return Object.fromEntries(grouped);
+});
 
 watch(
-  cart,
+  items,
   (value) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   },
@@ -57,71 +70,43 @@ watch(
 );
 
 function findItem(scryfallId: string, containerId: number) {
-  return cart.find((item) => item.scryfallId === scryfallId && item.containerId === containerId);
+  return items.find((i) => i.scryfallId === scryfallId && i.containerId === containerId);
 }
 
-export function removeFromCart(scryfallId: string, containerId: number) {
-  const index = cart.findIndex(
-    (item) => item.scryfallId === scryfallId && item.containerId === containerId,
-  );
-  if (index !== -1) cart.splice(index, 1);
-}
-
-export function addToCart(
-  scryfallId: string,
-  containerId: number,
-  name: string,
-  amount: number,
-  max: number,
-) {
+export function addToCart(scryfallId: string, containerId: number, name: string, max: number) {
   const existing = findItem(scryfallId, containerId);
   if (existing) {
-    existing.amount = Math.min(existing.amount + amount, max);
+    existing.amount = Math.min(existing.amount + 1, max);
     existing.max = max; // keep max in sync in case data refreshed
   } else {
-    cart.push({
+    items.push({
       scryfallId,
       name,
-      amount: Math.min(amount, max),
+      amount: 1,
       max,
       containerId,
     });
   }
 }
 
-export function updateAmount(scryfallId: string, containerId: number, newAmount: number) {
+export function removeFromCart(scryfallId: string, containerId: number) {
   const existing = findItem(scryfallId, containerId);
   if (!existing) return;
 
-  if (newAmount <= 0) {
-    removeFromCart(scryfallId, containerId);
+  if (existing.amount > 1) {
+    existing.amount -= 1;
   } else {
-    existing.amount = Math.min(newAmount, existing.max);
+    removeItem(scryfallId, containerId);
   }
+}
+
+export function removeItem(scryfallId: string, containerId: number) {
+  const index = items.findIndex(
+    (item) => item.scryfallId === scryfallId && item.containerId === containerId,
+  );
+  if (index !== -1) items.splice(index, 1);
 }
 
 export function removeAllCards() {
-  cart.splice(0);
-}
-
-export async function submitAllCards() {
-  const grouped = new Map<number, IScryfallAmount[]>();
-
-  for (const { scryfallId, containerId, amount } of cart) {
-    let amounts = grouped.get(containerId);
-    if (!amounts) {
-      amounts = [];
-      grouped.set(containerId, amounts);
-    }
-    const card: IScryfallId = { scryfallId };
-    amounts.push({ card, amount });
-  }
-
-  await fetchApi('/cards/withdraw', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(Object.fromEntries(grouped)),
-  });
-
-  removeAllCards();
+  items.splice(0);
 }
