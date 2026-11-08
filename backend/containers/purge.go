@@ -248,10 +248,21 @@ func PruneRequests(options []CardRequest, fullCards []cards.Card, prices []cards
 		})
 
 		for _, req := range reqs {
-			cardPrice, ok := pricesByCard[req.ScryfallId]
+			card, ok := cardsById[req.ScryfallId]
+			if !ok {
+				continue
+			}
 
-			// assume missing cards are above price, so keep them all
-			if cardPrice >= minPrice || !ok {
+			if strings.Contains(card.Type, "Basic") {
+				continue
+			}
+
+			cardPrice, ok := pricesByCard[req.ScryfallId]
+			if !ok {
+				continue
+			}
+
+			if cardPrice >= minPrice {
 				replacing := min(req.Delta, remainingCopies)
 				result = append(result, req)
 				remainingCopies -= replacing

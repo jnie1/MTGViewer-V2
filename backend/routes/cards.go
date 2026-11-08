@@ -191,8 +191,8 @@ func pruneUpload(c *gin.Context) {
 	}
 
 	kept := containers.PruneRequests(requests, matches, prices, query.MaxCopies, query.MinPrice)
+	result, err := os.CreateTemp("", "card-*.txt")
 
-	result, err := os.CreateTemp("prunes", "card-*.txt")
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

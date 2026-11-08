@@ -16,7 +16,7 @@ func WriteCardRequests(writer io.Writer, reqs []CardRequest, fullCards []cards.C
 
 	for _, req := range reqs {
 		if card, ok := cardsById[req.ScryfallId]; ok {
-			_, err := fmt.Fprintf(writer, "%d %s (%s) %s", req.Delta, card.Name, card.SetCode, card.CollectorNumber)
+			_, err := fmt.Fprintf(writer, "%d %s (%s) %s\n", req.Delta, card.Name, card.SetCode, card.CollectorNumber)
 			if err != nil {
 				return err
 			}
