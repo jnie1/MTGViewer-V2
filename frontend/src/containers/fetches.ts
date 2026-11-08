@@ -8,3 +8,8 @@ export function previewPrune(quantity: number, price: number, abort: AbortSignal
   });
   return fetchApi<IPrunePreview>(`containers/prune?${params}`, { signal: abort });
 }
+
+export function commitPrune(size: number, price: number, signal?: AbortSignal) {
+  const query = new URLSearchParams({ size: String(size), price: String(price) });
+  return fetchApi(`/containers/prune?${query}`, { method: 'POST', signal });
+}

@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { isAbortError, timeout } from '@/fetch/abort';
 import { toQueryString } from '@/fetch/routeData';
 import type { IPrunePreview } from '@/containers/types';
-import { previewPrune } from '@/containers/fetches';
+import { previewPrune, commitPrune } from '@/containers/fetches';
 import CardImage from '@/cards/CardImage.vue';
 
 const {
@@ -13,7 +13,7 @@ const {
 
 const router = useRouter();
 const isLoading = ref(false);
-
+const isCommitting = ref(false);
 const quantityAmount = ref(Number(toQueryString(size)) || 0);
 const priceAmount = ref(Number(toQueryString(price)) || 0);
 const pruneResults = ref<IPrunePreview>({ total: 0, containersPrunePreviews: [] });
@@ -48,6 +48,17 @@ watch(
   },
   { immediate: true },
 );
+
+async function handleCommit() {
+  try {
+    isCommitting.value = true;
+    await commitPrune(quantityAmount.value, priceAmount.value);
+    pruneResults.value = { total: 0, containersPrunePreviews: [] };
+    await router.push({ name: 'logs' });
+  } finally {
+    isCommitting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -139,6 +150,18 @@ watch(
         </v-expansion-panel>
       </v-expansion-panels>
     </v-container>
+    <v-alert v-if="pruneResults.total > 0" type="info" variant="tonal" class="mt-4">
+      Total cards: {{ pruneResults.total }}
+    </v-alert>
+    <v-btn
+      color="error"
+      class="mt-4"
+      :disabled="pruneResults.total <= 0 || isLoading"
+      :loading="isCommitting"
+      @click="handleCommit"
+    >
+      Commit prune
+    </v-btn>
   </main>
 </template>
 
