@@ -59,7 +59,7 @@ const handleRemoveFromCart = () => {
           density="compact"
           icon="$cartAdd"
           class="cart-btn"
-          :disabled="amountInCart >= max"
+          :disabled="amountInCart >= (card.amount ?? 0)"
           @click="handleAddToCart"
         />
         <p>{{ amountInCart }}x</p>
