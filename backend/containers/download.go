@@ -1,0 +1,34 @@
+package containers
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+
+	"github.com/google/uuid"
+	"github.com/jnie1/MTGViewer-V2/cards"
+)
+
+func WriteCardRequests(out io.Writer, reqs []CardRequest, fullCards []cards.Card) error {
+	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
+	for _, card := range fullCards {
+		cardsById[card.ScryfallId] = card
+	}
+
+	writer := bufio.NewWriter(out)
+	for _, req := range reqs {
+		if card, ok := cardsById[req.ScryfallId]; ok {
+			_, err := fmt.Fprintf(writer, "%d %s (%s) %s\n", req.Delta, card.Name, card.SetCode, card.CollectorNumber)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	err := writer.Flush()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
