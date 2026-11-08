@@ -150,9 +150,6 @@ async function handleCommit() {
         </v-expansion-panel>
       </v-expansion-panels>
     </v-container>
-    <v-alert v-if="pruneResults.total > 0" type="info" variant="tonal" class="mt-4">
-      Total cards: {{ pruneResults.total }}
-    </v-alert>
     <v-btn
       color="error"
       class="mt-4"
