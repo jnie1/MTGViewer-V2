@@ -249,6 +249,23 @@ func FilterCards(fullCards []cards.Card, deposits []CardDeposit) []cards.Card {
 	return matches
 }
 
+func ToRequestScryfallIds(reqs []CardRequest) uuid.UUIDs {
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
+	for _, req := range reqs {
+		uniqIds[req.ScryfallId] = v
+	}
+
+	ids := make(uuid.UUIDs, len(uniqIds))
+	i := 0
+	for id := range uniqIds {
+		ids[i] = id
+		i += 1
+	}
+
+	return ids
+}
+
 func ToScryfallIds(deposits []CardDeposit) uuid.UUIDs {
 	uniqIds := make(map[uuid.UUID]struct{})
 	var v struct{}

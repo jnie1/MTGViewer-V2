@@ -9,14 +9,9 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
+func TranslatePrune(options []CardDeposit, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
 	if targetCopies < 0 {
 		return nil
-	}
-
-	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
-	for _, card := range fullCards {
-		cardsById[card.ScryfallId] = card
 	}
 
 	pricesByCard := make(map[uuid.UUID]float64, len(prices))
@@ -24,26 +19,15 @@ func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []card
 		pricesByCard[price.ScryfallId] = price.Price
 	}
 
-	belowPrice := map[uuid.UUID]bool{}
 	cheapOracles := map[uuid.UUID]bool{}
 
 	for _, deposit := range options {
-		card, ok := cardsById[deposit.ScryfallId]
-		if !ok {
-			continue
-		}
-
 		cardPrice, ok := pricesByCard[deposit.ScryfallId]
 		if !ok {
 			continue
 		}
 
-		if strings.Contains(card.Type, "Land") {
-			continue
-		}
-
 		if cardPrice < minPrice {
-			belowPrice[deposit.ScryfallId] = true
 			cheapOracles[deposit.OracleId] = true
 		}
 	}
@@ -52,7 +36,7 @@ func TranslatePrune(options []CardDeposit, fullCards []cards.Card, prices []card
 
 	for _, deposit := range options {
 		oracleId := deposit.OracleId
-		if belowPrice[deposit.ScryfallId] || cheapOracles[oracleId] {
+		if cheapOracles[oracleId] {
 			depositsByOracle[oracleId] = append(depositsByOracle[oracleId], deposit)
 		}
 	}
@@ -191,4 +175,100 @@ func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCard
 	})
 	globalPrnPreviews.Total = grandTotal
 	return globalPrnPreviews
+}
+
+func PruneRequests(options []CardRequest, fullCards []cards.Card, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []CardRequest {
+	if targetCopies < 0 {
+		return nil
+	}
+
+	cardsById := make(map[uuid.UUID]cards.Card, len(fullCards))
+	for _, card := range fullCards {
+		cardsById[card.ScryfallId] = card
+	}
+
+	pricesByCard := make(map[uuid.UUID]float64, len(prices))
+	for _, price := range prices {
+		pricesByCard[price.ScryfallId] = price.Price
+	}
+
+	cheapOracles := map[uuid.UUID]bool{}
+
+	for _, req := range options {
+		if req.Delta <= 0 {
+			continue
+		}
+
+		card, ok := cardsById[req.ScryfallId]
+		if !ok {
+			continue
+		}
+
+		cardPrice, ok := pricesByCard[req.ScryfallId]
+		if !ok {
+			continue
+		}
+
+		if strings.Contains(card.Type, "Basic") || cardPrice < minPrice {
+			cheapOracles[req.OracleId] = true
+		}
+	}
+
+	reqsByOracle := map[uuid.UUID][]CardRequest{}
+
+	for _, req := range options {
+		oracleId := req.OracleId
+		if cheapOracles[oracleId] {
+			reqsByOracle[oracleId] = append(reqsByOracle[oracleId], req)
+		}
+	}
+
+	var result []CardRequest
+
+	for _, reqs := range reqsByOracle {
+		remainingCopies := targetCopies
+
+		slices.SortFunc(reqs, func(a, b CardRequest) int {
+			priceA, ok := pricesByCard[a.ScryfallId]
+			if !ok {
+				priceA = minPrice
+			}
+			priceB, ok := pricesByCard[b.ScryfallId]
+			if !ok {
+				priceB = minPrice
+			}
+
+			priceCmp := cmp.Compare(priceA, priceB)
+			if priceCmp != 0 {
+				return -priceCmp
+			}
+
+			// negative to sort in desc order
+			return -cmp.Compare(a.Delta, b.Delta)
+		})
+
+		for _, req := range reqs {
+			cardPrice, ok := pricesByCard[req.ScryfallId]
+
+			// assume missing cards are above price, so keep them all
+			if cardPrice >= minPrice || !ok {
+				replacing := min(req.Delta, remainingCopies)
+				result = append(result, req)
+				remainingCopies -= replacing
+				continue
+			}
+
+			keeping := min(req.Delta, remainingCopies)
+
+			if keeping > 0 {
+				req := CardRequest{req.ScryfallId, req.OracleId, keeping}
+				result = append(result, req)
+			}
+
+			remainingCopies -= keeping
+		}
+	}
+
+	return MergeCardRequests(result)
+
 }

@@ -1,8 +1,12 @@
 package routes
 
 import (
+	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -144,6 +148,80 @@ func importCards(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func pruneUpload(c *gin.Context) {
+	var query struct {
+		MaxCopies int     `form:"size" binding:"gte=0,required"`
+		MinPrice  float64 `form:"price" binding:"gt=0.0,required"`
+	}
+
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	if file.Size >= 5_000_000 {
+		c.AbortWithError(http.StatusBadRequest, multipart.ErrMessageTooLarge)
+		return
+	}
+
+	ctx := c.Request.Context()
+	requests, err := containers.ParseCardRequests(ctx, file)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	scryfallIds := containers.ToRequestScryfallIds(requests)
+	matches, err := cards.FetchCollection(ctx, scryfallIds...)
+
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	prices, err := cards.FetchPrices(ctx, query.MinPrice, scryfallIds...)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	kept := containers.PruneRequests(requests, matches, prices, query.MaxCopies, query.MinPrice)
+
+	result, err := os.CreateTemp("prunes", "card-*.txt")
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	defer os.Remove(result.Name())
+	defer result.Close()
+
+	if err := containers.WriteCardRequests(result, kept, matches); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if _, err := result.Seek(0, io.SeekStart); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	info, err := result.Stat()
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.DataFromReader(http.StatusOK, info.Size(), "text/plain", result, map[string]string{
+		"Content-Disposition": fmt.Sprintf("attachment: filename=\"%s.txt\"", filepath.Base(file.Filename)),
+	})
+}
+
 func withdrawCards(c *gin.Context) {
 	var withdrawals containers.ContainerWithdrawals
 	if err := c.ShouldBindJSON(&withdrawals); err != nil {
@@ -235,4 +313,5 @@ func AddCardRoutes(router gin.IRouter) {
 	group.GET("/random", fetchRandomCard)
 	group.POST("/withdraw", auth.IsAuthorized, withdrawCards)
 	group.POST("/import", auth.IsAuthorized, auth.IsAdmin, importCards)
+	group.POST("/preprune", auth.IsAuthorized, auth.IsAdmin, pruneUpload)
 }
