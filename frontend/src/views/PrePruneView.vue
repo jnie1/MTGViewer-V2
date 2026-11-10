@@ -4,7 +4,6 @@ import { fetchApiBlob } from '@/fetch/api';
 
 interface IPrunedFile {
   blob: Blob;
-  text: string;
   filename: string;
 }
 
@@ -60,7 +59,6 @@ async function pruneFile() {
 
     result.value = {
       blob,
-      text: await blob.text(),
       filename: `${file.name.replace(/\.[^.]+$/, '')}-pruned.txt`,
     };
   } catch (e) {
@@ -126,14 +124,6 @@ function downloadResult() {
     </v-btn>
 
     <template v-if="result">
-      <v-textarea
-        :model-value="result.text"
-        label="Pruned file"
-        variant="outlined"
-        class="mt-6"
-        auto-grow
-        readonly
-      />
       <v-btn prepend-icon="mdi-download" @click="downloadResult"
         >Download {{ result.filename }}</v-btn
       >

@@ -34,21 +34,11 @@ async function fetchApi<T = unknown>(path: string, init?: RequestInit): Promise<
   return body;
 }
 
-async function request(path: string, init?: RequestInit): Promise<Response> {
+export async function fetchApiBlob(path: string, init?: RequestInit): Promise<Blob> {
   const fullPath = new URL(path, import.meta.env.VITE_API_URL);
   fullPath.pathname = '/api' + fullPath.pathname;
-
-  const headers: HeadersInit = { ...init?.headers, ['Accept']: 'application/json' };
-  const fullInit: RequestInit = { ...init, headers, credentials: 'omit' };
-
+  const fullInit: RequestInit = { ...init, credentials: 'omit' };
   const response = await fetch(fullPath, fullInit);
-  if (!response.ok) {
-    throw new ResponseError(response);
-  }
-  return response;
-}
-export async function fetchApiBlob(path: string, init?: RequestInit): Promise<Blob> {
-  const response = await request(path, init);
   return response.blob();
 }
 export default fetchApi;
