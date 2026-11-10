@@ -164,10 +164,6 @@ func pruneUpload(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	if file.Size >= 5_000_000 {
-		c.AbortWithError(http.StatusBadRequest, multipart.ErrMessageTooLarge)
-		return
-	}
 
 	ctx := c.Request.Context()
 	requests, err := containers.ParseCardRequests(ctx, file)

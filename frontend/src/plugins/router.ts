@@ -11,6 +11,7 @@ import CartView from '@/views/CartView.vue';
 import LoginView from '@/views/LoginView.vue';
 import UploadView from '@/views/UploadView.vue';
 import PruneView from '@/views/PruneView.vue';
+import PrePruneView from '@/views/PrePruneView.vue';
 import { isAdmin, isLoggedIn } from '@/fetch/auth.js';
 
 const router = createRouter({
@@ -78,6 +79,12 @@ const router = createRouter({
       path: '/prune',
       name: 'prune',
       component: PruneView,
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/preprune',
+      name: 'preprune',
+      component: PrePruneView,
       meta: { requiresAdmin: true },
     },
   ],

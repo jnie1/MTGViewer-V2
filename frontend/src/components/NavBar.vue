@@ -32,6 +32,9 @@ const handleLogout = () => {
         <router-link v-if="isAdmin" to="/prune">Prune</router-link>
       </li>
       <li>
+        <router-link v-if="isAdmin" to="/preprune">Preprune</router-link>
+      </li>
+      <li>
         <router-link v-if="isAdmin" to="/upload">Upload</router-link>
       </li>
       <li>

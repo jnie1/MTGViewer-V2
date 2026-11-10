@@ -9,64 +9,57 @@ import (
 	"github.com/jnie1/MTGViewer-V2/cards"
 )
 
-func TranslatePrune(options []CardDeposit, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
+func TranslatePrune(candidates []CardDeposit, cheapCards []cards.CardPricePreview, targetCopies int, minPrice float64) []ContainerChanges {
 	if targetCopies < 0 {
 		return nil
 	}
 
-	pricesByCard := make(map[uuid.UUID]float64, len(prices))
-	for _, price := range prices {
-		pricesByCard[price.ScryfallId] = price.Price
+	cheapPrices := make(map[uuid.UUID]float64, len(cheapCards))
+	for _, price := range cheapCards {
+		cheapPrices[price.ScryfallId] = price.Price
 	}
 
-	cheapOracles := map[uuid.UUID]bool{}
+	cheapOracles := map[uuid.UUID][]CardDeposit{}
 
-	for _, deposit := range options {
-		cardPrice, ok := pricesByCard[deposit.ScryfallId]
+	for _, deposit := range candidates {
+		cardPrice, ok := cheapPrices[deposit.ScryfallId]
 		if !ok {
 			continue
 		}
 
-		if cardPrice < minPrice {
-			cheapOracles[deposit.OracleId] = true
-		}
-	}
-
-	depositsByOracle := map[uuid.UUID][]CardDeposit{}
-
-	for _, deposit := range options {
 		oracleId := deposit.OracleId
-		if cheapOracles[oracleId] {
-			depositsByOracle[oracleId] = append(depositsByOracle[oracleId], deposit)
+
+		if cardPrice < minPrice {
+			cheapOracles[oracleId] = append(cheapOracles[oracleId], deposit)
 		}
 	}
 
-	changesByContainer := map[int][]CardRequest{}
+	removesByContainer := map[int][]CardRequest{}
 
-	for _, deposits := range depositsByOracle {
+	for _, deposits := range cheapOracles {
 		remainingCopies := targetCopies
 
 		slices.SortFunc(deposits, func(a, b CardDeposit) int {
-			priceA, ok := pricesByCard[a.ScryfallId]
+			priceA, ok := cheapPrices[a.ScryfallId]
 			if !ok {
 				priceA = minPrice
 			}
-			priceB, ok := pricesByCard[b.ScryfallId]
+			priceB, ok := cheapPrices[b.ScryfallId]
 			if !ok {
 				priceB = minPrice
 			}
 
 			priceCmp := cmp.Compare(priceA, priceB)
-			if priceCmp != 0 {
-				return -priceCmp
+			if priceCmp == 0 || (priceA < minPrice && priceB < minPrice) {
+				// negative to sort in desc order
+				return -cmp.Compare(a.Amount, b.Amount)
 			}
 
-			// negative to sort in desc order
-			return -cmp.Compare(a.Amount, b.Amount)
+			return -priceCmp
 		})
 
 		for _, deposit := range deposits {
-			cardPrice, ok := pricesByCard[deposit.ScryfallId]
+			cardPrice, ok := cheapPrices[deposit.ScryfallId]
 
 			// assume missing cards are above price, so keep them all
 			if cardPrice >= minPrice || !ok {
@@ -81,21 +74,21 @@ func TranslatePrune(options []CardDeposit, prices []cards.CardPricePreview, targ
 			if removing > 0 {
 				containerId := deposit.ContainerId
 				request := CardRequest{deposit.ScryfallId, deposit.OracleId, -removing}
-				changesByContainer[containerId] = append(changesByContainer[containerId], request)
+				removesByContainer[containerId] = append(removesByContainer[containerId], request)
 			}
 
 			remainingCopies -= keeping
 		}
 	}
 
-	changes := make([]ContainerChanges, len(changesByContainer))
+	removals := make([]ContainerChanges, len(removesByContainer))
 	i := 0
-	for containerId, requests := range changesByContainer {
-		changes[i] = ContainerChanges{containerId, MergeCardRequests(requests)}
+	for containerId, requests := range removesByContainer {
+		removals[i] = ContainerChanges{containerId, MergeCardRequests(requests)}
 		i += 1
 	}
 
-	return changes
+	return removals
 }
 
 func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCards []cards.Card, prices []cards.CardPricePreview) PrunePreviews {
@@ -177,7 +170,7 @@ func PreviewPrune(boxes []ContainerPreview, changes []ContainerChanges, fullCard
 	return globalPrnPreviews
 }
 
-func PruneRequests(options []CardRequest, fullCards []cards.Card, prices []cards.CardPricePreview, targetCopies int, minPrice float64) []CardRequest {
+func PruneRequests(candidates []CardRequest, fullCards []cards.Card, cheapCards []cards.CardPricePreview, targetCopies int, minPrice float64) []CardRequest {
 	if targetCopies < 0 {
 		return nil
 	}
@@ -187,14 +180,14 @@ func PruneRequests(options []CardRequest, fullCards []cards.Card, prices []cards
 		cardsById[card.ScryfallId] = card
 	}
 
-	pricesByCard := make(map[uuid.UUID]float64, len(prices))
-	for _, price := range prices {
-		pricesByCard[price.ScryfallId] = price.Price
+	cheapPrices := make(map[uuid.UUID]float64, len(cheapCards))
+	for _, price := range cheapCards {
+		cheapPrices[price.ScryfallId] = price.Price
 	}
 
-	cheapOracles := map[uuid.UUID]bool{}
+	cheapOracles := map[uuid.UUID][]CardRequest{}
 
-	for _, req := range options {
+	for _, req := range candidates {
 		if req.Delta <= 0 {
 			continue
 		}
@@ -204,47 +197,40 @@ func PruneRequests(options []CardRequest, fullCards []cards.Card, prices []cards
 			continue
 		}
 
-		cardPrice, ok := pricesByCard[req.ScryfallId]
+		cardPrice, ok := cheapPrices[req.ScryfallId]
 		if !ok {
 			continue
 		}
 
-		if strings.Contains(card.Type, "Basic") || cardPrice < minPrice {
-			cheapOracles[req.OracleId] = true
-		}
-	}
-
-	reqsByOracle := map[uuid.UUID][]CardRequest{}
-
-	for _, req := range options {
 		oracleId := req.OracleId
-		if cheapOracles[oracleId] {
-			reqsByOracle[oracleId] = append(reqsByOracle[oracleId], req)
+
+		if strings.Contains(card.Type, "Basic") || cardPrice < minPrice {
+			cheapOracles[oracleId] = append(cheapOracles[oracleId], req)
 		}
 	}
 
-	var result []CardRequest
+	var keptCards []CardRequest
 
-	for _, reqs := range reqsByOracle {
+	for _, reqs := range cheapOracles {
 		remainingCopies := targetCopies
 
 		slices.SortFunc(reqs, func(a, b CardRequest) int {
-			priceA, ok := pricesByCard[a.ScryfallId]
+			priceA, ok := cheapPrices[a.ScryfallId]
 			if !ok {
 				priceA = minPrice
 			}
-			priceB, ok := pricesByCard[b.ScryfallId]
+			priceB, ok := cheapPrices[b.ScryfallId]
 			if !ok {
 				priceB = minPrice
 			}
 
 			priceCmp := cmp.Compare(priceA, priceB)
-			if priceCmp != 0 {
-				return -priceCmp
+			if priceCmp == 0 || (priceA < minPrice && priceB < minPrice) {
+				// negative to sort in desc order
+				return -cmp.Compare(a.Delta, b.Delta)
 			}
 
-			// negative to sort in desc order
-			return -cmp.Compare(a.Delta, b.Delta)
+			return -priceCmp
 		})
 
 		for _, req := range reqs {
@@ -257,14 +243,13 @@ func PruneRequests(options []CardRequest, fullCards []cards.Card, prices []cards
 				continue
 			}
 
-			cardPrice, ok := pricesByCard[req.ScryfallId]
+			cardPrice, ok := cheapPrices[req.ScryfallId]
 			if !ok {
 				continue
 			}
 
 			if cardPrice >= minPrice {
 				replacing := min(req.Delta, remainingCopies)
-				result = append(result, req)
 				remainingCopies -= replacing
 				continue
 			}
@@ -273,13 +258,29 @@ func PruneRequests(options []CardRequest, fullCards []cards.Card, prices []cards
 
 			if keeping > 0 {
 				req := CardRequest{req.ScryfallId, req.OracleId, keeping}
-				result = append(result, req)
+				keptCards = append(keptCards, req)
 			}
 
 			remainingCopies -= keeping
 		}
 	}
 
-	return MergeCardRequests(result)
+	for _, req := range candidates {
+		card, ok := cardsById[req.ScryfallId]
+		if !ok {
+			continue
+		}
+
+		if strings.Contains(card.Type, "Basic") {
+			continue
+		}
+
+		// if not cheap, then assume it's expensive, so keep
+		if _, ok := cheapPrices[req.ScryfallId]; !ok {
+			keptCards = append(keptCards, req)
+		}
+	}
+
+	return MergeCardRequests(keptCards)
 
 }

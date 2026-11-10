@@ -152,7 +152,7 @@ func parseCsvFile(ctx context.Context, formFile *multipart.FileHeader) ([]CardRe
 			if err != nil {
 				return nil, err
 			}
-			scryfallIds[scryfallId] = quantity
+			scryfallIds[scryfallId] = scryfallIds[scryfallId] + quantity
 
 		case headerPositions.MultiverseId > -1:
 			multiverseId, err := strconv.Atoi(row[headerPositions.MultiverseId])
