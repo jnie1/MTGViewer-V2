@@ -50,12 +50,12 @@ func TranslatePrune(candidates []CardDeposit, cheapCards []cards.CardPricePrevie
 			}
 
 			priceCmp := cmp.Compare(priceA, priceB)
-			if priceCmp != 0 {
-				return -priceCmp
+			if priceCmp == 0 || (priceA < minPrice && priceB < minPrice) {
+				// negative to sort in desc order
+				return -cmp.Compare(a.Amount, b.Amount)
 			}
 
-			// negative to sort in desc order
-			return -cmp.Compare(a.Amount, b.Amount)
+			return -priceCmp
 		})
 
 		for _, deposit := range deposits {
@@ -225,12 +225,12 @@ func PruneRequests(candidates []CardRequest, fullCards []cards.Card, cheapCards 
 			}
 
 			priceCmp := cmp.Compare(priceA, priceB)
-			if priceCmp != 0 {
-				return -priceCmp
+			if priceCmp == 0 || (priceA < minPrice && priceB < minPrice) {
+				// negative to sort in desc order
+				return -cmp.Compare(a.Delta, b.Delta)
 			}
 
-			// negative to sort in desc order
-			return -cmp.Compare(a.Delta, b.Delta)
+			return -priceCmp
 		})
 
 		for _, req := range reqs {
