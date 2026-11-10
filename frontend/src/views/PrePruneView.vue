@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { prePrune } from '@/cards/fetches';
 import { computed, ref, watch } from 'vue';
-import { fetchApiBlob } from '@/fetch/api';
 
 interface IPrunedFile {
   blob: Blob;
@@ -40,22 +40,11 @@ async function pruneFile() {
   const file = selectedFile.value;
   if (!file || !canSubmit.value) return;
 
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const query = new URLSearchParams({
-    size: String(quantityAmount.value),
-    price: String(priceAmount.value),
-  });
-
   try {
     isLoading.value = true;
     errorMessage.value = undefined;
 
-    const blob = await fetchApiBlob(`/cards/preprune?${query}`, {
-      method: 'POST',
-      body: formData,
-    });
+    const blob = await prePrune(file, quantityAmount.value, priceAmount.value);
 
     result.value = {
       blob,
