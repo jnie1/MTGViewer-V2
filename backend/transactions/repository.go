@@ -72,6 +72,35 @@ func GetTransaction(ctx context.Context, groupId uuid.UUID) (CardTransaction, er
 	return transaction, err
 }
 
+func GetLogGroups(ctx context.Context, groupIds uuid.UUIDs) ([]LogGroup, error) {
+	db := database.Instance()
+	row, err := db.QueryContext(ctx, `
+		SELECT lg.log_group_id, lg.time, lg.description
+		FROM log_groups AS lg
+		WHERE lg.group_id = ANY($1);`, groupIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	var groups []LogGroup
+
+	for row.Next() {
+		var group LogGroup
+		if err := row.Scan(&group.GroupId, &group.Time, &group.Description); err != nil {
+			return nil, err
+		}
+		groups = append(groups, group)
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
+	return groups, nil
+}
+
 func GetLogs(ctx context.Context, groupId uuid.UUID) ([]CardLogPreview, error) {
 	db := database.Instance()
 	row, err := db.QueryContext(ctx, `
@@ -129,6 +158,36 @@ func GetLogsFromRange(ctx context.Context, logRange LogRange) ([]CardLogPreview,
 	}
 
 	return logs, nil
+}
+
+func GetCardChanges(ctx context.Context, scryfallId uuid.UUID) ([]CardChangePreview, error) {
+	db := database.Instance()
+	row, err := db.QueryContext(ctx, `
+		SELECT t.log_group_id, t.from_container_id, t.to_container_id, t.amount
+		FROM transactions AS t
+		WHERE t.scryfall_id = $1;`, scryfallId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer row.Close()
+	var changes []CardChangePreview
+
+	for row.Next() {
+		var change CardChangePreview
+		if err := row.Scan(&change.GroupId, &change.FromContainerId, &change.ToContainerId, &change.Amount); err != nil {
+			return nil, err
+		}
+		changes = append(changes, change)
+	}
+
+	if err := row.Err(); err != nil {
+		return nil, err
+	}
+
+	return changes, nil
+
 }
 
 func UpdateDescription(ctx context.Context, groupId uuid.UUID, description *string) error {
