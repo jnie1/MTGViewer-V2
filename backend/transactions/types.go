@@ -19,8 +19,21 @@ type CardTransaction struct {
 	Description *string   `json:"description,omitempty"`
 }
 
+type LogGroup struct {
+	GroupId     uuid.UUID
+	Time        time.Time
+	Description *string
+}
+
 type CardLogPreview struct {
 	ScryfallId      uuid.UUID
+	FromContainerId *int
+	ToContainerId   *int
+	Amount          int
+}
+
+type CardChangePreview struct {
+	GroupId         uuid.UUID
 	FromContainerId *int
 	ToContainerId   *int
 	Amount          int
@@ -39,10 +52,21 @@ type ContainerTransfers struct {
 	Cards         []CardTransfer `json:"cards"`
 }
 
-func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
+type CardHistory struct {
+	cards.CardImagePreview
+	Transactions []CardTransactionPreview `json:"transactions"`
+}
+
+type CardTransactionPreview struct {
+	GroupId uuid.UUID `json:"groupId"`
+	Time    time.Time `json:"time"`
+	Delta   int       `json:"delta"`
+}
+
+func ToScryfallIds(logs []CardLogPreview) uuid.UUIDs {
 	uniqIds := make(map[uuid.UUID]struct{})
 	var v struct{}
-	for _, log := range transactionLogs {
+	for _, log := range logs {
 		uniqIds[log.ScryfallId] = v
 	}
 
@@ -56,10 +80,10 @@ func ToScryfallIds(transactionLogs []CardLogPreview) uuid.UUIDs {
 	return ids
 }
 
-func ToContainerIds(transactionLogs []CardLogPreview) []int {
+func ToContainerIds(logs []CardLogPreview) []int {
 	uniqIds := make(map[int]struct{})
 	var v struct{}
-	for _, log := range transactionLogs {
+	for _, log := range logs {
 		if log.FromContainerId != nil {
 			uniqIds[*log.FromContainerId] = v
 		}
@@ -69,6 +93,23 @@ func ToContainerIds(transactionLogs []CardLogPreview) []int {
 	}
 
 	ids := make([]int, len(uniqIds))
+	i := 0
+	for id := range uniqIds {
+		ids[i] = id
+		i += 1
+	}
+
+	return ids
+}
+
+func ToGroupIds(changes []CardChangePreview) uuid.UUIDs {
+	uniqIds := make(map[uuid.UUID]struct{})
+	var v struct{}
+	for _, change := range changes {
+		uniqIds[change.GroupId] = v
+	}
+
+	ids := make([]uuid.UUID, len(uniqIds))
 	i := 0
 	for id := range uniqIds {
 		ids[i] = id
