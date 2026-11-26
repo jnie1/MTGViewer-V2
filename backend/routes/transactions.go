@@ -141,10 +141,52 @@ func updateDescription(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func fetchCardHistory(c *gin.Context) {
+	var params struct {
+		ScryfallId uuid.UUID `uri:"scryfallId,parser=encoding.TextUnmarshaler" binding:"required"`
+	}
+
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+
+	ctx := c.Request.Context()
+	cardMatches, err := cards.FetchCollection(ctx, params.ScryfallId)
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(cardMatches) != 1 {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	changes, err := transactions.GetCardChanges(ctx, params.ScryfallId)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	groupIds := transactions.ToGroupIds(changes)
+	logGroups, err := transactions.GetLogGroups(ctx, groupIds)
+
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	history := transactions.MergeCardHistory(cardMatches[0], changes, logGroups)
+	c.JSON(http.StatusOK, history)
+}
+
 func AddTransactionRoutes(router gin.IRouter) {
 	group := router.Group("/logs")
 	group.GET("", fetchCardTransactions)
 	group.GET("/:group", fetchCardTransaction)
 	group.GET("/:group/cards", fetchCardLogs)
 	group.PUT("/:group/description", auth.IsAuthorized, auth.IsAdmin, updateDescription)
+	group.GET("/card/:scryfalllId", fetchCardHistory)
 }
