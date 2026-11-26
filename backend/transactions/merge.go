@@ -237,10 +237,9 @@ func groupDeltasByCard(logs []CardLogPreview) map[uuid.UUID][]containers.Contain
 func MergeCardHistory(fullCard cards.Card, changes []CardChangePreview, logGroups []LogGroup) CardHistory {
 	deltas := map[uuid.UUID]int{}
 	for _, change := range changes {
-		if change.FromContainerId != nil {
+		if change.FromContainerId != nil && change.ToContainerId == nil {
 			deltas[change.GroupId] -= change.Amount
-		}
-		if change.ToContainerId != nil {
+		} else {
 			deltas[change.GroupId] += change.Amount
 		}
 	}
@@ -250,6 +249,15 @@ func MergeCardHistory(fullCard cards.Card, changes []CardChangePreview, logGroup
 		cardTransactions[i] = CardTransactionPreview{group.GroupId, group.Time, deltas[group.GroupId]}
 	}
 
-	preview := cards.CardImagePreview{ScryfallId: fullCard.ScryfallId, Name: fullCard.Name, Images: fullCard.Images}
+	slices.SortFunc(cardTransactions, func(a, b CardTransactionPreview) int {
+		return -a.Time.Compare(b.Time)
+	})
+
+	preview := cards.CardImagePreview{
+		ScryfallId: fullCard.ScryfallId,
+		Name:       fullCard.Name,
+		Images:     fullCard.Images,
+	}
+
 	return CardHistory{preview, cardTransactions}
 }
